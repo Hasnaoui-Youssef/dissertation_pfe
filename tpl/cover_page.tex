@@ -1,0 +1,96 @@
+\thispagestyle{cover}%
+\newgeometry{bottom=25mm,left=20mm,top=15mm,right=20mm}
+\hspace{-47pt}
+\begin{minipage}[l]{0.2\columnwidth}
+    \vspace{6mm}
+    \includegraphics[width=1.1\columnwidth]{img/ST_Summer_Internship/logo_enicar.jpg}\\
+\end{minipage}
+\hfill
+\begin{minipage}[l]{0.6\columnwidth}
+    \centering
+    \footnotesize
+    \textbf{{Republic of Tunisia}}\\
+    \vspace{1.5mm}
+    \textbf{{Ministry of Higher Education\\
+                and Scientific Research}}\\
+    \vspace{1.5mm}
+    \textbf{{University of Carthage }}\\
+    \vspace{1.5mm}
+    \textbf{{National Engineering School of Carthage}}
+\end{minipage}
+\hfill
+\begin{minipage}[l]{0.02\columnwidth}
+\end{minipage}
+\hfill
+\begin{minipage}[l]{0.18\columnwidth}
+    \vspace{6mm}
+    \includegraphics[width=1.1\columnwidth]{img/ST_Summer_Internship/uni_car.png}\\
+\end{minipage}
+\vskip1.5cm
+
+\begin{center}
+    {\LARGE{\textbf{\textsc{End of Studies Project Report}}}}\\
+    \vskip0.5cm
+    \large
+
+\end{center}
+
+\begin{center}
+    \textrm{By}\\
+    \vskip0.3cm
+    {\ifthenelse{\boolean{isBinomal}}
+    {% IF TRUE
+        \begin{center}
+            \large\textbf{\@author}~~~~~ et ~~~~~
+            \large\textbf{\@secondAuthor}
+        \end{center}
+    }
+    {\Large\textbf{\@author}}% FALSE
+    }
+    \vskip12mm
+
+    \definecolor{isiBlue}{RGB}{31, 78, 121}
+
+    \begin{changemargin}{-9mm}{0cm}
+        \begin{minipage}[l]{1.1\columnwidth}
+            \begin{tcolorbox}[colframe=black,colback=white,boxrule=0pt,toprule=3pt,bottomrule=3pt,arc=0pt,top=0mm,right=0mm,left=0mm,bottom=0mm,boxsep=0.5mm]{
+                    \begin{tcolorbox}[colframe=black,colback=white, boxrule=0pt,toprule=1pt,bottomrule=1pt,arc=0pt,enlarge bottom by=-0.9mm, auto outer arc]
+                        \centering
+                        {\huge\textbf{\@title }}
+                    \end{tcolorbox}
+                }
+            \end{tcolorbox}
+        \end{minipage}
+    \end{changemargin}
+
+\end{center}
+\vskip8mm%
+
+\begin{center}
+    \large
+    \begin{minipage}[c]{0.28\columnwidth}
+        Professional Supervisor:
+        \newline
+        Academic Supervisor:
+    \end{minipage}
+    \hfill
+    \begin{minipage}[c]{0.42\columnwidth}
+        \textbf{\@proFramerNameOne}\\
+        \textbf{\@academicFramerName}
+    \end{minipage}
+    \hfill
+
+\end{center}
+\vskip16mm
+
+\begin{center}
+    \large
+    Project Elaborated Within \@companyName\\
+    \vskip0.2cm
+
+    \begin{figure}[h]
+        \centering
+        {\color{black}{\fboxrule=2.5pt\fbox{\includegraphics[width=0.43\columnwidth]{img/ST_logo_2024_blue.jpg}}}}
+    \end{figure}
+\end{center}
+\afterpage{\blankpage}

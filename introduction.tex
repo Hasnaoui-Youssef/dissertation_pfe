@@ -1,0 +1,12 @@
+\chapter*{Introduction}
+\addcontentsline{toc}{chapter}{Introduction} % to include the introduction to the table of content
+\markboth{Introduction}{} %To redefine the section page head
+
+Embedded systems operate under real-time constraints while interacting directly with hardware peripherals and asynchronous external events, this makes them inherently difficult to observe and debug. Traditional techniques such as serial logging or software breakpoints are often either insufficiently informative or intrusive enough to perturb the behavior. To address these limitations, modern ARM-based microcontrollers integrate advanced hardware debug and trace capabilities through the ARM CoreSight architecture, enabling non-intrusive visibility into instruction execution, memory accesses, and system activity.
+
+STM32 microcontrollers expose a substantial subset of these capabilities.But, Despite the sophistication of the underlying hardware, these features remain largely locked behind proprietary tooling ecosystems or surface only as limited workflows exposed by commercial IDEs. Within mainstream open-source debugging environments, instruction trace is rarely treated as a first-class debugging primitive and instead exists as a fragmented collection of low-level mechanisms requiring significant manual integration effort.
+
+In practice, utilizing instruction trace frequently involves extracting raw trace data through custom scripts, decoding packets through standalone frameworks such as OpenCSD, and relying on separate visualization or analysis frontends disconnected from the debugging workflow itself. The resulting process lacks standardization, interoperability, and accessibility, effectively placing advanced trace-assisted debugging outside the reach of many embedded developers despite the hardware support already present on modern devices.
+
+This thesis addresses that gap through a study of the trace and debug infrastructure available on STM32 microcontrollers, spanning CoreSight components, transport protocols, debug probes, software tooling, and host-side integration mechanisms. The work then proposes a practical and reproducible workflow for instruction trace capture, decoding, and visualization, designed to integrate with existing debugging environments while remaining independent of proprietary IDE abstractions.
+

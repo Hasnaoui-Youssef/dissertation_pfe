@@ -1,0 +1,139 @@
+\chapter{Context \& Problem Statement}
+\label{chap:premierchapitre}
+
+\section{Host Organization}
+\subsection{STMicroelectronics}
+
+STMicroelectronics (ST) is a global leader in the semiconductor industry, providing innovative solutions across various markets, including automotive, industrial, personal electronics, and communications equipment.
+
+Founded in 1987 through the merger of SGS Microelettronica of Italy and Thomson Semiconducteurs of France, ST has grown to become one of the largest semiconductor companies in the world.
+
+\subsection{Activity Sectors}
+
+ST's mission is to be the undisputed leader in the semiconductor market, delivering sustainable and innovative solutions that make a positive impact on people's lives. The company's vision is to create technology that enables a more intelligent and connected world, driving progress in key areas such as smart driving, smart industry, smart home, and smart city applications.\\
+The following illustration highlights the key end markets targetted by ST's solutions.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=16cm]{end markets.png}
+  \caption{STMicroelectronics Activity Sectors}
+  \label{fig:st_activities}
+\end{figure}
+
+\subsection{Global Presence}
+
+STMicroelectronics operates in more than 35 countries, with a strong presence in key markets around the world. Figure \ref{fig:map} illustrates the company's global network, which includes \cite{st_comp}:
+
+\begin{itemize}
+    \item \textbf{Manufacturing Sites:} ST has 14 main manufacturing sites, strategically located to serve its global customer base efficiently.
+    \item \textbf{Sales \& Marketing Offices:} With a network of sales and marketing offices, ST provides localized support and services to its customers.
+    \item \textbf{R\&D Centers:} ST's R\&D centers are spread across the globe, fostering innovation and collaboration.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=16cm]{st map.png}
+  \caption{STMicroelectronics Worldwide Presence}
+  \label{fig:map}
+\end{figure}
+
+\subsection{ST Tunis}
+
+The STMicroelectronics Tunis site, located in the El Ghazela Technopark, employs over 100 professionals in various fields such as tools, applications, quality, and support functions. The facility is involved in all stages of the microelectronics industry, from initial circuit design to final verification before mass production.
+
+With expertise in both hardware and software, the Tunis center's activities include electronic circuit design, software tool development, application software support, and the electrical validation and verification of new circuits. This diverse skill set allows the center to contribute significantly to ST's global operations.
+
+ \begin{figure}[htp]
+  \centering
+  \includegraphics[width=10cm]{stmicroelectronics-tunis-site.jpg}
+  \caption{STMicroelectronics Tunis}
+  \label{fig:st_tn}
+\end{figure}
+
+
+\subsection{Application \& Product Support Team}
+The Application \& Product Support team is dedicated to delivering comprehensive customer support while managing and publishing STM32 product documentation. Their role includes providing in-depth technical support for ST’s tools and products, helping customers troubleshoot problems and optimize their use of these technologies. They ensure the accuracy, clarity, and consistency of all technical documentation, which is regularly updated to reflect the latest developments and innovations. The team is also involved in enhancing and maintaining existing products, as well as defining new products, derivatives, and application references to meet evolving market needs. Additionally, they lead initiatives related to intellectual property applications, offering specific support through the development of application notes, training programs, and other resources that help customers fully understand and utilize ST’s products. This multifaceted approach ensures both customer satisfaction and continuous improvement in the STM32 ecosystem.
+\section{Project Context}
+
+\subsection{Problem Statement}
+Debugging software is designed to offer a unified experience across a wide range of chips, vendors and architectures, for this, it relies on a common layer of abstraction that groups these heterogeneous targets behind a single conceptual model, This approach is valid for simple primitives such as memory views and breakpoints, however, the shortcomings appear when we move to more advanced features, such as reconstructing execution flow, conditional and cross-triggering of debug events, or recovering execution history after the system failed. These features do not generalize properly, and are tightly coupled to vendor-specific implementations.
+
+Further more, the current debugging workflows stop at the presentation of symptomps, A variable having unexpected values, or the code execution reaching an undesired path, while these views provide observability over the system, they do not explain why a fault has happened in the first place, observability and root-cause analysis remain separate concerns, and this is reinforced by the fact that the notion of an "erroneous state" has no formal standing in the debugging process.
+
+The gap between what the silicon can do and what the developer can actually reach, alongside the lack of formality behind the definition of an erroneous state are the central concerns of this thesis.
+\subsection{State of the Art}
+Debugging an embedded system from a host machine needs multiple tools to work together in order to achieve the desired goal: Beyond the debug interface present on the microcontroller itself, the user needs a debug probe physically connected to the device, and software on the host machine called a debugger. Generally, the entire workflow is is tightly coupled from a specific vendor, so it's worth looking at the state of the art based on vendors.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Embedded Systems IDE Vendors}
+    \label{tab:ide_vendors}
+    \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X X X@{}}
+        \toprule
+        Vendor & Toolchain & Debugger & Debug Probe \\
+        \midrule
+        IAR & IAR toolchain & C-Spy & I-Jet\/I-Jet Trace \\
+        \midrule
+        Keil & ARMCC & Keil \textmu Vision Debugger & ULink Family\\
+        \midrule
+        Arm & ARMCC & Arm Debugger & Arm DSTREAM family \\
+        \midrule
+        Segger & Segger toolchain & Ozone & J-Link\/J-Trace \\
+        \midrule
+        STMicroelectronics & ST-Clang & ST-OpenOCD & STLink \\
+        \midrule
+        Free \& GCC for arm32 \& LLVM Clang  & OpenOCD\/PyOCD\/Probe-RS + GDB\/LLDB & CMSIS-DAP \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+It is also worth looking at the features provided by the proprietary debuggers for CoreSight based debug infrastructures:
+
+\textit{note that for ST's tools, they are specialized forks of open-source tools}
+\begin{table}[htbp]
+    \centering
+    \caption{Debugger Features}
+    \label{tab:debugger_features}
+    \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X X X X@{}}
+        \toprule
+        Feature & IAR & Keil & Arm & Segger \\
+        \midrule
+        ITM trace & \checkmark & \checkmark & \checkmark & \checkmark\footnote{Supports UART encoding only} \\
+        \midrule
+        Instruction Trace & \checkmark & \checkmark & \checkmark & \checkmark \\
+        \midrule
+        CTI support  & \times & \times & \checkmark & \times \\
+        \midrule
+        Scripting Interface & \checkmark & \checkmark & \checkmark & \checkmark \\
+        \midrule
+        Multi-Core Debugging & Limited & Limited & \checkmark  & Limited\\
+        \midrule
+        IDE coupling & \footnote{Implemented in the IDE but can work as a standalone server} & \checkmark & \checkmark & \times \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+\subsection{Critique of Current State of the Art}
+While toolchain vendors aim to provide many features within their IDEs, and to a degree, an extensible platform via the scripting interface. However, the main limitation comes in the form of the UI coupling.
+The fact that the UI, or the debugger's state needs to be aware of the state of the debuggee limits the capabilities of the scripting interface, as with CoreSight components, programming happens via a memory-mapped interface, and a debugger generally has no idea about the component or register behind the address of a read\/write command.
+
+Diving more into details, IDEs generally provide a set of configurable settings for tracing capabilities, and no configuration beyond that is possible. More Specifically, when executing a program in a debug environment, the debugger will perform a sequence of actions which includes overriding the configuration registers of CoreSight components with preset values. This makes any extending behaviour on proprietary tools pretty much impossible.
+Below is a list of unacheivable features:
+\begin{table}[htbp]
+    \centering
+    \caption{Debugger Limitations}
+    \label{tab:debugger_limitations}
+    \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
+        \toprule
+        Feature & Description \\
+        \midrule
+        Conditional Tracing & Conditional tracing relies on managing the resources of the ETM to start/stop or include/exclude portions of the execution history. \\
+        \midrule
+        Event tracing & Events are elements that signal the occurence of specific conditions related to the execution and/or state of the application, they can be used to infer more specific details about the runtime context. \\
+        \midrule
+        CTI awarness  & The CTI is a component that allows the propagation of events across many components, this can for example allow for the synchronization of halting multiple cores, or generating external interruputs\\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+
+\subsection{Proposed Solution}
+\section{Conclusion}
