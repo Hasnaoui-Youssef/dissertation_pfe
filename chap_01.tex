@@ -129,11 +129,32 @@ Below is a list of unacheivable features:
         \midrule
         Event tracing & Events are elements that signal the occurence of specific conditions related to the execution and/or state of the application, they can be used to infer more specific details about the runtime context. \\
         \midrule
-        CTI awarness  & The CTI is a component that allows the propagation of events across many components, this can for example allow for the synchronization of halting multiple cores, or generating external interruputs\\
+        CTI awarness  & The CTI is a component that allows the propagation of events across many components, this can for example allow for the synchronization of halting multiple cores, or generating interruputs from within the debug elements. \\
         \bottomrule
     \end{tabularx}
 \end{table}
 
+It is also worth looking at the limitations behind debug probes, as a note, each toolchain vendor, that being IAR, Keil, and Segger provide two versions of their probes, a base model, and an extended one capable of capturing trace via dedicated trace pins.
+
+\textit{Due to not being able to obtain and work with the DSTREAM family, it will be ommitted from this comparison.}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Debug Probe Limitations}
+    \label{tab:debug_probe_limitations}
+    \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
+        \toprule
+        Probe & IAR & Keil & Segger & Trace Capture Support\\
+        \midrule
+        I-Jet & \checkmark & \times & \times & \checkmark \footnote{Given the appropriate model} \\
+        ULink & \times & \checkmark & \times & \checkmark \footnote{Given the appropriate model} \\
+        J-Link/J-Trace & \checkmark & \checkmark & \checkmark & \checkmark \footnote{Given the appropriate model} \\
+        STLink & \checkmark & \checkmark & \checkmark & \times \\
+        CMSIS-DAP & \checkmark & \checkmark & \checkmark & \times \\
+        \midrule
+        \bottomrule
+    \end{tabularx}
+\end{table}
 
 \subsection{Proposed Solution}
 \section{Conclusion}
