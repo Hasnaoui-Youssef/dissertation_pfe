@@ -2,317 +2,34 @@
 \chapter{Theory and Key Concepts}
 
 \section*{Introduction}
-In this chapter, we will explore the key concepts essential to our project. We begin by introducing the STM32 ecosystem, providing an overview of its components and their functionalities. Following this, we delve into the theoretical aspects of benchmarking and embedded build systems relevant to our work. We then present the open-CMSIS-pack ecosystem. Finally we will discuss the essentials of automating project generation.
 
-\section{STM32 Microcontrollers (MCUs)}
-\subsection{STM32 Series}
-STM32 MCUs are a family of 32-bit microcontrollers based on the ARM Cortex-M processor. Developed by STMicroelectronics, the STM32 series offers a wide range of products that cater to various applications, from simple embedded systems to complex industrial automation.
-The STM32 MCUs are categorized into several series, each designed to meet specific application requirements.
-\subsection{ARM Cortex-M}
-The STM32 microcontrollers are built around the ARM Cortex-M cores, a group of 32-bit RISC ARM processors cores optimized for low-cost and power-efficient integrated circuits.
-The ARM Cortex-M family includes several cores, each offering different levels of performance and features.
+\section{What is Debugging?}
+During the development process of a project, specifically within computer programs, mistakes are bound to happen and it is unlikely that the first iteration of a solution will be flawless, and therefore, defects exist within the application. Debugging is the process of finding and eliminating these defects. But what defines a defect or the fact that a program is not working properly?
 
-\subsection{STM32 Families}
-STM32 MCUs are grouped into families, a combination of a series and an ARM Cortex-M core, the number proceeding the STM32 series indicates the core, for example, STM32H7 family indicates a microcontroller from the STM32H series with a Cortex-M7 core, while the STM32N6 family indicates a STM32N series microcontroller with a Cortex-M55 core. Refer to Table~\ref{tab:stm32_mcu_families} for a full list of STM32 MCU families.
-\subsection{STM32 UART Peripheral}
-STM32 microcontrollers come with a rich set of integrated peripherals. The one of interest in this report is the UART peripheral.
-UART is a hardware protocol and communication interface that uses two wires for data exchanges between peripherals that do not share a common clock signal. It fits our use case of transmitting data from the microcontroller to the host computer in order to have access to Coremark results.
-\newpage
-\subsection{STM32Cube Firmware Package}
-The STM32Cube Firmware Package is a comprehensive software suite provided by STMicroelectronics to accelerate development on STM32 microcontrollers. Its components include but are not limited to:
-\begin{itemize}
-    \item \textbf{CMSIS:} A vendor-independent standard defined by Arm that provides a consistent API for Cortex-M cores, STM32Cube Firmware provides an implementation of the CMSIS-Core layer, these include device and family specific header files, as well as templates for startup files and linker scripts.
-    \item \textbf{HAL:} Simplifies peripheral configuration and access through high-level APIs, reducing development complexity and allows for re-usability across different hardware.
-    \item \textbf{LL Drivers:} Provide fine-grained control of peripherals with minimal overhead.
-\end{itemize}
+When writing a program, we have a goal in mind that we want to achieve, let's call this the \textit{specification}, for example, we would like to create a program that blinks an LED at a periodic rate, if say the LED is not toggling, or the timing is not consistent, we can confidently say that the program is not working according to the specification, and therefore, within the context of our work, it contains a bug. The next step is then to fix our program, and that process is exactly what's called debugging.
 
+A specification generally sets a final result or an end goal, but it also implicitly implies how parts of the system should behave in order to achieve that. For example, the end goal is a periodically blinking LED, but that implies that we should be supplying current to the LED at a specific rate, and since we're using a microcontroller, that in itself implies that we should be writing values to specific registers in order to achieve that functionality. If any of these break, then the symptom would appear as the LED not blinking properly, due to writing to the wrong register for example.
 
-\section{Benchmarking}
-\subsection{Overview}
-Benchmarking is the systematic process of evaluating the performance of a computing system, or a specific component within that system, by running a standardized set of tasks and synthetic workloads.
-The key aspects of benchmarks include:
-\begin{itemize}
-    \item \textbf{Metrics:} Performance is measured using quantifiable units, Common metrics include:
-        \begin{itemize}
-            \item \textbf{Throughput:} The amount of work done per unit of time (e.g., operations/second, frames/second, MB/s).
-            \item \textbf{Latency:} The time taken to complete a single operation (e.g., microseconds per operation).
-            \item \textbf{Power Efficiency:} Performance achieved per watt of power consumed (e.g., points per watt, inferences per joule).
-            \item \textbf{Memory Usage:} The amount of memory consumed during a task.
-            \end{itemize}
-    \begin{samepage}
-    \item \textbf{Benchmark Types:}
-        \begin{itemize}
-            \item \textbf{Synthetic Benchmarks:} These are specialized programs designed to stress specific subsystems like the CPU, memory, or GPU. They provide standardized but often abstract results.
-            \item \textbf{Application Benchmarks:} Use real-world software and workloads (e.g., rendering a video file, compiling a large code-base, running a specific game at a set quality). These measure performance in practical, user-facing scenarios.
-            \item \textbf{Micro-benchmarks:} Isolate and test a very specific, low-level operation (e.g., floating-point multiplication speed, memory access latency).
-        \end{itemize}
-    \end{samepage}
-\end{itemize}
-\subsection{Benchmarking Microcontrollers}
-Although the same benchmarks can be run on most pieces of technology, the implementation differs slightly for microcontrollers. Computers can delegate tasks such as scheduling and printing to the underlying operating system, which is not the case when it comes to embedded devices. We have to take into account handling threads, I/O operations, memory regions, and code sections.
-The following steps are necessary to ensure proper benchmarking on a microcontroller:
-\begin{itemize}
-    \item \textbf{Clock Source Provision:} Benchmarks rely on CPU ticks in order to get an accurate estimate of the time taken to run the workloads, providing access to the tick counter, whether it be the internal System Clock or an external timer, as well as the frequency of said clock is crucial for proper measurements.
-    \item \textbf{Print Logic Implementation:} Computers can offer multiple ways of getting data from a program, such as logging them into files or printing them to the standard output, this option is not available on microcontrollers, therefore, we have to provide our own mechanism of data transmission.
-    \item \textbf{Code Execution Management:} For high-end systems relying on an operating system, the most common approach is to load the program from disk into volatile memory (RAM) and begin execution without any extra steps. However, in embedded systems, we have to specify the regions of memory where each part of an application should go, and, due to multiple difference, such as wait-states, clock synchronization and the communication interface, the results can have vastly varying results depending on the chosen regions.
-\end{itemize}
-\subsection{Coremark}
-There have been many attempts to provide a single number that can totally quantify the
-ability of a CPU. Be it MHz, MOPS, MFLOPS - all are simple to derive but misleading
-when looking at actual performance potential.
-EEMBC’s CoreMark is a benchmark that measures the performance of microcontrollers (MCUs) and central processing units (CPUs) used in embedded systems.
-It is designed to run on devices from 8-bit microcontrollers to 64-bit microprocessors.
-CoreMark ties a performance indicator to execution of simple
-code, but rather than being entirely arbitrary and synthetic, the code for the benchmark
-uses basic data structures and algorithms that are common in practically any application
-\subsubsection*{Coremark Composition}
-To appreciate the value of CoreMark, it’s worthwhile to dissect its composition, which in
-general is comprised of lists, strings, and arrays (matrixes to be exact). Lists commonly
-exercise pointers and are also characterized by non-serial memory access patterns. In
-terms of testing the core of a CPU, list processing predominantly tests how fast data can
-be used to scan through the list. For lists larger then the CPU’s available cache, list
-processing can also test the efficiency of cache and memory hierarchy.
-\subsubsection{List Processing}
-List processing consists of reversing, searching or sorting the list according to different
-parameters, based on the contents of the list data items. In particular, each list item can
-either contain a pre-computed value or a directive to invoke a specific algorithm with
-specific data to provide a value during sorting. To verify correct operation, CoreMark
-performs a 16b cyclic redundancy check (CRC) based on the data contained in elements
-of the list. Since CRC is also a commonly used function in embedded applications, this
-calculation is included in the timed portion of the CoreMark.
-\subsubsection{Matrix Processing}
-Many algorithms use matrixes and arrays, warranting significant research on optimizing
-this type of processing. These algorithms test the efficiency of tight loop operations as
-well as the ability of the CPU and associated toolchain to use ISA accelerators such as
-MAC units and SIMD instructions. These algorithms are composed of tight loops that
-iterate over the whole matrix. CoreMark performs simple operations on the input
-matrixes, including multiplication with a constant, a vector, or another matrix. CoreMark
-also tests operating on part of the data in the matrix in the form of extracting bits from
-each matrix item for operations. To validate that all operations have been performed,
-CoreMark again computes a CRC on the results from the matrix test.
-\subsubsection{State machine processing}
-An important function of a CPU core is the ability to handle control statements other than
-loops. A state machine based on switch or ‘if’ statements is an ideal candidate for testing
-that capability. There are 2 common methods for state machines – using switch
-statements or using a state transition table. Because CoreMark already utilizes the latter
-method in the list processing algorithm to test load/store behavior, CoreMark uses the
-former method, switch and ‘if’ statements, to exercise the CPU control structure.
-The state machine tests an input string to detect if the input is a number, if it is not a
-number it will reach the “invalid” state. This is a simple state machine with 9 states. The
-input is a stream of bytes, initialized to ensure we pass all available states, based on an
-input that is not available at compile time. The entire input buffer is scanned with this
-state machine.
-\subsubsection{CoreMark Profiling}
-Since CoreMark contains multiple algorithms, it is interesting to demonstrate how the
-behavior changes over time. For example, looking at the percentage of control code
-executed (samples taken at each 1000 cycles) and branch mis-predictions in Figure \ref{fig:coremark_control}, it is
-obvious where the matrix algorithm is being called. This is portrayed by the low mis-
-prediction rate and high percentage of control operations, indicative of tight loops) (for example,
-between points 330-390).
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=15cm]{./img/ST_Summer_Internship/coremark_control_instructions.png}
-  \caption{Distribution of control instructions and mispredictions over CoreMark execution.}
-  \label{fig:coremark_control}
-\end{figure}
+The coupling between "bugs" and specifications is important and should be highlighted clearly, as the same program could be considered buggy under certain specifications while it works perfectly fine in other cases, and that leads us to the last part: defining an erroneous state.
 
-Overall CoreMark is well suited to comparing embedded processors. It is small, highly
-portable, well understood, and highly controlled. CoreMark verifies that all computations
-were completed correctly during execution, which helps debug any issues that may come
-up. The run rules are clearly defined and reporting rules are enforced on the CoreMark
-web site.
-\section{C/C++ Build Process}
-The construction of executable firmware for embedded systems necessitates interventions throughout the compilation toolchain, this requirement is driven by the absence of standardized hardware and resource constraints. Consequently, in our context, the build process is characterized by explicit configuration at each stage, including compiler optimizations, targeted assembly integration, and memory management via linker scripts.
-\subsection{Compilation Toolchain}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=15cm]{img/comp_diag.jpeg}
-  \caption{Compilation Process Diagram}
-  \label{fig:compilation}
-\end{figure}
-Going from source code in C/C++ to executable firmware involves multiple steps, apart from the linking stage, all other processes in the toolchain target a single file at a time.
-\begin{itemize}
-    \item \textbf{Preprocessor :} Preprocessing is the first step of the build process, it expands macros and resolves defines as well as stripping comments from the code.
-    \item \textbf{Assembler :} The assembler translates the high-level code into assembly, which is the human-readable format of machine instruction.
-    \item \textbf{Compiler :} Although the we use the term compilation as an equivalent to the whole process, compilation at its core is translating code into machine instructions, this step is what translates assembly mnemonics into machine code in a format known as object files.
-    \item \textbf{Linker :} The linking stage is the final and most important part of the process, it takes the object files and combines them into a single runnable application.
-\end{itemize}
-\subsection{Embedded Systems Toolchains}
-While a native toolchain produces binaries that run directly on the host machine, a toolchain dedicated to embedded systems must target a separate device with its own architecture, memory constraints, and hardware interfaces.
-This difference introduces several additional requirements beyond those of a regular host toolchain.
+\subsection{What is an erroneous state?}
+We established that a lot can go wrong during the development of a program, and to figure out what's wrong, we need to define how the functional state of the program should look like.
+We can go about the definition by first making the distinction from other faulty behaviors that can occur. The most notable one is error handling within the program, as we know certain operations might fail in advance for whatever reason, we account for this by checking for the status of the operation after its completion, we then have the possibility of altering the control flow based on the status of the operation, or potentially halting the execution entirely.
 
-The most significant distinction is that an embedded toolchain must generate \textbf{cross-compiled code}.
-The compiler, assembler, and linker are configured to emit machine code compatible with the target processor's instruction set (e.g., ARM Cortex-M), rather than the host CPU.
-This involves selecting the correct ABI and handling architectural details such as endianness, hardware floating-point support, or specialized instruction extensions.
-In addition to basic code generation, embedded toolchains typically include:
-\begin{itemize}
-	\item \textbf{Device-Specific Startup Code:} Since embedded systems do not run an operating system by default, the toolchain must provide initialization code that configures the processor state after reset.
-	This includes setting up the stack pointer, initializing memory sections, and defining the interrupt vector table.
+Error handling can be part of the specification, and is not the subject of discussion, instead, an erroneous state is one that can potentially lead to an unexpected execution flow, or result in undesired behavior without being accounted for. This can be due to the assumption that a program cannot reach such a state, or that the program in itself simply does something that contradicts the specification. As an example, consider a program that takes as an input an integer number, and executes a specific piece of code only if that number is even.
+\begin{lstlisting}[language=C, caption=Checking Parity]
+void foo(int x){
+    if(x % 2 == 0) {
+        //Do some treatment...
+    }
+}
+\end{lstlisting}
+By mistakenly changing the checking condition to:
+\begin{lstlisting}[language=C, caption=Checking Parity]
+if(x % 2 != 0)
+\end{lstlisting}
+We are now doing the processing on odd values of our variable, while this will not necessarily crash our program, it differs from what is defined in the specification, and therefore will lead to unexpected consequences. And, relatively to the processing block inside the conditional statement, the erroneous state in this case is the parity of our integer.
 
-	\item \textbf{Linker Scripts for Memory Mapping:} Unlike host systems where memory layout is abstracted by the operating system, embedded applications must explicitly define where code, data, and peripherals reside in memory.
-	The linker script enforces this mapping, ensuring that the binary fits within the device’s regions.
-
-	\item \textbf{Runtime Support Libraries:} Embedded toolchains include specialized implementations of standard libraries designed to operate without an operating system.
-	These lightweight libraries provide essential functionality such as math operations or memory management while avoiding features that rely on system calls.
-
-	\item \textbf{Debugging Interfaces:} Many embedded toolchains integrate support for hardware debugging through interfaces like SWD or JTAG.
-	This enables loading binaries onto the target, setting breakpoints, and inspecting registers or memory directly on the device.
-
-	\item \textbf{Output Conversion Utilities:} Since microcontrollers typically require firmware images in raw binary or hex formats, embedded toolchains include utilities to convert the standard elf into target-specific formats such as Intel HEX or Motorola S-Record.
-\end{itemize}
-
-\subsection{Build Runners}
-While small embedded projects can be compiled by invoking individual commands manually, this approach quickly becomes impractical as the codebase grows.
-Modern projects often contain hundreds of source files, complex dependencies, and different build configurations for debugging or optimization.
-
-A \textbf{build runner} (or build automation tool) automates this process by defining a set of rules that specify how source files should be transformed into the desired output.
-At its core, a build runner:
-\begin{itemize}
-	\item Tracks dependencies between source files and generated files.
-	\item Determines which parts of the project need to be rebuilt when a file changes.
-	\item Invokes the appropriate compiler, assembler, or linker commands in the correct order.
-\end{itemize}
-
-Build runners operate based on explicit instructions provided through configuration files or scripts.
-\subsection{Build Systems}
-A \textbf{build system} is a higher-level abstraction built on top of build runners.
-While a build runner executes rules, a build system focuses on generating and managing those rules for complex projects, often in a platform-agnostic way.
-
-Build systems provide several key advantages:
-\begin{itemize}
-	\item \textbf{Portability:} They enable the same project to be built on different platforms or with different toolchains without rewriting build scripts.
-	\item \textbf{Configuration Management:} They support multiple build configurations.
-	\item \textbf{Scalability:} They handle projects with multiple modules, libraries, and external dependencies.
-\end{itemize}
-
-In practice, a build system generates low-level build instructions for a runner.
-For example, it may produce a set of dependency files and rules that a runner can execute efficiently.
-This separation of concerns allows developers to describe the project structure and relationships at a higher level, without directly managing every compiler or linker invocation.
-
-In the context of embedded systems, build systems are particularly valuable because they can integrate device-specific settings into the build process while remaining flexible enough to support multiple target devices and toolchains.
-
-\section{Open-CMSIS-Pack}
-Software compatibility for component re-use has long been a challenge in the microcontroller space, which is much more diverse at the hardware level compared to PCs. Open-CMSIS-Pack removes this complexity, delivering a standard for software component packaging and related foundation tools for validation, distribution, integration, management, and maintenance.
-\subsection{CMSIS-Packs} CMSIS-Packs are software components that contain device specific startup code, peripheral drivers, middleware, and board support packages. They provide a standardized delivery mechanism for software components and enable consistent project configuration across different development environments.
-\begin{figure}[H]
-	\centering
-	\includegraphics[height=10cm]{img/ST_Summer_Internship/pack_trinity.png}
-	\caption{Software Packs Types}
-	\label{fig:sw_trinity}
-\end{figure}
-\subsection{CMSIS-Pack Format}
-The CMSIS-Pack format is used to deliver a software package and is aimed to be scalable for future requirements. It provides a management process and supports a tool independent distribution for:
-\begin{itemize}
-	\item \textbf{Device Support :}
-	\begin{itemize}
-		\item Information about the processor and it's features.
-		\item C and assembly files for the device startup and access to the memory mapped peripheral registers.
-		\item Parameters, technical information, and data sheets about the device family and the specific devices.
-		\item Device description and available peripherals.
-		\item Memory layout of internal and external RAM and ROM address ranges.
-		\item Flash algorithms for programming the device.
-		\item Debug and trace configurations as well as System View Description files for device specific display of the memory mapped peripheral registers.
-	\end{itemize}
-	\item \textbf{Board Support :}
-	\begin{itemize}
-		\item Information about the development board and it's features.
-		\item Parameters, technical information, and data sheets about the board, the mounted microcontroller, and peripheral devices.
-		\item Drivers for on-board peripheral devices
-	\end{itemize}
-	\item \textbf{Software components :}
-	\begin{itemize}
-		\item A collection of source modules, header and configuration files as well as libraries.
-		\item Documentation of the software, including features and APIs.
-	\end{itemize}
-\end{itemize}
-\subsection{Software Components}
-A software component encapsulates a set of related functions. They can contain C/C++ source files, object code, assembler files, header files, or libraries. The interfaces of software components should be defined with APIs to make them substitutable by other compatible components at design time.
-CMSIS software components can also refer to multiple interfaces of other software components. This could be also a hardware abstraction layer for a device peripheral.
-Configuration files contain application specific parameters for a software component. These files are typically copied to the user project workspace; all other files are not modified by the user and can remain in a separate location which avoids that a project workspace is polluted by many source files that should be considered as “black-box” elements by the application programmer.
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=15cm]{img/ST_Summer_Internship/software_component.png}
-	\caption{Software Component Interface}
-	\label{fig:sw_comp}
-\end{figure}
-\subsubsection{Component classification}
-A component lists the files that belong to it and that are relevant for a project. The component itself or each individual file may refer to a condition that must resolve to true; if it is false, the component or file is not applicable in the given context. Each component must have the following identifying attributes
-\begin{itemize}
-	\item \textbf{Component Class (Cclass):} A component class which is a top-level component name, for example CMSIS, Device, File System
-	\item \textbf{Component Group (Cgroup):} A component group name, for example CMSIS:RTOS.
-	\item \textbf{Component Version (Cversion):} the version number of the software component.
-\end{itemize}
-
-
-
-\subsection{CMSIS Solution Project Structure}
-\label{sec:csol_ps}
-As an effort to standardize the embedded software ecosystem, the csolution(CMSIS Solution) project structure came into place, it is a set of configuration files that is meant to describe your overall application, from the workspace, to projects, software layers and default configurations.
-This approach allows the user to centralize all the configuration of an application.
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=15cm]{./img/ST_Summer_Internship/csolution_project_structure.png}
-	\caption{CMSIS Solution Project Structure}
-	\label{fig:csln_files}
-\end{figure}
-\subsubsection{CMSIS solution files}
-The CMSIS-Toolbox gets its information from the csolution project files, these are YAML configuration files used to describe the application's context:
-\begin{itemize}
-	\item \textbf{Solution file} A solution is the software view of the complete system. It combines projects that can be generated independently, and specifies the targeted device(s) and build type(s).
-	\item \textbf{Project file} The *.cproject.yml file has the content of a single independent build step, it specifies the source files to compile, sets the include directories and the necessary defines.
-	\item \textbf{Layer file} Software layers collect source files and software components along with configuration files for reuse in different projects. Software Layers gives projects a better structure and simplifies:
-	\begin{itemize}
-		\item Development flows with evaluation boards and production hardware.
-		\item Evaluation of middleware and hardware modules across different microcontroller boards.
-		\item Code reuse across projects, i.e. board support for test-case deployment.
-		\item Test-driven software development on simulation model and hardware.
-	\end{itemize}
-	\item \textbf{Default Configuration file} The cdefault.yml file contains a common set of compiler-specific settings that select reasonable defaults with miscellaneous controls for each compiler.
-\end{itemize}
-
-\section{Project Generation}
-When trying to run benchmarks across a wide variety of MCUs, the project structure follows the same pattern, and the dependencies can be expressed in a logical way relating to the device's metadata, therefore, automating the process will prove handy.
-There are multiple techniques to be used to generate a fully working project from scratch.
-\subsection{Regular Expressions:}
-    The phrase regular expressions, or regexes, is often used to mean the specific, standard textual syntax for representing patterns for matching text. Each character in a regular expression (that is, each character in the string describing its pattern) is either a metacharacter, having a special meaning, or a regular character that has a literal meaning.
-    A regular expression, often called a pattern, specifies a set of strings required for a particular purpose.
-\subsubsection{Operations}
-Most formalisms provide the following operations to construct regular expressions.
-\begin{itemize}
-    \item \textbf{Boolean "OR":} A vertical bar separates alternatives. For example, gray|grey can match "gray" or "grey".
-    \item \textbf{Grouping} Parentheses are used to define the scope and precedence of the operators (among other uses). For example, gray|grey and gr(a|e)y are equivalent patterns which both describe the set of "gray" or "grey".
-    \item \textbf{Quantification} A quantifier after an element (such as a token, character, or group) specifies how many times the preceding element is allowed to repeat.
-    The available quantifications are:
-    \begin{itemize}
-        \item \textbf{Zero or One:} Denoted by the question mark \textbf{"?"} symbol.
-        \item \textbf{Zero or More:} Denoted by the asterisk \textbf{"*"} (derived from the Kleene star).
-        \item \textbf{One or More:} Denoted by the plus symbol \textbf{"+"}.
-        \item \textbf{N or More:} Denoted by the expression : \textbf{"\{N, \}"} where N is a positive integer.
-        \item \textbf{N or Less:} Denoted by the expression : \textbf{"\{ ,N\}"} where N is a positive integer.
-        \item \textbf{Between N and M times:} Denoted by the expression: \textbf{"\{N, M\}"} where N and M are positive integers such that N < M.
-    \end{itemize}
-    \item \textbf{Wildcard:} Denoted by the dot \textbf{"."} it matches any single character
-\end{itemize}
-
-\subsection{Templates \& File Manipulation}
-File generation templates are pre-defined structures or blueprints used to create new files with standardized content and formatting.
-\subsubsection{Template Definition}
-A template file is created containing boilerplate text, placeholders for dynamic content (variables), and sometimes logic for conditional generation.
-\subsubsection{Parameterization}
-The template defines parameters that can be filled in by the user or a program when generating a new file. These parameters can be single-valued, arrays or maps containing relevant information.
-\subsubsection{Template Execution}
-When a new file is needed, the template is selected, and the required parameters are provided. A generation engine then processes the template, replacing placeholders with the provided values and executing any embedded logic to produce the final file.
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=15cm]{img/ST_Summer_Internship/template_workflow.png}
-	\caption{Templating Process}
-	\label{fig:tempalte_proc}
-\end{figure}
-
-\newpage
-\section*{Conclusion}
-This chapter has provided an overview of the key theoretical concepts and technologies relevant to the project. We began by exploring the STM32 microcontroller ecosystem, including the various series and ARM Cortex-M cores that form the foundation of these devices. The STM32Cube firmware package was introduced as a comprehensive software suite for STM32 development.
-
-We then examined the principles of benchmarking, with a particular focus on the CoreMark benchmark and its application to microcontrollers. The C/C++ build process for embedded systems was detailed, highlighting the unique requirements and toolchains needed for cross-compilation.
-
-Finally, we discussed methods for automating project generation, including the use of regular expressions and file templates. These concepts and tools form the theoretical and practical basis for the work conducted during this internship, setting the stage for the implementation and results that will be presented in subsequent chapters.
+This small example showcases the complexity of the problem, as we cannot assume that our program is working properly according to the specifications, and we have to figure out how to analyze our program to find out that the root cause of the erroneous state is the wrong conditional check we apply.
+However, by checking the value of the variable during runtime, we can remark that it only enters the processing block when it is odd, and we can infer that the control flow is not propagating properly based on the parity, which can allow us to limit our analysis to statements that influence the state (parity) of the variable, which in our case is simply the conditional check. Marking elements and operations that make assumptions about the state, such as control flow will allow us to limit the scope of our analysis, and thus improve the quality of the debugging workflow.
+\section{Embedded Systems Debugging}

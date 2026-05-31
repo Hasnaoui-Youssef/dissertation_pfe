@@ -68,22 +68,22 @@ Debugging an embedded system from a host machine needs multiple tools to work to
     \centering
     \caption{Embedded Systems IDE Vendors}
     \label{tab:ide_vendors}
-    \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X X X@{}}
-        \toprule
-        Vendor & Toolchain & Debugger & Debug Probe \\
-        \midrule
+    \begin{tabularx}{\linewidth}{| @{}>{\bfseries}Y | Y | Y | Y@{} |}
+        \hline
+        Vendor & \textbf{Toolchain} & \textbf{Debugger} & \textbf{Debug Probe} \\
+        \hline
         IAR & IAR toolchain & C-Spy & I-Jet/I-Jet Trace \\
-        \midrule
+        \hline
         Keil & ARMCC & Keil \textmu Vision Debugger & ULink Family\\
-        \midrule
+        \hline
         Arm & ARMCC & Arm Debugger & Arm DSTREAM family \\
-        \midrule
-        Segger & Segger toolchain & Ozone & J-Link/J-Trace \\
-        \midrule
+        \hline
+        SEGGER & SEGGER toolchain & Ozone & J-Link/J-Trace \\
+        \hline
         STMicroelectronics & ST-Clang & ST-OpenOCD & STLink \\
-        \midrule
+        \hline
         Free & GCC/LLVM Clang  & OpenOCD/PyOCD & CMSIS-DAP \\
-        \bottomrule
+        \hline
     \end{tabularx}
 \end{table}
 It is also worth looking at the features provided by the proprietary debuggers for CoreSight based debug infrastructures:
@@ -94,9 +94,9 @@ It is also worth looking at the features provided by the proprietary debuggers f
     \begin{threeparttable}
     \caption{Debugger Features}
     \label{tab:debugger_features}
-    \begin{tabularx}{\linewidth}{| @{}>{\bfseries}l | X | X | X | X@{} |}
+    \begin{tabularx}{\linewidth}{| @{}>{\bfseries}Y | Y | Y | Y | Y@{} |}
         \hline
-        Feature & IAR & Keil & Arm & Segger \\
+        Feature & \textbf{IAR} & \textbf{Keil} & \textbf{Arm} & \textbf{SEGGER} \\
         \hline
         ITM trace & \cmark & \cmark & \cmark & \cmark\tnote{1} \\
         \hline
@@ -127,9 +127,9 @@ Below is a list of unacheivable features:
     \centering
     \caption{Debugger Limitations}
     \label{tab:debugger_limitations}
-    \begin{tabularx}{\linewidth}{| @{}>{\bfseries}l | Y@{} |}
+    \begin{tabularx}{\linewidth}{| @{}>{\bfseries}Y | Y@{} |}
         \hline
-        Feature & Description \\
+        Feature & \textbf{Description} \\
         \hline
         Conditional Tracing & Conditional tracing relies on managing the resources of the ETM to start/stop or include/exclude portions of the execution history. \\
         \hline
@@ -140,7 +140,7 @@ Below is a list of unacheivable features:
     \end{tabularx}
 \end{table}
 
-It is also worth looking at the limitations behind debug probes, as a note, each toolchain vendor, that being IAR, Keil, and Segger provide two versions of their probes, a base model, and an extended one capable of capturing trace via dedicated trace pins.
+It is also worth looking at the limitations behind debug probes, as a note, each toolchain vendor, that being IAR, Keil, and SEGGER provide two versions of their probes, a base model, and an extended one capable of capturing trace via dedicated trace pins.
 
 \textit{Note: due to not being able to obtain and work with the DSTREAM family, it will be ommitted from this comparison.}
 
@@ -151,7 +151,7 @@ It is also worth looking at the limitations behind debug probes, as a note, each
     \label{tab:debug_probe_limitations}
         \begin{tabularx}{\linewidth}{| @{}>{\bfseries}Y | Y | Y | Y | Y@{} |}
         \hline
-        Probe & IAR & Keil & Segger & Trace Capture \\
+        Probe & \textbf{Supported by IAR} & \textbf{Supported by Keil} & \textbf{Supported by SEGGER} & \textbf{Trace Stream Capture} \\
         \hline
         I-Jet & \cmark & \xmark & \xmark & \cmark \tnote{1} \\
         \hline
@@ -171,4 +171,10 @@ It is also worth looking at the limitations behind debug probes, as a note, each
 \end{table}
 
 \subsection{Proposed Solution}
+The proposed contributions to the gaps found in the debugging ecosystem follows the same two parts as the stated problems, as a first step, the work revolved around adding support for CoreSight components in open-source tools, as well as integrating trace decoding for the newer protocols. This will allow users access to advanced features that the microcontroller is capable off without relying on expensive hardware.
+
+For the second part, the efforts were concentrated on developing a framework for defining erroneous states, and providing a formal methodology for working up the causality chain given the available information.
 \section{Conclusion}
+This first chapter introduces the host organization, STMicroelectronics, and provides the context and objectives of the project. It sets the stage for understanding the foundational aspects of the project and its significance.
+In the next chapter, the focus will shift to the theories and concepts relevant to the project, providing
+a detailed overview of the technical background and key components involved.

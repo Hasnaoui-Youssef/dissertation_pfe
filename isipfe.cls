@@ -129,6 +129,7 @@
 \newcommand{\cmark}{\ding{51}}%
 \newcommand{\xmark}{\ding{55}}%
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
+\renewcommand\tabularxcolumn[1]{m{#1}}
 
 %================ Languages used in the doc ================%
 \usepackage[utf8]{inputenc}
