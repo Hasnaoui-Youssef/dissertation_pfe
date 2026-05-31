@@ -72,48 +72,54 @@ Debugging an embedded system from a host machine needs multiple tools to work to
         \toprule
         Vendor & Toolchain & Debugger & Debug Probe \\
         \midrule
-        IAR & IAR toolchain & C-Spy & I-Jet\/I-Jet Trace \\
+        IAR & IAR toolchain & C-Spy & I-Jet/I-Jet Trace \\
         \midrule
         Keil & ARMCC & Keil \textmu Vision Debugger & ULink Family\\
         \midrule
         Arm & ARMCC & Arm Debugger & Arm DSTREAM family \\
         \midrule
-        Segger & Segger toolchain & Ozone & J-Link\/J-Trace \\
+        Segger & Segger toolchain & Ozone & J-Link/J-Trace \\
         \midrule
         STMicroelectronics & ST-Clang & ST-OpenOCD & STLink \\
         \midrule
-        Free \& GCC for arm32 \& LLVM Clang  & OpenOCD\/PyOCD\/Probe-RS + GDB\/LLDB & CMSIS-DAP \\
+        Free & GCC/LLVM Clang  & OpenOCD/PyOCD & CMSIS-DAP \\
         \bottomrule
     \end{tabularx}
 \end{table}
 It is also worth looking at the features provided by the proprietary debuggers for CoreSight based debug infrastructures:
 
-\textit{note that for ST's tools, they are specialized forks of open-source tools}
+\textit{Note: ST's tools are specialized forks of open-source projects, therefore won't be included in the comparison}
 \begin{table}[htbp]
     \centering
+    \begin{threeparttable}
     \caption{Debugger Features}
     \label{tab:debugger_features}
-    \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X X X X@{}}
-        \toprule
+    \begin{tabularx}{\linewidth}{| @{}>{\bfseries}l | X | X | X | X@{} |}
+        \hline
         Feature & IAR & Keil & Arm & Segger \\
-        \midrule
-        ITM trace & \checkmark & \checkmark & \checkmark & \checkmark\footnote{Supports UART encoding only} \\
-        \midrule
-        Instruction Trace & \checkmark & \checkmark & \checkmark & \checkmark \\
-        \midrule
-        CTI support  & \times & \times & \checkmark & \times \\
-        \midrule
-        Scripting Interface & \checkmark & \checkmark & \checkmark & \checkmark \\
-        \midrule
-        Multi-Core Debugging & Limited & Limited & \checkmark  & Limited\\
-        \midrule
-        IDE coupling & \footnote{Implemented in the IDE but can work as a standalone server} & \checkmark & \checkmark & \times \\
-        \bottomrule
+        \hline
+        ITM trace & \cmark & \cmark & \cmark & \cmark\tnote{1} \\
+        \hline
+        Instruction Trace & \cmark & \cmark & \cmark & \cmark \\
+        \hline
+        CTI support  & \xmark & \xmark & \cmark & \xmark \\
+        \hline
+        Scripting Interface & \cmark & \cmark & \cmark & \cmark \\
+        \hline
+        Multi-Core Debugging & Limited & Limited & \cmark  & Limited \\
+        \hline
+        IDE coupling & \cmark\tnote{2} & \cmark & \cmark & \xmark \\
+        \hline
     \end{tabularx}
+    \begin{tablenotes}
+        \item[1] Supports UART encoding only
+        \item[2] Implemented in the IDE but can work as a standalone server
+    \end{tablenotes}
+    \end{threeparttable}
 \end{table}
 \subsection{Critique of Current State of the Art}
 While toolchain vendors aim to provide many features within their IDEs, and to a degree, an extensible platform via the scripting interface. However, the main limitation comes in the form of the UI coupling.
-The fact that the UI, or the debugger's state needs to be aware of the state of the debuggee limits the capabilities of the scripting interface, as with CoreSight components, programming happens via a memory-mapped interface, and a debugger generally has no idea about the component or register behind the address of a read\/write command.
+The fact that the UI, or the debugger's state needs to be aware of the state of the debuggee limits the capabilities of the scripting interface, as with CoreSight components, programming happens via a memory-mapped interface, and a debugger generally has no idea about the component or register behind the address of a read/write command.
 
 Diving more into details, IDEs generally provide a set of configurable settings for tracing capabilities, and no configuration beyond that is possible. More Specifically, when executing a program in a debug environment, the debugger will perform a sequence of actions which includes overriding the configuration registers of CoreSight components with preset values. This makes any extending behaviour on proprietary tools pretty much impossible.
 Below is a list of unacheivable features:
@@ -121,39 +127,47 @@ Below is a list of unacheivable features:
     \centering
     \caption{Debugger Limitations}
     \label{tab:debugger_limitations}
-    \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
-        \toprule
+    \begin{tabularx}{\linewidth}{| @{}>{\bfseries}l | Y@{} |}
+        \hline
         Feature & Description \\
-        \midrule
+        \hline
         Conditional Tracing & Conditional tracing relies on managing the resources of the ETM to start/stop or include/exclude portions of the execution history. \\
-        \midrule
+        \hline
         Event tracing & Events are elements that signal the occurence of specific conditions related to the execution and/or state of the application, they can be used to infer more specific details about the runtime context. \\
-        \midrule
+        \hline
         CTI awarness  & The CTI is a component that allows the propagation of events across many components, this can for example allow for the synchronization of halting multiple cores, or generating interruputs from within the debug elements. \\
-        \bottomrule
+        \hline
     \end{tabularx}
 \end{table}
 
 It is also worth looking at the limitations behind debug probes, as a note, each toolchain vendor, that being IAR, Keil, and Segger provide two versions of their probes, a base model, and an extended one capable of capturing trace via dedicated trace pins.
 
-\textit{Due to not being able to obtain and work with the DSTREAM family, it will be ommitted from this comparison.}
+\textit{Note: due to not being able to obtain and work with the DSTREAM family, it will be ommitted from this comparison.}
 
 \begin{table}[htbp]
     \centering
+    \begin{threeparttable}
     \caption{Debug Probe Limitations}
     \label{tab:debug_probe_limitations}
-    \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X@{}}
-        \toprule
-        Probe & IAR & Keil & Segger & Trace Capture Support\\
-        \midrule
-        I-Jet & \checkmark & \times & \times & \checkmark \footnote{Given the appropriate model} \\
-        ULink & \times & \checkmark & \times & \checkmark \footnote{Given the appropriate model} \\
-        J-Link/J-Trace & \checkmark & \checkmark & \checkmark & \checkmark \footnote{Given the appropriate model} \\
-        STLink & \checkmark & \checkmark & \checkmark & \times \\
-        CMSIS-DAP & \checkmark & \checkmark & \checkmark & \times \\
-        \midrule
-        \bottomrule
+        \begin{tabularx}{\linewidth}{| @{}>{\bfseries}Y | Y | Y | Y | Y@{} |}
+        \hline
+        Probe & IAR & Keil & Segger & Trace Capture \\
+        \hline
+        I-Jet & \cmark & \xmark & \xmark & \cmark \tnote{1} \\
+        \hline
+        ULink & \xmark & \cmark & \xmark & \cmark \tnote{1} \\
+        \hline
+        J-Link/J-Trace & \cmark & \cmark & \cmark & \cmark \tnote{1} \\
+        \hline
+        STLink & \cmark & \cmark & \cmark & \xmark \\
+        \hline
+        CMSIS-DAP & \cmark & \cmark & \cmark & \xmark \\
+        \hline
     \end{tabularx}
+    \begin{tablenotes}
+        \item[1] Given the appropriate model
+    \end{tablenotes}
+    \end{threeparttable}
 \end{table}
 
 \subsection{Proposed Solution}

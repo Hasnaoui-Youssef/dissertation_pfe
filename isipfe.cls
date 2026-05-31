@@ -124,6 +124,11 @@
 \usepackage{tabularx}
 \usepackage{xltabular}
 \usepackage{booktabs}
+\usepackage{array}
+\usepackage{pifont}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
 
 %================ Languages used in the doc ================%
 \usepackage[utf8]{inputenc}
@@ -261,6 +266,7 @@
 
 
 \usepackage{longtable}
+\usepackage{threeparttable}
 \usepackage{colortbl}
 \usepackage{xcolor}
 %\usepackage{sequencediagram}
