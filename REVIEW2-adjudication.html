@@ -1,0 +1,1226 @@
+<title>Trace Report Adjudication</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root {
+  --ground:      #f2f5f4;
+  --surface:     #ffffff;
+  --surface-alt: #e9efee;
+  --ink:         #14201f;
+  --ink-soft:    #4d605e;
+  --ink-faint:   #7d908e;
+  --rule:        #d3dedc;
+  --rule-soft:   #e3ebe9;
+  --accent:      #0f6b74;
+  --accent-soft: #d9eceb;
+
+  --v-accept:    #1a6f45;
+  --v-modify:    #96650f;
+  --v-challenge: #a83a46;
+  --v-verify:    #2a5795;
+  --v-optional:  #6d7c7a;
+
+  --v-accept-bg:    #dcefe4;
+  --v-modify-bg:    #f4e9d4;
+  --v-challenge-bg: #f6dfe1;
+  --v-verify-bg:    #dee7f5;
+  --v-optional-bg:  #e5eae9;
+
+  --shadow: 0 1px 2px rgba(20,32,31,.05), 0 8px 24px -16px rgba(20,32,31,.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #101615;
+    --surface:     #18201f;
+    --surface-alt: #1f2928;
+    --ink:         #e2ebe9;
+    --ink-soft:    #a3b4b2;
+    --ink-faint:   #748684;
+    --rule:        #2c3a38;
+    --rule-soft:   #232e2d;
+    --accent:      #58bcc4;
+    --accent-soft: #17332f;
+
+    --v-accept:    #67c08e;
+    --v-modify:    #d6a95a;
+    --v-challenge: #e08b95;
+    --v-verify:    #86aae0;
+    --v-optional:  #9aabaa;
+
+    --v-accept-bg:    #16302a;
+    --v-modify-bg:    #33290f;
+    --v-challenge-bg: #351b1f;
+    --v-verify-bg:    #1a2740;
+    --v-optional-bg:  #232d2c;
+
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground:      #101615;
+  --surface:     #18201f;
+  --surface-alt: #1f2928;
+  --ink:         #e2ebe9;
+  --ink-soft:    #a3b4b2;
+  --ink-faint:   #748684;
+  --rule:        #2c3a38;
+  --rule-soft:   #232e2d;
+  --accent:      #58bcc4;
+  --accent-soft: #17332f;
+
+  --v-accept:    #67c08e;
+  --v-modify:    #d6a95a;
+  --v-challenge: #e08b95;
+  --v-verify:    #86aae0;
+  --v-optional:  #9aabaa;
+
+  --v-accept-bg:    #16302a;
+  --v-modify-bg:    #33290f;
+  --v-challenge-bg: #351b1f;
+  --v-verify-bg:    #1a2740;
+  --v-optional-bg:  #232d2c;
+
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  font-size: 16.5px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px 96px; }
+.prose { max-width: 74ch; }
+
+h1, h2, h3, h4 {
+  font-family: Newsreader, Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  text-wrap: balance;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0;
+}
+
+code, .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", monospace; }
+code {
+  font-size: .87em;
+  background: var(--surface-alt);
+  padding: .08em .34em;
+  border-radius: 3px;
+}
+
+/* ---------- masthead ---------- */
+
+.mast {
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+  padding: 56px 0 34px;
+  margin-bottom: 44px;
+}
+.mast h1 { font-size: clamp(34px, 5vw, 50px); letter-spacing: -.015em; margin: 14px 0 0; }
+.mast .lede {
+  font-size: 19px; color: var(--ink-soft); margin: 16px 0 0; max-width: 62ch;
+  font-family: Newsreader, Georgia, serif; font-style: italic;
+}
+.evidence {
+  margin: 30px 0 0; padding-top: 22px; border-top: 1px solid var(--rule-soft);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px 34px;
+}
+.evidence div { font-size: 14px; color: var(--ink-soft); }
+.evidence dt {
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 5px;
+}
+
+/* ---------- section rhythm ---------- */
+
+section { margin-top: 62px; }
+section > h2 {
+  font-size: 29px; letter-spacing: -.01em;
+  padding-bottom: 12px; border-bottom: 2px solid var(--ink);
+  display: flex; align-items: baseline; gap: 14px;
+}
+section > h2 .n {
+  font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 500;
+  color: var(--accent); letter-spacing: .08em;
+}
+section > .intro { margin: 18px 0 0; color: var(--ink-soft); }
+
+h3.sub {
+  font-size: 21px; margin-top: 40px; padding-bottom: 7px;
+  border-bottom: 1px solid var(--rule);
+}
+
+p { margin: 14px 0 0; }
+ul, ol { margin: 12px 0 0; padding-left: 22px; }
+li { margin: 6px 0; }
+li::marker { color: var(--ink-faint); }
+strong { font-weight: 700; }
+
+/* ---------- verdict pills ---------- */
+
+.pill {
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 500;
+  letter-spacing: .09em; text-transform: uppercase;
+  padding: 4px 10px 3px; border-radius: 999px; border: 1px solid currentColor;
+}
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.p-accept    { color: var(--v-accept);    background: var(--v-accept-bg); }
+.p-modify    { color: var(--v-modify);    background: var(--v-modify-bg); }
+.p-challenge { color: var(--v-challenge); background: var(--v-challenge-bg); }
+.p-verify    { color: var(--v-verify);    background: var(--v-verify-bg); }
+.p-optional  { color: var(--v-optional);  background: var(--v-optional-bg); }
+
+/* ---------- divergence callouts ---------- */
+
+.diverge { display: grid; gap: 2px; margin-top: 26px; }
+.diverge article {
+  background: var(--surface); border-left: 4px solid var(--accent);
+  padding: 18px 22px 20px;
+}
+.diverge h4 { font-size: 18px; }
+.diverge p { font-size: 15.5px; color: var(--ink-soft); max-width: 78ch; }
+.diverge .tag {
+  font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--accent);
+  letter-spacing: .1em; text-transform: uppercase;
+}
+
+/* ---------- finding entries ---------- */
+
+.finding {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 3px; box-shadow: var(--shadow);
+  margin-top: 22px; overflow: hidden;
+}
+.finding > header {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  padding: 15px 22px; border-bottom: 1px solid var(--rule-soft);
+  background: var(--surface-alt);
+}
+.finding > header .id {
+  font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 15px;
+  color: var(--accent); letter-spacing: .04em;
+}
+.finding > header h4 { font-size: 18.5px; flex: 1 1 300px; }
+.finding .body { padding: 6px 22px 20px; }
+
+dl.kv { display: grid; grid-template-columns: 132px 1fr; gap: 0; margin: 0; }
+dl.kv dt {
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-faint);
+  padding: 13px 14px 13px 0; border-top: 1px solid var(--rule-soft);
+}
+dl.kv dd {
+  margin: 0; padding: 12px 0; border-top: 1px solid var(--rule-soft);
+  font-size: 15.5px;
+}
+dl.kv dd > :first-child { margin-top: 0; }
+dl.kv dd p { font-size: 15.5px; }
+dl.kv dd ul { padding-left: 19px; margin-top: 6px; }
+dl.kv dd li { font-size: 15.5px; }
+@media (max-width: 660px) {
+  dl.kv { grid-template-columns: 1fr; }
+  dl.kv dt { padding-bottom: 0; border-top: 1px solid var(--rule-soft); }
+  dl.kv dd { border-top: none; padding-top: 4px; }
+}
+
+.quote {
+  font-family: "IBM Plex Mono", monospace; font-size: 13.5px; line-height: 1.6;
+  background: var(--surface-alt); border-left: 3px solid var(--rule);
+  padding: 11px 15px; margin: 12px 0 0; white-space: pre-wrap;
+  overflow-x: auto;
+}
+.quote.fix { border-left-color: var(--v-accept); }
+.quote .lab {
+  display: block; font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-faint); margin-bottom: 6px;
+}
+
+/* ---------- tables ---------- */
+
+.tablewrap { overflow-x: auto; margin-top: 22px; border: 1px solid var(--rule); border-radius: 3px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; min-width: 620px; }
+th, td { text-align: left; padding: 11px 15px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+thead th {
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-faint); font-weight: 500;
+  background: var(--surface-alt); border-bottom: 1px solid var(--rule);
+}
+tbody tr:last-child td { border-bottom: none; }
+td.k { font-family: "IBM Plex Mono", monospace; font-size: 13.5px; color: var(--accent); white-space: nowrap; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.val { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.v-hi  { color: var(--v-challenge); font-weight: 500; }
+.v-med { color: var(--v-modify); }
+.v-lo  { color: var(--ink-faint); }
+
+/* ---------- phases ---------- */
+
+.phase { background: var(--surface); border: 1px solid var(--rule); border-radius: 3px; margin-top: 20px; overflow: hidden; }
+.phase > header { padding: 14px 22px; background: var(--surface-alt); border-bottom: 1px solid var(--rule); display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.phase > header .step {
+  font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--accent);
+}
+.phase > header h4 { font-size: 19px; }
+.phase > header .meta { font-size: 13.5px; color: var(--ink-faint); margin-left: auto; }
+.phase .tablewrap { margin: 0; border: none; border-radius: 0; }
+
+/* ---------- misc ---------- */
+
+.note {
+  margin-top: 26px; padding: 16px 20px; background: var(--accent-soft);
+  border-radius: 3px; font-size: 15.5px; color: var(--ink);
+}
+.note b { color: var(--accent); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 20px; }
+
+footer.end {
+  margin-top: 70px; padding-top: 24px; border-top: 1px solid var(--rule);
+  font-size: 14px; color: var(--ink-faint); max-width: 74ch;
+}
+
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="mast">
+  <div class="wrap">
+    <p class="eyebrow">Second review &middot; adjudication of the jury findings</p>
+    <h1>Which findings to accept, and which to fight</h1>
+    <p class="lede">Every claim in the first review re-tested against the sources, the implementation and the Arm and ST documentation. Twenty-six findings stand, six change, two do not survive contact with the code.</p>
+    <dl class="evidence">
+      <div><dt>Findings adjudicated</dt>33 numbered, plus the loose items in Parts 4, 7 and 8</div>
+      <div><dt>Verified independently</dt><code>etm_dump.bin</code>, <code>arm_tmc.c</code>, <code>arm_etmv4.c</code>, <code>cortex_m.c</code>, <code>target.c</code>, the CMake link graph, <code>aux/main.mtc*</code></div>
+      <div><dt>Documents opened</dt>RM0477 Rev 9 §DBGMCU_CR, RM0433, RM0090, RM0487, RM0503, RM0490, DDI0403E.e, IHI0064H.b, FrankenTrace (CPS-IoT Week 2023)</div>
+      <div><dt>Disagreements with review one</dt>F4, F8, F9, F16, F19, F24 change verdict or scope; F24 would introduce an error if applied as written</div>
+    </dl>
+  </div>
+</div>
+
+<div class="wrap">
+
+<section>
+  <h2><span class="n">01</span> Where this review differs</h2>
+  <p class="intro prose">The first review is unusually accurate. Its register-level and source-level claims held everywhere I could check them, and its two headline findings are real. What follows is only the places where the evidence does not support the finding as written, or where applying the proposed correction would make the report worse.</p>
+
+  <div class="diverge">
+    <article>
+      <p class="tag">F24 &middot; would introduce an error</p>
+      <h4>Trace during a single step is not simply discarded</h4>
+      <p>The first review states that the stepped instruction's trace is lost. Tracing the event order through <code>target.c:1417</code> and <code>cortex_m.c:1629</code> shows that only the <em>first</em> step after a halt loses its trace. The sink is armed on <code>STEP_END</code> and stays armed, so from the second consecutive step onward the trace is captured and delivered at the following halt. The report's own stated rationale is also wrong, for the same reason. Write neither version without running the five-step experiment first.</p>
+    </article>
+    <article>
+      <p class="tag">F8 &middot; the proposed claim is false</p>
+      <h4>ETMv4 and the on-chip route do not coincide exactly</h4>
+      <p>The relation is one-directional. Every STM32 family carrying an on-chip sink implements ETMv4, and several ETMv4 families carry no sink at all, including F7, H5, L5, U3, U5. The defensible sentence is that supporting the earlier architecture would add no device the on-chip route can reach. I also checked the rows the first review called unverifiable: RM0487, RM0503 and RM0490 confirm the U3, U0 and C0 entries, so only C5, G4, L4+ and N6 lack a source here.</p>
+    </article>
+    <article>
+      <p class="tag">F4 &middot; severity overstated</p>
+      <h4>The architecture's justification is not wrong, one sentence in it is</h4>
+      <p>The first review argues that a jury will question whether the two-path design was necessary. The paragraph immediately after the offending sentence already gives the correct reason: reading memory through the debugger library requires a stopped program, and reading it through the debug server does not. The report contradicts itself across two adjacent paragraphs. That is a one-sentence repair, not a defence of the architecture.</p>
+    </article>
+    <article>
+      <p class="tag">F19 &middot; proposed wording not supported</p>
+      <h4>Do not write "undefined internal state"</h4>
+      <p>Nothing in the implementation or in the C library supports that. What is true is narrower and still worth stating: allocations the server made on the abandoned call chain are leaked, and a change it had partly completed is not undone. That is a leak and a possible inconsistency, not undefined behavior.</p>
+    </article>
+    <article>
+      <p class="tag">F16 &middot; the diagram is better than reported</p>
+      <h4>Only one arrow is wrong, and the others are consistent</h4>
+      <p>The first review says the figure mixes "depends on" with "hands work to". The CMake graph says otherwise. Four of the five arrows are correct dependency edges. Reverse the one from the transport to the handlers and the figure is right. No relabelling is needed.</p>
+    </article>
+    <article>
+      <p class="tag">F9 &middot; demand over-applied</p>
+      <h4>Ten of the eleven measured figures need no method at all</h4>
+      <p>Instruction counts, element counts and byte counts are deterministic properties of a stored input and are already fully reproducible from the test resources. Demanding repetition and variance for them would be wrong. Exactly one row is a performance number, and that one has no artifact behind it anywhere in the repository.</p>
+    </article>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">02</span> Adjudication, finding by finding</h2>
+  <p class="intro prose">Each entry answers the same questions: does the report actually change, is the finding established, what is the smallest change that resolves it, what kind of work it takes, and what a jury can do with it if it is left alone.</p>
+
+  <div class="legend">
+    <span class="pill p-accept">Accept</span>
+    <span class="pill p-modify">Accept with modification</span>
+    <span class="pill p-challenge">Challenge</span>
+    <span class="pill p-verify">Verify first</span>
+    <span class="pill p-optional">Optional</span>
+  </div>
+
+  <h3 class="sub">The two headline claims</h3>
+
+  <article class="finding">
+    <header><span class="id">F1</span><h4>The capture size counts sixteen host-inserted bytes</h4><span class="pill p-modify">Accept with modification</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Established</dt>
+        <dd><p>Partly. <code>etm_dump.bin</code> is 144 bytes and its first sixteen are <code>ff ff ff 7f</code> four times. <code>tmc_output_write</code> writes <code>tmc_fsync_barrier</code> to the callback, the file and every TCP client ahead of the payload, on the host, after the buffer has already been read. The device produced 128 bytes, which is eight formatter frames.</p></dd>
+
+        <dt>The distinction</dt>
+        <dd>
+          <ul>
+            <li>Bytes produced by the on-chip sink and transferred by the extraction path: <strong>128</strong>.</li>
+            <li>Bytes presented to the decoder: <strong>144</strong>.</li>
+            <li>Synchronization data: the 16-byte barrier is host-generated. The decoder is deliberately configured with <code>reset_on_4x_fsync</code>, so the barrier is a designed part of the protocol between driver and decoder, not padding.</li>
+            <li>Trace payload proper: about 120 bytes, since the formatter spends roughly one byte in sixteen on framing.</li>
+          </ul>
+        </dd>
+
+        <dt>Is it false?</dt>
+        <dd><p>"Capture size: 144 bytes" is <strong>ambiguous, not false</strong>, if read as the decoder's input, and Figure 5.3 supports exactly that reading. What is objectively wrong is the pair derived from it. "Executed instructions per byte captured: 0.79" and the extrapolation to sixteen hundred instructions both divide by 144, while the two kilobytes being extrapolated to is sink capacity, which never holds the barrier.</p></dd>
+
+        <dt>Derived quantities</dt>
+        <dd>
+          <p>Only two numbers change, and both improve.</p>
+          <div class="tablewrap"><table><thead><tr><th>Quantity</th><th>Printed</th><th>Correct</th></tr></thead><tbody>
+            <tr><td>Executed instructions per byte from the device</td><td class="num">0.79</td><td class="num">0.89</td></tr>
+            <tr><td>Instructions a 2 KB sink holds at this density</td><td class="num">~1600</td><td class="num">~1800</td></tr>
+          </tbody></table></div>
+        </dd>
+
+        <dt>Smallest change</dt>
+        <dd>
+          <p>Split one Table 5.7 row into three, correct two numbers, and change the noun in both abstracts and the conclusion from a capture size to what the device drained.</p>
+          <div class="quote fix"><span class="lab">Table 5.7</span>Trace produced by the device        128 bytes, eight formatter frames
+Host-inserted synchronization barrier  16 bytes, one frame
+Bytes presented to the decoder      144 bytes, nine formatter frames
+...
+Executed instructions per byte produced by the device   0.89</div>
+          <div class="quote fix"><span class="lab">Abstract, English</span>A capture of 128 bytes, drained from the on-chip buffer with no trace pins in use, reconstructs 114 executed instructions.</div>
+          <p>Figure 5.3's annotation "144 bytes in all, nine frames" becomes "128 bytes from the device, ahead of them the host's 16-byte barrier, nine frames in all". Keep 144 in the figure. The figure is about the decoder's input and 144 is the right number there.</p>
+        </dd>
+
+        <dt>Work</dt><dd><p>Rewriting and arithmetic. No experiment, no code, no new source.</p></dd>
+        <dt>Defence risk</dt>
+        <dd><p><span class="val v-hi">High.</span> Figure 5.3 states on its own face that frame zero is the barrier, and Table 5.7 sits nine pages later calling the total a capture. A jury member needs no outside evidence to see it.</p></dd>
+        <dt>Likely question</dt>
+        <dd><p>"Your abstract says 144 bytes and your figure says frame zero is a barrier your driver inserted. How many bytes did the chip produce?" Answer in one sentence: 128, eight frames, and the barrier exists so the decoder resets its state at each capture boundary. Then add that correcting it raises the density from 0.79 to 0.89.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <article class="finding">
+    <header><span class="id">F2</span><h4>The "frozen oracle" is a regression baseline</h4><span class="pill p-modify">Accept with modification</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Established</dt>
+        <dd><p>Yes for the counts. <code>trace_provider_test.cc</code> carries the comment "Counts below were frozen from this test's first green run", and the three assertions are literal equality against 114, 6 and 2. The test also makes two assertions that are <em>not</em> frozen and are genuinely independent: every reconstructed address resolves to an instruction in the image, and at least one function block carries a resolved name. The first review does not credit those, and they are the part worth keeping in the table.</p></dd>
+
+        <dt>Is "oracle" defensible?</dt>
+        <dd>
+          <p>In the testing literature an oracle is any procedure that decides pass or fail, and a value taken from a previous run of the system is classified as a <em>derived</em> oracle. So the word is not wrong in general. It is wrong <em>in this report</em>, for a reason the first review missed:</p>
+          <ul>
+            <li>Table 5.4 uses "oracle" in the weak, derived sense.</li>
+            <li>Eleven lines below, §5.5.3 uses it in the strong sense: fixed startup code "is therefore known in advance, which makes it an exact oracle".</li>
+          </ul>
+          <p>One word, two meanings, same subsection. That is the defect a jury will find, and renaming one of the two removes it.</p>
+        </dd>
+
+        <dt>What would establish correctness</dt>
+        <dd><p>An independent measurement of the same execution. The cheapest one available is <strong>hardware single-stepping</strong>: step from the reset vector to the entry of <code>main</code> through the run-control path, record the program counter at each step, and compare that address sequence to the reconstructed one. It uses different hardware, halt-mode debug through DHCSR, and a different code path, the debugger library over the server, so agreement is real evidence. About 114 steps.</p></dd>
+
+        <dt>On the proposed fix</dt>
+        <dd><p>The first review's option (a), deriving the sequence by hand from the ELF, is sound in principle and underestimated in practice: the startup loops' trip counts depend on the linker-placed section sizes, so "by hand" means partially simulating the code. The single-step route is cheaper and stronger. A useful middle option, if hardware time runs out, is a <strong>control-flow validity assertion</strong>: every consecutive pair of reconstructed addresses must be a fall-through or a legal successor of its predecessor. That is independent of the decoder and catches a broken reconstruction.</p></dd>
+
+        <dt>Smallest change</dt>
+        <dd>
+          <p>Mandatory even if no work is done: rename the Table 5.4 cell, and make Table 5.6's FR5 evidence say what was checked rather than invoking a word.</p>
+          <div class="quote fix"><span class="lab">Table 5.4, trace_provider_test</span>The whole offline pipeline, against counts frozen from a verified run and against properties checked independently of them</div>
+          <div class="quote fix"><span class="lab">Table 5.6, FR5</span>Every reconstructed address resolves to an instruction in the image, function blocks carry resolved names, and the counts match the frozen baseline of Table 5.7</div>
+        </dd>
+        <dt>Work</dt><dd><p>Rewriting alone is sufficient. Half a day of hardware work converts the weakest claim in the report into the strongest.</p></dd>
+        <dt>Defence risk</dt><dd><p><span class="val v-hi">High.</span> FR5 is the central functional requirement and its cited evidence is currently circular.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <h3 class="sub">Validation and evidence</h3>
+
+  <article class="finding">
+    <header><span class="id">F3</span><h4>The gap transform is not covered by the transform test</h4><span class="pill p-modify">Accept with modification</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Established</dt>
+        <dd><p>The table cell is wrong: <code>transform_test.cc</code> includes only the reconstructed-instruction and function-block headers, and its own comment lists four cases, none of them a gap. The <em>validation gap</em> is narrower than the finding implies.</p></dd>
+        <dt>What is actually covered</dt>
+        <dd>
+          <ul>
+            <li><strong>Unit test:</strong> two of the three transforms.</li>
+            <li><strong>Integration test:</strong> the gap transform runs end to end in <code>trace_provider_test</code>, which asserts two gaps and therefore exercises the <code>kNoSync</code> and <code>kTraceOn</code> branches.</li>
+            <li><strong>Untested anywhere:</strong> the overflow reason, and the capture-boundary gap, which <code>trace_session.cc</code> emits only when <code>capture_count &gt; 0</code>. The test appends once.</li>
+            <li><strong>Hardware and manual:</strong> the boundary case is observed only in the trace view.</li>
+          </ul>
+        </dd>
+        <dt>Minimum meaningful test</dt>
+        <dd><p>One additional <code>session.Append</code> of the same buffer in <code>trace_provider_test</code>, asserting that the second increment's first gap carries reason <code>kCaptureBoundary</code> at instruction index 114. Roughly eight lines, and it is the exact case FR7 was written for. Adding overflow and trace-on cases to <code>transform_test</code> is worth doing but adds less, since the integration test already reaches two of the four reasons.</p></dd>
+        <dt>Smallest change</dt><dd><p>"the three reconstruction transforms" becomes "two of the three reconstruction transforms". Mandatory regardless of whether tests are added.</p></dd>
+        <dt>Work</dt><dd><p>One table cell, then eight lines of C++ if the test is added.</p></dd>
+        <dt>Defence risk</dt><dd><p><span class="val v-med">Medium.</span> An examiner who opens the test file finds the mismatch immediately.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <article class="finding">
+    <header><span class="id">F9</span><h4>One capture, no stated method</h4><span class="pill p-modify">Accept with modification</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Established</dt>
+        <dd><p>For one row out of eleven. The distinction the first review does not draw is the one that decides the work:</p>
+          <ul>
+            <li><strong>Deterministic measurements</strong> (elements, ranges, instructions, blocks, byte counts): properties of a fixed stored input. One run is complete evidence. Repetition and variance would be meaningless. <span class="val v-lo">No change needed.</span></li>
+            <li><strong>Illustrative measurement</strong> (instructions per byte): depends on the branch density of one startup sequence. The report already labels it "indicative rather than general", which is correct. <span class="val v-lo">No change needed beyond F1.</span></li>
+            <li><strong>Performance benchmark</strong> (0.112 ms): a wall-clock timing on a shared host. <span class="val v-hi">Not defensible as printed.</span></li>
+            <li><strong>Reproducibility:</strong> already satisfied for everything except the timing, because the capture, the ELF and the register dump are all committed test resources.</li>
+            <li><strong>Statistical significance:</strong> not applicable to any row.</li>
+          </ul>
+        </dd>
+        <dt>The 0.112 ms figure</dt>
+        <dd><p>I searched the whole implementation. There is no timing instrumentation anywhere in <code>trace_session.cc</code>, <code>trace_decoder</code> or <code>trace_manager.cc</code>, and the number appears nowhere in the repository or its logs. It is quoted in both abstracts and in the conclusion.</p>
+          <p><strong>Verdict: remeasure, or remove it from the abstracts.</strong> Remeasuring costs about twenty minutes. Wrap <code>session.Append</code> in <code>std::chrono::steady_clock</code>, run twenty times, report the median, and state that the boundary excludes the one-off analysis of the program image, which dominates and is not a per-capture cost. Then one sentence before Table 5.7 giving the host processor and the build configuration. If hardware or time is unavailable, delete the timing from the abstracts and the conclusion and keep it in the table with the method stated.</p>
+          <p>Leaving a number in an abstract that no artifact in the project produces is the one thing in Section 5.5 that cannot be defended by argument.</p></dd>
+        <dt>Work</dt><dd><p>Twenty minutes of code and one paragraph, or deletion.</p></dd>
+        <dt>Defence risk</dt><dd><p><span class="val v-hi">High</span> for the timing, <span class="val v-lo">none</span> for the rest.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <article class="finding">
+    <header><span class="id">F15</span><h4>Five tests missing from the inventory</h4><span class="pill p-accept">Accept, strongly</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Established</dt>
+        <dd><p>Yes. Fifteen test files exist, Table 5.4 lists ten. The five omitted are <code>handshake_test.py</code> (158 lines), <code>launch_smoke_test.py</code>, <code>attach_smoke_test.py</code>, <code>stepping_smoke_test.py</code> (425 lines) and <code>peripheral_smoke_test.py</code> (322 lines). They are not stubs. The stepping test drives real hardware and checks that comparator exhaustion never hangs. The peripheral test writes and reads back a backup register and verifies that a write during a poll never surfaces a frame tagged with the pre-write epoch.</p></dd>
+        <dt>Are they relevant?</dt>
+        <dd><p>They are the direct evidence for three requirements that Table 5.6 currently marks Met by assertion: FR9 stepping and breakpoints, FR11 peripheral access, FR12 disassembly and inspection. The evidence is sitting in the repository and the report does not cite it.</p></dd>
+        <dt>Smallest change</dt><dd><p>Five table rows, and three cells of Table 5.6 rewritten to name the script. Also correct the lead-in sentence, since "lists the tests of the first two tiers" is a completeness claim.</p></dd>
+        <dt>Work</dt><dd><p>Rewriting only. This is the cheapest credibility available anywhere in the plan.</p></dd>
+        <dt>Defence risk</dt><dd><p><span class="val v-med">Medium,</span> and it currently understates the work.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <article class="finding">
+    <header><span class="id">F25</span><h4>Both reported gaps are start-of-capture markers</h4><span class="pill p-accept">Accept</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Established</dt>
+        <dd><p>Yes. <code>trace_gap_transform.hpp</code> emits one gap per <code>kNoSync</code> and per <code>kTraceOn</code> record. Figure 5.3 shows the capture opening with a not-synchronized packet at <code>0x10</code> and a trace-on packet at <code>0x24</code>, both immediately after the barrier. The capture-boundary gap requires a second capture and this is the first. Neither counted gap is a discontinuity in the program's execution.</p></dd>
+        <dt>Smallest change</dt>
+        <dd><p>Split the row. The second line is a result, and a good one.</p>
+          <div class="quote fix"><span class="lab">Table 5.7</span>Start-of-capture markers                   2
+Discontinuities within the traced execution 0</div></dd>
+        <dt>Work</dt><dd><p>One table row.</p></dd>
+        <dt>Defence risk</dt><dd><p><span class="val v-med">Medium.</span> "Gaps: 2" in a table of measured figures reads as two holes in the reconstruction. Zero holes is the answer you want on the page.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <h3 class="sub">Architecture and contribution</h3>
+
+  <article class="finding">
+    <header><span class="id">F22</span><h4>OpenOCD's existing trace support is never acknowledged</h4><span class="pill p-accept">Accept, defence-critical</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Established</dt>
+        <dd><p>Yes, and the first review understates it. The fork contains <code>etm.c</code>, <code>etb.c</code>, <code>etm_dummy.c</code> and <code>arm_tpiu_swo.c</code>. Two corrections to the finding as written:</p>
+          <ul>
+            <li><code>etm.c</code>'s own header says it "supports up to the ETMv1.3 architecture, as seen in ETM9 and most common ARM9 systems", reached over a dedicated JTAG scan chain. The first review's "ETMv1 to ETMv3" overstates it.</li>
+            <li>The first review omits <code>arm_tpiu_swo.c</code>, which is the strongest counterexample, because it is a modern CoreSight driver that works on Cortex-M through ADIv5.</li>
+          </ul>
+        </dd>
+        <dt>Is the scoped claim stronger?</dt>
+        <dd><p>Considerably. Naming what exists and why it does not reach this device turns an unsupported negative into a precise statement of the gap the work filled.</p>
+          <div class="quote fix"><span class="lab">§5.3.1, replacement opening</span>The debug server already carries trace support. It implements a trace macrocell driver limited to the earlier architecture and reached over a JTAG scan chain, a driver for the legacy embedded trace buffer, and a driver for the trace port interface unit and its serial output. None of these reaches an ETMv4 trace unit or a Trace Memory Controller, which are the components this device implements, so two drivers were written and added to it.</div></dd>
+        <dt>Work</dt><dd><p>Rewriting, one paragraph, and the same scoping applied to §1.2.3's universal negative.</p></dd>
+        <dt>Defence risk</dt><dd><p><span class="val v-hi">High.</span> Opening the OpenOCD tree is a plausible thing for this examiner to do, and <code>etb.c</code> is the first file they would find.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <article class="finding">
+    <header><span class="id">F4</span><h4>The two-path justification misattributes the constraint</h4><span class="pill p-modify">Accept with modification, severity down</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>What each layer can do</dt>
+        <dd>
+          <div class="tablewrap"><table><thead><tr><th>Layer</th><th>Can it carry the trace pipeline's needs?</th></tr></thead><tbody>
+            <tr><td class="k">GDB RSP itself</td><td>No native trace-component operation. It does define <code>qRcmd</code>, which transports an arbitrary server command as text. Its only unsolicited server-to-client message is console output.</td></tr>
+            <tr><td class="k">OpenOCD <code>qRcmd</code></td><td>Present and functional (<code>gdb_server.c:2785</code>). It would reach the <code>etmv4</code> and <code>tmc</code> object commands. Replies are unstructured text.</td></tr>
+            <tr><td class="k">OpenOCD memory packets</td><td><code>gdb_read_memory_packet</code> carries no halted guard. The server serves memory reads while the core runs.</td></tr>
+            <tr><td class="k">LLDB's process abstraction</td><td>Memory is reachable only through a process object that must be stopped. This is the real constraint, and the project's own <code>04-event-dataflow.md:89</code> says so.</td></tr>
+            <tr><td class="k">The trace callback</td><td>A synchronous C callback invoked from inside the server at the moment of a halt. No protocol packet corresponds to it.</td></tr>
+          </tbody></table></div>
+        </dd>
+        <dt>Established</dt>
+        <dd><p>The sentence is wrong on two of its three items. The severity is not. The very next paragraph of §4.3.4.2 already attributes the halt requirement correctly to the debugger library. The report contradicts itself in adjacent paragraphs rather than resting the architecture on a wrong reason.</p></dd>
+        <dt>Strongest honest justification</dt>
+        <dd>
+          <ol>
+            <li>The debugger library exposes memory only through a stopped process, so live observation is impossible on that path whatever the protocol underneath allows.</li>
+            <li>A capture arrives as a push from the server at the moment of a halt, and the protocol defines no channel for delivering one.</li>
+            <li>Configuring the decoder requires typed values read from the hardware, and the protocol's escape hatch carries commands and replies as unstructured text.</li>
+          </ol>
+          <div class="quote fix"><span class="lab">§4.3.4.2, replacement first sentence</span>That protocol was not designed to carry what the trace pipeline needs. Its escape hatch transports a server command as text and returns an unstructured reply, whereas the decoder must be configured from typed values read out of the hardware. A capture arrives as a push from the server at the moment of a halt, and the protocol defines no channel for delivering one.</div>
+          <p>Leave the following paragraph untouched. It is already correct and it is the good half of the argument.</p>
+        </dd>
+        <dt>Work</dt><dd><p>One sentence.</p></dd>
+        <dt>Defence risk</dt><dd><p><span class="val v-med">Medium.</span> An examiner who knows <code>monitor</code> commands will ask, and the honest answer is available. The self-contradiction is the worse half.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <article class="finding">
+    <header><span class="id">F24</span><h4>Trace during a single step</h4><span class="pill p-verify">Verify before writing anything</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>What the code actually does</dt>
+        <dd>
+          <p><code>target_step</code> raises <code>STEP_START</code>, calls the Cortex-M step, then raises <code>STEP_END</code>. The Cortex-M step raises <code>HALTED</code> from inside itself, before returning. So one step runs as:</p>
+          <div class="quote">STEP_START   ETM arms
+             one instruction executes
+HALTED       ETM stops. TMC extracts only if it was already RUNNING, then goes DISABLED
+STEP_END     TMC arms</div>
+          <p>The consequence is not what either document says. The <strong>first</strong> step after any halt loses its trace, because the sink was disabled at that halt. Every <strong>subsequent consecutive</strong> step is captured, because the sink was armed at the end of the previous step and is running while the trace unit produces the stepped instruction.</p>
+        </dd>
+        <dt>Both descriptions are wrong</dt>
+        <dd>
+          <ul>
+            <li>The first review says the stepped instruction's trace is discarded. True only for the first step.</li>
+            <li>The report says the ordering exists "so that the sink is not armed while the processor is momentarily running under the control of the debugger". The sink <em>is</em> armed during every consecutive step after the first, so the stated rationale does not describe what the ordering achieves.</li>
+          </ul>
+        </dd>
+        <dt>What kind of thing is it</dt>
+        <dd><p>A <strong>debugger sequencing consequence</strong>, caused by OpenOCD raising the halted event from inside its own step implementation. Not a hardware limitation, not a deliberate trade-off, and not obviously a functional limitation until the behavior is observed.</p></dd>
+        <dt>Smallest safe change</dt>
+        <dd><p>Run five consecutive steps with trace enabled and count the callbacks and the instructions each one carries. Then state the observed behavior in one sentence. If the experiment is not run, <strong>delete the rationale clause</strong> and keep only the ordering, which is verifiable from the code and true.</p></dd>
+        <dt>Work</dt><dd><p>Fifteen minutes on hardware, then one sentence.</p></dd>
+        <dt>Technical risk</dt><dd><p><span class="val v-hi">This is the one finding that will introduce an error if applied as written.</span></p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <article class="finding">
+    <header><span class="id">F19</span><h4>What survives a contained termination</h4><span class="pill p-modify">Accept with modification</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Established</dt>
+        <dd><p>The tension is real. <code>openocd_jmp.h</code> says the mechanism "is only ever meant to precede terminating the whole engine", while every provider entry point converts an escape into an error string and continues the session.</p></dd>
+        <dt>What the report already gets right</dt>
+        <dd><p>More than the first review credits. §5.4.1.2 names a consequence <em>and</em> its mitigation: the guard wraps calls into the server rather than engine code, so no engine object is left on the abandoned chain. That is a careful design statement.</p></dd>
+        <dt>Does it overstate recovery?</dt>
+        <dd><p>Yes, mildly. §4.4.1's "never terminates the session" is an absolute where a boundary is meant.</p></dd>
+        <dt>Smallest change</dt>
+        <dd>
+          <div class="quote fix"><span class="lab">§5.4.1.2, one added sentence</span>The server's own allocations on the abandoned call chain are leaked, and a change it had partly completed is not undone, so the mechanism is a containment of the last resort rather than an ordinary error path.</div>
+          <div class="quote fix"><span class="lab">§4.4.1</span>The rule is that a failed operation produces an error response rather than ending the process.</div>
+          <p>Do not write "undefined internal state". Nothing in the implementation supports it.</p>
+        </dd>
+        <dt>Work</dt><dd><p>Two sentences. Reconciling the header comment with the actual use is a zero-risk code change outside the report.</p></dd>
+        <dt>Defence risk</dt><dd><p><span class="val v-med">Medium.</span> Anyone who has written a non-local jump out of C will ask, and the honest answer reads as competence.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <h3 class="sub">Chapter 1, sources and positioning</h3>
+
+  <article class="finding">
+    <header><span class="id">F7</span><h4>The state of the art has no sources</h4><span class="pill p-modify">Accept with modification</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>What the criticism is really about</dt>
+        <dd>
+          <ol>
+            <li><strong>Unsupported claims about commercial tools.</strong> Real. Tables 1.2 and 1.4 assert what named products do and do not support.</li>
+            <li><strong>An overly broad conclusion.</strong> Real, and the most exposed sentence in the chapter.</li>
+            <li><strong>No academic state of the art.</strong> Real. Twenty-eight bibliography entries, no peer-reviewed paper, in a section titled State of the Art, with four relevant works sitting in the project folder.</li>
+            <li><strong>Citation count.</strong> <span class="val v-lo">Reject this framing.</span> Do not add citations to raise a number.</li>
+          </ol>
+        </dd>
+        <dt>Which claims need a source</dt>
+        <dd><p>Only the contestable ones. Table 1.2's feature matrix and Table 1.4's probe matrix. Table 1.1 is product naming and needs correction, not citation. Table 1.3 is the author's own argument and needs nothing. The cheapest honest route is one caption line on Tables 1.2 and 1.4 recording that the entries come from vendor documentation and from evaluation during the internship, with versions given, plus one bibliography entry per vendor debugger manual. Do not chase per-cell citations.</p>
+          <div class="quote fix"><span class="lab">§1.2.3, replacement closing</span>Among the tools examined, none exposes on-chip trace capture through a probe other than its own, although on-chip capture requires no dedicated hardware.</div></dd>
+        <dt>FrankenTrace</dt>
+        <dd>
+          <p>I read it. It is a stronger contrast than the first review describes, and the distinction the report should draw is not cost against tooling. It is the <strong>hardware premise</strong>.</p>
+          <div class="tablewrap"><table><thead><tr><th></th><th>FrankenTrace (CPS-IoT Week 2023)</th><th>This work</th></tr></thead><tbody>
+            <tr><td class="k">Premise</td><td>The trace macrocell and the parallel port are <em>absent</em></td><td>They are <em>present</em> and unreachable through open tooling</td></tr>
+            <tr><td class="k">Mechanism</td><td>Synthesizes a program-counter trace from watchpoint, instrumentation and serial-output units</td><td>Drives the trace unit and the on-chip buffer that already exist</td></tr>
+            <tr><td class="k">Route off chip</td><td>The serial trace pin, streamed continuously</td><td>The on-chip buffer, drained over the debug connection at a halt</td></tr>
+            <tr><td class="k">Limit</td><td>Serial output bandwidth</td><td>A two-kilobyte window before each halt</td></tr>
+            <tr><td class="k">Deliverable</td><td>A tracing technique</td><td>An implementation inside open tooling that a developer installs</td></tr>
+          </tbody></table></div>
+          <p><strong>Yes, the distinction is technically meaningful,</strong> and it is the framing that makes the contribution legible. Two sentences in §1.2.2 and one citation.</p>
+        </dd>
+        <dt>The other three papers</dt>
+        <dd>
+          <ul>
+            <li><strong>Ninja</strong> (USENIX Security 2017): the standard citation for the trace macrocell used as an analysis instrument. Earns one sentence in §2.3.1's non-intrusiveness argument.</li>
+            <li><strong>Rath's OpenOCD thesis</strong>: the primary source for a system the report leans on throughout and cites as a bare URL. Earns a place in §4.1.3.</li>
+            <li><strong>Convent et al.</strong>, runtime verification from trace: relevant only to future work. <span class="val v-lo">Optional.</span></li>
+          </ul>
+          <p>Three of the four earn their place. Adding more would be citation padding.</p>
+        </dd>
+        <dt>Work</dt><dd><p>Two captions, four bibliography entries, two paragraphs, one softened sentence.</p></dd>
+        <dt>Defence risk</dt><dd><p><span class="val v-hi">High.</span> "How does your work relate to FrankenTrace?" is the question that most rewards preparation and most punishes its absence.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <article class="finding">
+    <header><span class="id">F8</span><h4>Table 2.9, the STM32 trace capability table</h4><span class="pill p-modify">Accept with modification</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Verified independently</dt>
+        <dd><p>The first review lists C5, U3, G4, L4+, U0 and N6 as unverifiable. I opened three of them. RM0487 confirms the trace macrocell on U3 and shows no trace buffer, and the apparent trace-FIFO hits in RM0487, RM0503 and RM0490 are the timer external-trigger filter field, not a trace component. The U3, U0 and C0 rows are therefore <strong>correct and sourced</strong>. Only C5, G4, L4+ and N6 remain without a document here.</p></dd>
+        <dt>Is the ETM-version column necessary?</dt>
+        <dd><p><strong>Yes, and it is the highest-value change in Chapter 2.</strong> It converts the table from a liability into the argument for the project's scope. The Cortex-M3 and Cortex-M4 families implement the earlier architecture, and the Cortex-M7, Cortex-M33 and Cortex-M55 families implement ETMv4. With that column visible, a reader can see at a glance which families the drivers of Chapter 5 could serve.</p></dd>
+        <dt>Correct the claim</dt>
+        <dd>
+          <p>The first review proposes stating that ETMv4 and the on-chip route "coincide exactly". That is false. The relation is one-directional.</p>
+          <div class="quote fix"><span class="lab">Statement to place under the table</span>Every STM32 device carrying an on-chip trace sink implements the later architecture, so supporting the earlier one would add no device the on-chip route can reach.</div>
+        </dd>
+        <dt>Narrow or expand?</dt>
+        <dd><p><span class="val v-hi">Do not expand.</span> Adding L1, WB, WBA, WL and MP changes no conclusion, since none carries an on-chip sink, and it dilutes a table whose job is to justify one scope decision. Narrow the caption instead to the families surveyed, and cite each row group to its reference manual or to AN4989.</p></dd>
+        <dt>Work</dt><dd><p>One column, one caption, per-row citations, one sentence.</p></dd>
+        <dt>Defence risk</dt><dd><p><span class="val v-med">Medium.</span> "You mark eleven families as having instruction trace. On how many does your implementation work?" is answerable in one sentence once the column exists.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <h3 class="sub">Confirmed technical corrections</h3>
+  <p class="prose">Each of these I checked directly against the specification or the source. All are small, none carries technical risk, and together they take under an hour.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>ID</th><th>Verdict</th><th>What the evidence shows, and the smallest change</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">F11</td><td><span class="pill p-accept">Accept</span></td>
+          <td>DDI0403E.e C1.6: <code>C_HALT</code> bit[1] is a control. Writing one requests a halt, writing zero requests a resume, and the processor also sets it on entry to Debug state. The status bit is <code>S_HALT</code> bit[17], read-only. The report's "Set when the processor is halted" is not false, it describes only the side effect, in the Effect column of a table headed "Registers governing halting debug". Replace with "Requests a halt when written as one, and a resume when written as zero. The processor also sets it on entry to Debug state." An <code>S_HALT</code> row is optional, since the table is about controls.</td>
+        </tr>
+        <tr>
+          <td class="k">F12</td><td><span class="pill p-accept">Accept, and extend</span></td>
+          <td>I read RM0477 Rev 9 DBGMCU_CR at offset <code>0x004</code>. It carries <code>TRGOEN</code>, <code>DBGCKEN</code>, <code>TRACECLKEN</code>, <code>DCRT</code> and the three low-power debug bits. No trace-pin assignment, no trace enable, no power-domain control. RM0090 names bits 7:5 "TRACE_MODE[1:0] and TRACE_IOEN: Trace pin assignment control", and RM0433 bits 22 and 21 are per-domain <em>debug clock</em> enables. One point the first review missed: "enables trace itself" is wrong for every family, because that is <code>DEMCR.TRCENA</code>, which Table 2.3 already carries. Rewrite as three clauses with three citations and drop the trace-enable claim.</td>
+        </tr>
+        <tr>
+          <td class="k">F13</td><td><span class="pill p-accept">Accept</span></td>
+          <td><code>ETMV4_TRCVIPCSSCTLR</code> is written under <code>if (caps-&gt;numpc)</code>, and <code>numpc</code> is <code>TRCIDR4.NUMPC</code>, the PE comparator input count. Context-ID comparators are <code>NUMCIDC</code>, parsed separately at <code>arm_etmv4.c:257</code>. Write "the start and stop control for the PE comparators".</td>
+        </tr>
+        <tr>
+          <td class="k">F14</td><td><span class="pill p-accept">Accept</span></td>
+          <td>Two senses eleven pages apart, and the second looks like a contradiction of the first. Reserve "component discovery" for the ROM-table sense. Table 5.6 FR1 becomes "Trace source and sink located and their registers read back against the device". One cell, and it removes a direct-looking contradiction, so it is worth more than its severity suggests.</td>
+        </tr>
+        <tr>
+          <td class="k">F16</td><td><span class="pill p-modify">Accept, note rejected</span></td>
+          <td>The CMake graph gives <code>dap_handlers → dap_core</code>, <code>dap_handlers → core</code>, <code>dap_core → dap_protocol</code>, <code>core → dap_protocol</code>. The figure's "Protocol transport" node is <code>dap_core</code>, whose sources are the transport and the orchestrator. Exactly one arrow is reversed. The first review's claim that the figure mixes two semantics is wrong: the other four arrows are correct dependency edges. Reverse one arrow and leave the label alone.</td>
+        </tr>
+        <tr>
+          <td class="k">F17</td><td><span class="pill p-modify">Accept, and delete the metric</span></td>
+          <td>Exactly 49 <code>Register&lt;...&gt;</code> calls, one of which is the catch-all and one a test-only handler. The project's own docs say "~48". Counting registered handler classes communicates nothing an examiner values. <strong>Remove the number from §5.5.6 entirely</strong> and let Table 5.3 carry the capability claim. If a count is wanted in §5.4.10, write "forty-seven protocol requests, listed in Table 5.3, together with a catch-all for unrecognised requests". Do not argue 47 against 49 in the report.</td>
+        </tr>
+        <tr>
+          <td class="k">F18</td><td><span class="pill p-modify">Accept for ETMv3</span></td>
+          <td>The test is whether the reader needs the reason to understand the scope. For the earlier trace architecture, <strong>yes</strong>: without it, the sentence reads as an unfinished implementation. Use the corrected F8 wording: "the earlier version is not implemented, and no device reachable by the on-chip route is lost by that, since every STM32 device carrying an on-chip trace sink implements the later version." For multi-core the reason is <span class="val v-lo">marginal</span>, since Chapter 3 already establishes a single-core target. One short clause is still cheap.</td>
+        </tr>
+        <tr>
+          <td class="k">F20</td><td><span class="pill p-accept">Accept</span></td>
+          <td>ST-LINK V2 and V3 capture serial-wire output, and CMSIS-DAP v2 defines streaming endpoints for it, so the column as labeled is false for two rows. The intended meaning is clear from the note above the table. Rename the column "Trace pin capture". The report gets this exactly right in §3.3.3, which is the wording to copy.</td>
+        </tr>
+        <tr>
+          <td class="k">F21</td><td><span class="pill p-accept">Accept, prefer the split</span></td>
+          <td>OpenOCD, pyOCD and the ST fork are debug servers, and §2.1.2 draws that distinction carefully six pages later. Split the column into Debugger and Debug server. This is not cosmetic: it makes the free stack look like a stack rather than a gap, which is the chapter's own argument. Fix the product spellings in the same pass: C-SPY, I-jet, ULINK, ST-LINK, Arm Compiler 6.</td>
+        </tr>
+        <tr>
+          <td class="k">F23</td><td><span class="pill p-accept">Accept, figure only</span></td>
+          <td>The remote serial protocol runs between a debugger and a stub or server in another process, and in this project between the two systems Chapter 4 treats as separate. Drawing it as a seam inside one backend contradicts Figure 4.1. Move the label to a backend-to-server boundary and put the probe beyond it. One clause of §2.1.2 needs the same treatment. Do not rewrite the section: in GDB's own architecture the protocol does sit at the target layer, so this is an abstraction choice in a diagram, not a knowledge error.</td>
+        </tr>
+        <tr>
+          <td class="k">F26</td><td><span class="pill p-accept">Accept</span></td>
+          <td>Three meanings for one acronym, two of them on figure arrows. Cleanest scheme: <code>DAP</code> means Debug Access Port everywhere including figures; the Debug Adapter Protocol is never abbreviated and the Figure 2.1 and 4.1 arrows carry it in full; CMSIS-DAP stays whole as a product name with its own acronym entry. Split the acronym-list entry in two. One of the cheapest comprehension gains for this jury.</td>
+        </tr>
+        <tr>
+          <td class="k">F31</td><td><span class="pill p-accept">Accept</span></td>
+          <td>A chapter label rendered as "Section 5". Check the line number before editing, since the file has changed since the review was written.</td>
+        </tr>
+        <tr>
+          <td class="k">F34</td><td><span class="pill p-accept">Accept</span></td>
+          <td>§5.4.7's peripheral race is described as discarding an observation whose reading <em>began</em> before the counter advanced, which would discard almost everything. The implemented rule discards a frame whose read <em>overlapped</em> a completing write. One clause.</td>
+        </tr>
+        <tr>
+          <td class="k">F35, F36</td><td><span class="pill p-optional">Optional</span></td>
+          <td>Two missing conditions in the P0 element list, and two threads missing from Table 4.1. Neither affects an argument. Batch them into the final pass, or leave them.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub">Presentation, structure and language</h3>
+
+  <article class="finding">
+    <header><span class="id">F6</span><h4>Chapter contents pages are wrong</h4><span class="pill p-accept">Accept, and the cause is now known</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Cause, confirmed</dt>
+        <dd>
+          <p>I mapped the generated files. Chapters 1 to 5 need <code>main.mtc5</code> through <code>main.mtc9</code>, which hold their sections. They receive <code>main.mtc1</code> through <code>main.mtc5</code>, which is an offset of four, so chapters 1 to 3 print empty lists, chapter 4 prints chapter 1's sections and chapter 5 prints chapter 2's. That is exactly the reported symptom.</p>
+          <p>The offset is four because four chapter-level entries precede Chapter 1 in the table of contents: the list of figures, the list of tables, the list of acronyms and the introduction. Each makes <code>\dominitoc</code> allocate a file, and none of them steps the counter that <code>\minitoc</code> reads.</p>
+        </dd>
+        <dt>Smallest reliable fix</dt>
+        <dd><p>Add <code>\adjustmtc</code> after each of those four <code>\addcontentsline{toc}{chapter}{...}</code> lines, delete <code>aux/*.mtc*</code>, and rebuild twice. If it lands off by one, add or remove one <code>\adjustmtc</code>. <strong>Neither a structural rewrite nor a switch to <code>\include</code> is needed</strong>, and the choice between <code>\input</code> and <code>\include</code> is not the cause. Fallback if it resists: delete <code>\dominitoc</code> from <code>main.tex:41</code> and the lists disappear. No list beats the wrong list.</p></dd>
+        <dt>Work</dt><dd><p>Four lines and two builds. Fifteen minutes.</p></dd>
+        <dt>Defence risk</dt><dd><p><span class="val v-hi">High relative to cost.</span> It is visible in the first second of opening either contribution chapter.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <article class="finding">
+    <header><span class="id">F5</span><h4>Figure 4.1 routes the trace around the probe</h4><span class="pill p-accept">Accept</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Established</dt>
+        <dd><p>Yes, and it is purely graphical. The last drawing command in <code>fig_global_architecture.tex</code> runs from the target's south edge down and left into the host's south edge. The probe node is not on that path.</p></dd>
+        <dt>Why it matters anyway</dt>
+        <dd><p>It is the first architecture figure a jury sees, and it draws the opposite of NFR1 and of both abstracts. Figure 4.4 routes the same trace correctly, so the report disagrees with itself in pictures.</p></dd>
+        <dt>Smallest change</dt><dd><p>Route the arrow through the probe node along the existing link. One line of TikZ. Label it "captured trace, over the same connection" so the thesis is made without a sentence.</p></dd>
+        <dt>Work</dt><dd><p>Presentation only, and not optional.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <article class="finding">
+    <header><span class="id">F10</span><h4>No figure is referenced from the text</h4><span class="pill p-modify">Accept with modification</span></header>
+    <div class="body">
+      <dl class="kv">
+        <dt>Established</dt>
+        <dd><p>Yes. Thirty-three of thirty-seven figures and ten of thirty tables carry a label no reference uses. Every float uses <code>[H]</code>, so nothing is displaced, which is what makes the omission survivable.</p></dd>
+        <dt>Does every figure need one?</dt>
+        <dd>
+          <p><span class="val v-hi">No.</span> Adding forty sentences of the form "Figure X shows the following" would make the report worse and this jury no better off. Apply a rule instead:</p>
+          <ul>
+            <li>Where the paragraph above the figure already states its content, insert a bare <code>\ref</code> into that existing sentence. No new sentence.</li>
+            <li>Where the figure is the <em>evidence</em> for a claim, write one sentence that says what to look at. That is Figures 2.6, 3.1, 4.1, 4.4, 5.2, 5.3, 5.7, 5.10 and 5.11, nine in all.</li>
+            <li>The Chapter 3 requirement tables need references regardless, because a reader chasing a requirement identifier has nothing else to navigate by.</li>
+          </ul>
+        </dd>
+        <dt>Work</dt><dd><p>Nine sentences and about thirty inserted references. Mechanical, no technical risk.</p></dd>
+      </dl>
+    </div>
+  </article>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>ID</th><th>Verdict</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">F27</td><td><span class="pill p-modify">Accept the consistency fix</span></td>
+          <td><span class="val v-hi">Reject the appeal to the template,</span> which is another institution's and another specialty's. Accept the internal problem, which is the author's own: chapters 2 to 5 open with an unnumbered Introduction and chapter 1 does not, so the contents page shows a numbered Conclusion five times and an Introduction never. Give Chapter 1 an Introduction like the others and stop there. Do this <em>after</em> F6, since the chapter contents lists will show whatever is chosen.</td>
+        </tr>
+        <tr>
+          <td class="k">F28</td><td><span class="pill p-accept">Accept</span></td>
+          <td>Not because a template prescribes it. The introduction currently ends without telling the reader what follows, and a jury reading a five-chapter report in a second language uses the plan as a map. Five sentences, future tense, one per chapter.</td>
+        </tr>
+        <tr>
+          <td class="k">F29</td><td><span class="pill p-accept">Accept, bounded</span></td>
+          <td>All the cited instances are real: <code>targetted</code>, <code>ommitted</code>, two contractions, one first-person plural, three comma splices with a capital mid-sentence, and a problem statement whose central sentence has no working predicate. Fix these. <span class="val v-hi">Do not touch Chapters 2 to 5.</span> Their English is already what this jury needs, and making it more academic would make it worse. One caution on the proposed replacements: several are longer than the originals and at least one ("The principal limitation is therefore the following.") reads oddly. Check every replacement against the report's own style rules before pasting it.</td>
+        </tr>
+        <tr>
+          <td class="k">F30</td><td><span class="pill p-modify">Accept, bounded</span></td>
+          <td>Not merely stylistic here, because the author's own standard names this pattern as the thing to eliminate. Prioritise: §4.2.3's "Three properties of the design deserve statement" is the one doing active harm, since the three are never numbered afterwards. Then the Results and Limitations openers, which a jury reads closely. Leave the rest if time is short, and doing half removes the impression. One caution: deleting an opener sometimes leaves a paragraph with no topic sentence. Replace it with what the items are <em>for</em>, not with the first item alone.</td>
+        </tr>
+        <tr>
+          <td class="k">F32</td><td><span class="pill p-optional">Optional, and late</span></td>
+          <td>Resetting the overfull-box threshold is worth one build, but do it in the final pass. Doing it early wastes the work, because every table edit changes the box list.</td>
+        </tr>
+        <tr>
+          <td class="k">F33</td><td><span class="pill p-accept">Accept, and it is evidence</span></td>
+          <td>The bench photograph is the only direct evidence for NFR1 and for the claim carried by both abstracts. Follow the first review's advice exactly: the trace connector visibly empty, one cable, nothing else attached, and both points annotated. A jury that reads no prose settles NFR1 from that one image.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">03</span> What the first review missed</h2>
+  <p class="intro prose">Six omissions, all of which change what a jury can conclude. None is manufactured, and four are resolved by work already recommended elsewhere.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Gap</th><th>Why it matters</th><th>Cost</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>The report never says what a two-kilobyte window is for.</strong></td>
+          <td>§5.5.6 gives the extrapolation and stops. The window covers the interval immediately preceding a halt, which is exactly the interval a developer investigating a fault wants. That single sentence turns the smallest-sounding number in the report into its justification, and it is the answer to the most obvious challenge the result invites.</td>
+          <td class="num">One sentence</td>
+        </tr>
+        <tr>
+          <td><strong>No single statement of the contribution exists.</strong></td>
+          <td>§1.2.4 is two sentences and one of them is broken. The conclusion's two-results paragraph is about findings, not deliverables. Nowhere does the report say in one place: two CoreSight drivers added to an open-source debug server, a decode and reconstruction pipeline, and a live trace view in an editor, obtained over a probe that cannot capture a trace port. With F22 and F7 corrected, this is the paragraph the defence rests on, and it does not exist.</td>
+          <td class="num">One paragraph</td>
+        </tr>
+        <tr>
+          <td><strong>The formatter is enabled and never discussed.</strong></td>
+          <td><code>TMC_FFCR_ENFT</code> is set in every configuration in <code>arm_tmc.h</code>, so roughly one byte in sixteen of the two-kilobyte buffer is framing. With a single trace source the formatter can be bypassed. This is both the honest reason the density figure is what it is, and a better future-work item than two of the four currently listed in §5.3.7.</td>
+          <td class="num">Two sentences</td>
+        </tr>
+        <tr>
+          <td><strong>Every result comes from a launch session, and the report does not say so.</strong></td>
+          <td>Trace, live memory and peripheral watches are unavailable when attaching, which §5.5.7 states as a limitation without connecting it to the results. A jury member who tries the tool by attaching finds the headline feature missing.</td>
+          <td class="num">One clause</td>
+        </tr>
+        <tr>
+          <td><strong>No result exercises a second capture.</strong></td>
+          <td>The capture-boundary gap exists precisely because captures accumulate across halts. F3 covers the missing test. Nothing covers the missing <em>result</em>. One two-halt capture reported in Table 5.7 closes F3, F25 and this at once.</td>
+          <td class="num">One hardware run</td>
+        </tr>
+        <tr>
+          <td><strong>The 114 instructions are never shown.</strong></td>
+          <td>Figure 5.3 stops at elements, and the trace-view screenshot is at 92 mm. An annotated extract of the first fifteen reconstructed instructions beside the disassembly of the reset handler would be the most persuasive single page in the report, and it is half the evidence F2 needs.</td>
+          <td class="num">One listing</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note prose"><b>On the questions you asked me to check:</b> the report does establish why instruction trace is useful, does distinguish proof of concept from production tooling in §5.5.7, is understandable to a reader who does not know CoreSight (that is what thirty pages of Chapter 2 buy), and does demonstrate operation on real hardware through Table 5.5's six field defects, which is the most convincing evidence in the document. Where it falls short is contribution versus existing technology (F22, F7 and the missing paragraph above) and correctness of the reconstruction (F2).</div>
+</section>
+
+<section>
+  <h2><span class="n">04</span> The five lists</h2>
+
+  <h3 class="sub">A &middot; Must fix</h3>
+  <p class="prose">Correctness, technical credibility or basic comprehension is materially affected.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>ID</th><th>Action</th><th>Kind</th><th>Risk</th></tr></thead>
+    <tbody>
+      <tr><td class="k">F1</td><td>Separate the device's 128 bytes from the host's 16-byte barrier. Correct the density, the extrapolation, both abstracts, the conclusion and the Figure 5.3 annotation.</td><td>Rewriting</td><td class="v-lo">None</td></tr>
+      <tr><td class="k">F2</td><td>Stop calling the frozen counts an oracle in Table 5.4 and Table 5.6, or replace them with the single-step ground truth.</td><td>Rewriting</td><td class="v-lo">None</td></tr>
+      <tr><td class="k">F22</td><td>Scope the "no support" claim to the ETMv4 trace unit and the Trace Memory Controller, and name what the server already carries.</td><td>Rewriting</td><td class="v-lo">None</td></tr>
+      <tr><td class="k">F9</td><td>Remeasure the 0.112 ms figure with committed instrumentation, or remove it from the abstracts and the conclusion.</td><td>Code, then rewriting</td><td class="v-lo">None</td></tr>
+      <tr><td class="k">F3</td><td>Correct Table 5.4's transform description and Table 5.6's FR7 evidence.</td><td>Rewriting</td><td class="v-lo">None</td></tr>
+      <tr><td class="k">F4</td><td>Replace the one sentence that attributes the halt requirement to the protocol.</td><td>Rewriting</td><td class="v-lo">None</td></tr>
+      <tr><td class="k">F5</td><td>Route the captured-trace arrow through the probe in Figure 4.1.</td><td>One TikZ line</td><td class="v-lo">None</td></tr>
+      <tr><td class="k">F6</td><td>Fix the chapter contents lists with four <code>\adjustmtc</code> calls, or remove them.</td><td>Build</td><td class="v-lo">None</td></tr>
+      <tr><td class="k">F11 F12 F13</td><td>The three confirmed register and specification errors.</td><td>Rewriting</td><td class="v-lo">None</td></tr>
+      <tr><td class="k">F29</td><td>Repair the introduction and §1.2, including the problem statement's central sentence.</td><td>Rewriting</td><td class="v-lo">None</td></tr>
+      <tr><td class="k">F33</td><td>Produce the bench photograph and remove the placeholder box.</td><td>Artwork</td><td class="v-lo">None</td></tr>
+      <tr><td class="k">&mdash;</td><td>Write the contribution paragraph that does not currently exist.</td><td>Rewriting</td><td class="v-lo">None</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="sub">B &middot; Strongly recommended</h3>
+  <p class="prose">Not errors, but each one either invites a question you would rather not receive or leaves evidence on the floor.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>ID</th><th>Action</th><th>Why it earns the effort</th></tr></thead>
+    <tbody>
+      <tr><td class="k">F15</td><td>Add the five omitted tests and cite them in Table 5.6 for FR9, FR11 and FR12.</td><td>Pure gain. Automated evidence already exists for three requirements the table asserts.</td></tr>
+      <tr><td class="k">F7</td><td>Cite FrankenTrace, Ninja and Rath. Position the contribution against FrankenTrace's hardware premise. Source Tables 1.2 and 1.4 by caption. Soften the universal negative.</td><td>Answers the defence question that most rewards preparation.</td></tr>
+      <tr><td class="k">F8</td><td>Add the trace-unit architecture column, cite the rows, and state the one-directional relation.</td><td>Converts the table from a liability into the argument for the project's scope.</td></tr>
+      <tr><td class="k">F25</td><td>Split the gaps row into start-of-capture markers and discontinuities.</td><td>Puts a zero on the page where a two currently sits.</td></tr>
+      <tr><td class="k">F18</td><td>Give the ETMv3 exclusion its reason.</td><td>Turns an apparent gap into a boundary chosen deliberately.</td></tr>
+      <tr><td class="k">F14 F17 F19 F20 F21 F26</td><td>The terminology and table-column corrections.</td><td>Each removes an apparent contradiction or an undefined term, at a cost of one cell or one word.</td></tr>
+      <tr><td class="k">F10</td><td>Nine evidence sentences and about thirty inserted references.</td><td>For a jury reading figures rather than paragraphs, the reference is the only navigation aid.</td></tr>
+      <tr><td class="k">F16 F23</td><td>Reverse one dependency arrow. Move the protocol label to a process boundary.</td><td>Two figures currently contradict the architecture they illustrate.</td></tr>
+      <tr><td class="k">F28 F27</td><td>Announce the plan. Give Chapter 1 an Introduction.</td><td>Both are what this jury expects, and neither costs anything.</td></tr>
+      <tr><td class="k">F30</td><td>Remove the count-announcing openers in §4.2.3, the Results and the Limitations.</td><td>The author's own standard names this as the report's worst tic.</td></tr>
+      <tr><td class="k">&mdash;</td><td>The five omissions in list 03 above.</td><td>Four of them are one sentence each.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="sub">C &middot; Optional</h3>
+  <p class="prose">Real improvements with low defence impact. Do them only if the phases above are finished.</p>
+  <ul class="prose">
+    <li>F32, the overfull-box audit, in the final build pass only.</li>
+    <li>F35 and F36, the P0 element conditions and the two missing threads in Table 4.1.</li>
+    <li>Terminology unification: Arm, ST-LINK, I-jet, ULINK, on-chip.</li>
+    <li>Versions or commit identifiers on the software bibliography entries, particularly the decoder library and the OpenOCD fork.</li>
+    <li>Drop Figure 4.5, which Figure 5.2 supersedes. Separate the colliding labels in Figure 4.8. Add a time axis to Figure 5.1.</li>
+    <li>Reduce the three company figures in Chapter 1 to one and give the space to the state of the art.</li>
+    <li>Convent et al., in future work only.</li>
+  </ul>
+
+  <h3 class="sub">D &middot; Challenge, or do not change</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Claim in review one</th><th>Why it does not stand</th></tr></thead>
+    <tbody>
+      <tr><td>F24: the trace of a stepped instruction is discarded.</td><td>True only for the first step after a halt. From the second consecutive step onward the sink is armed and the trace is captured. Applying this as written would put a false statement in the report. The report's own rationale is wrong for the same reason, so <strong>neither version should be written</strong> without the experiment.</td></tr>
+      <tr><td>F8: ETMv4 and the on-chip route coincide exactly.</td><td>False. Several ETMv4 families carry no on-chip sink. Only the one-directional statement is defensible.</td></tr>
+      <tr><td>F8: the C5, U3, G4, L4+, U0 and N6 rows are unverifiable.</td><td>U3, U0 and C0 are verifiable from RM0487, RM0503 and RM0490, and the apparent trace-FIFO references in all three are a timer bitfield of the same name.</td></tr>
+      <tr><td>F19: continuing after a non-local jump leaves the server's state undefined.</td><td>Not supported by the implementation or by the C library. Leaked allocations and an un-rolled-back partial change are what can be said.</td></tr>
+      <tr><td>F16: the figure mixes "depends on" with "hands work to".</td><td>Four of five arrows are correct dependency edges. One arrow is reversed. No relabelling.</td></tr>
+      <tr><td>F9: every quantitative result needs a stated experimental method.</td><td>Ten of eleven rows are deterministic properties of a committed input and are already reproducible. Demanding variance for them would be wrong.</td></tr>
+      <tr><td>F4: the two-path architecture's justification is wrong.</td><td>One sentence in it is wrong. The next paragraph already carries the correct reason, so this is a self-contradiction, not a missing justification.</td></tr>
+      <tr><td>F10: add a sentence per figure.</td><td>Forty mechanical sentences would make the report worse. Nine evidence sentences and thirty inserted references achieve the comprehension goal.</td></tr>
+      <tr><td>F27: follow the supplied template's chapter structure.</td><td>That template is another institution's and another specialty's. Fix the internal inconsistency only.</td></tr>
+      <tr><td>F7: the citation count is the problem.</td><td>The problem is three specific unsupported claims and an absent academic survey. Citation count is not a target.</td></tr>
+      <tr><td>F8: add the wireless and L1 families.</td><td>None carries an on-chip sink, so no conclusion changes and the table's focus is diluted. Narrow the caption instead.</td></tr>
+      <tr><td>F2: "oracle" is always wrong for a frozen baseline.</td><td>A derived oracle is a recognised category. The defect here is that the same word carries the strong sense eleven lines later in the same subsection.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="sub">E &middot; New work worth doing</h3>
+  <p class="prose">Ranked by technical credibility multiplied by defence value, divided by effort. The first four are one hardware session, and that session is the single most valuable afternoon available before submission.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>Experiment</th><th>Resolves</th><th>Effort</th><th>Defence value</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">E1</td>
+        <td><strong>Single-step ground truth.</strong> Step from the reset vector to the entry of <code>main</code> through the run-control path, record the program counter at each step, compare the address sequence to the reconstructed one.</td>
+        <td>F2 completely, FR5's evidence, and the missing instruction listing</td>
+        <td class="num">Half a day</td><td><span class="val v-hi">High</span></td>
+      </tr>
+      <tr>
+        <td class="k">E2</td>
+        <td><strong>One capture that wraps the buffer.</strong> Break further into the program so more than two kilobytes accumulate, capture, and report what came back.</td>
+        <td>The wrapped-read path, the overflow gap reason, and Table 5.7's discontinuity row</td>
+        <td class="num">Under an hour</td><td><span class="val v-hi">High</span></td>
+      </tr>
+      <tr>
+        <td class="k">E3</td>
+        <td><strong>Two captures in one session.</strong> Two halts, two captures, one capture-boundary gap. Offline equivalent is a second <code>Append</code> in the provider test.</td>
+        <td>F3's real gap, F25's second row, and omission five</td>
+        <td class="num">Minutes, plus eight lines</td><td><span class="val v-med">Medium</span></td>
+      </tr>
+      <tr>
+        <td class="k">E4</td>
+        <td><strong>Five consecutive single steps with trace enabled.</strong> Count the callbacks and the instructions each carries.</td>
+        <td>F24, and it prevents a false statement</td>
+        <td class="num">Fifteen minutes</td><td><span class="val v-med">Medium</span></td>
+      </tr>
+      <tr>
+        <td class="k">E5</td>
+        <td><strong>Timing instrumentation.</strong> <code>steady_clock</code> around <code>Append</code>, twenty runs, median, stated boundary.</td>
+        <td>F9's one indefensible row</td>
+        <td class="num">Twenty minutes</td><td><span class="val v-hi">High</span></td>
+      </tr>
+      <tr>
+        <td class="k">E6</td>
+        <td><strong>Control-flow validity assertion.</strong> Every consecutive pair of reconstructed addresses is a fall-through or a legal successor.</td>
+        <td>Partial substitute for E1 if hardware time runs out</td>
+        <td class="num">One to two hours</td><td><span class="val v-med">Medium</span></td>
+      </tr>
+      <tr>
+        <td class="k">E7</td>
+        <td><strong>The bench photograph.</strong> Trace connector visibly empty, one cable, both annotated.</td>
+        <td>F33, and NFR1's only direct evidence</td>
+        <td class="num">Minutes</td><td><span class="val v-hi">High</span></td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="note prose"><b>If only one thing is done:</b> E1. It converts the report's most attackable claim into its strongest, produces the instruction listing that omission six asks for, and retires defence question two permanently. If E1 finds a discrepancy, that is a result worth having in your hands rather than the jury's.</div>
+</section>
+
+<section>
+  <h2><span class="n">05</span> Defence preparation</h2>
+  <p class="intro prose">Each answer is written to be delivered in twenty to thirty seconds. The last column says whether changing the report makes the answer easier, or whether the answer is enough on its own.</p>
+
+  <div class="tablewrap"><table>
+    <thead><tr><th>Question</th><th>Shortest correct answer</th><th>Evidence in the report</th><th>Change the report?</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>How many bytes did the chip actually produce?</td>
+        <td>128, in eight formatter frames. The first sixteen bytes of the file are a synchronization barrier the driver inserts so the decoder resets its state at each capture boundary. Correcting it raises the density from 0.79 to 0.89.</td>
+        <td>Figure 5.3's frame zero annotation</td>
+        <td><strong>Yes.</strong> F1. The report currently contradicts itself.</td>
+      </tr>
+      <tr>
+        <td>How do you know the 114 instructions are the right 114?</td>
+        <td>Every reconstructed address resolves to an instruction in the image and the blocks carry resolved names. The counts are a regression baseline. [After E1:] the sequence was compared against a single-step run through the run-control path and matched.</td>
+        <td>§5.5.3 states the weakness plainly</td>
+        <td><strong>Yes.</strong> F2, and E1 turns the answer from a concession into a result.</td>
+      </tr>
+      <tr>
+        <td>OpenOCD already has an ETM and an ETB driver. What was missing?</td>
+        <td>Those target the earlier trace macrocell over a JTAG scan chain on ARM7 and ARM9 cores, and the legacy embedded trace buffer. Neither reaches an ETMv4 trace unit or a Trace Memory Controller, which is what this device implements.</td>
+        <td>Nothing currently. §5.3.1 asserts the opposite.</td>
+        <td><strong>Yes.</strong> F22, and this is the highest value per word in the report.</td>
+      </tr>
+      <tr>
+        <td>Why not drive the trace commands through <code>monitor</code> packets?</td>
+        <td>The replies are unstructured text, and the decoder needs typed register values. The capture arrives as a push from the server at the moment of a halt, and the protocol has no channel for that. Separately, the debugger library only reads memory through a stopped process.</td>
+        <td>§4.3.4.2's second paragraph is already correct</td>
+        <td><strong>Yes.</strong> F4, one sentence.</td>
+      </tr>
+      <tr>
+        <td>What happens when the buffer wraps? Did you ever see it?</td>
+        <td>The status register reports full, the whole RAM is live, and the driver reads all of it and reports an overflow. [After E2:] here is the capture.</td>
+        <td>§5.3.2.2 and Figure 4.5 describe the path in detail</td>
+        <td>Answer is adequate. <strong>E2 makes it unanswerable.</strong></td>
+      </tr>
+      <tr>
+        <td>Two kilobytes is microseconds of execution. What use is that?</td>
+        <td>It is the interval immediately before a halt, a fault or a breakpoint, which is the interval a developer investigating a failure wants. Filtering with the trace unit's comparators would let the buffer cover a chosen region instead, and that capability is present and not yet exposed.</td>
+        <td>§5.3.7's last limitation</td>
+        <td><strong>Yes.</strong> One sentence in §5.5.6. Omission one.</td>
+      </tr>
+      <tr>
+        <td>How does your work relate to FrankenTrace?</td>
+        <td>It solves the opposite problem. FrankenTrace targets devices with no trace macrocell and synthesizes a trace from watchpoint and instrumentation units over the serial pin. This device has the macrocell and an on-chip buffer, and the barrier was tooling. The capture uses the ordinary debug connection and no extra pin.</td>
+        <td>Nothing. It is uncited.</td>
+        <td><strong>Yes.</strong> F7, two sentences and a citation.</td>
+      </tr>
+      <tr>
+        <td>You measured 0.112 ms. On what machine, over how many runs?</td>
+        <td>[Only after E5.] Median of twenty runs on the host in Table 3.7, release build, covering decode and the three transforms, excluding the one-off analysis of the program image.</td>
+        <td>Nothing. No artifact produces the number.</td>
+        <td><strong>Yes.</strong> F9. Remeasure or remove.</td>
+      </tr>
+      <tr>
+        <td>Does the trace show the instruction you stepped?</td>
+        <td>[Only after E4.] Do not answer this from the code. Run the experiment and state what was observed.</td>
+        <td>§5.3.1.5's rationale does not describe the behavior</td>
+        <td><strong>Yes,</strong> after E4. Until then delete the rationale clause.</td>
+      </tr>
+      <tr>
+        <td>Your longjmp leaves the server's heap in an unknown state. Why keep going?</td>
+        <td>The guard wraps calls into the server, never engine code, so nothing of ours is left unwound. What the server allocated on that path is leaked and a partly completed change is not undone, so it is containment of the last resort, not an ordinary error path.</td>
+        <td>§5.4.1.2 names the first half</td>
+        <td><strong>Yes.</strong> F19, one sentence.</td>
+      </tr>
+      <tr>
+        <td>How many families does your implementation actually work on?</td>
+        <td>The ETMv4 families with an on-chip sink, which today is H7, H7RS and N6. Every device with an on-chip sink implements ETMv4, so supporting the earlier architecture would add no reachable device.</td>
+        <td>Table 2.9, once the version column exists</td>
+        <td><strong>Yes.</strong> F8 and F18.</td>
+      </tr>
+      <tr>
+        <td>Table 5.6 says thirteen requirements met. Which were checked by a program?</td>
+        <td>[After F15.] Name the script for each: stepping, peripheral, launch, attach, handshake, and the two offline pipeline tests. The frontend rows were observed by hand and the table says so.</td>
+        <td>Currently undifferentiated</td>
+        <td><strong>Yes.</strong> F15 makes this answerable.</td>
+      </tr>
+      <tr>
+        <td>What is the overhead of the trace on the running program?</td>
+        <td>Architecturally none. The trace unit observes the processor and the sink absorbs the stream, so nothing is added to execution. The only intrusion is the halt that already existed. It was not measured, and the report says so.</td>
+        <td>§2.3.1 and NFR1</td>
+        <td>No, provided you say plainly that it was not measured.</td>
+      </tr>
+      <tr>
+        <td>Why LLDB rather than GDB?</td>
+        <td>Its embedding interface is a supported API returning structured values, whereas the alternative offers a text interface or a scripting layer. The engine needs typed results at the boundary.</td>
+        <td>Nothing. §4.3.4.1 justifies using a mature library, not this one.</td>
+        <td>Optional. One clause in §4.3.4.1 would close it.</td>
+      </tr>
+      <tr>
+        <td>Your report says component discovery is not implemented, and your table says it was verified.</td>
+        <td>Two different things share a name. Reading the ROM tables is not implemented. Locating the configured components and reading their registers back against the device is what the table records.</td>
+        <td>The contradiction is currently visible</td>
+        <td><strong>Yes.</strong> F14, one cell.</td>
+      </tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="n">06</span> Execution plan</h2>
+  <p class="intro prose">Ordered by dependency, and by what can undermine the technical credibility of the project. Two items in Phase 1 are diagram and build fixes rather than prose, and they are there because they need no new technical work and each removes a visible contradiction in twenty minutes.</p>
+
+  <div class="phase">
+    <header><span class="step">Phase 1</span><h4>Corrections requiring no new technical work</h4><span class="meta">About one working day</span></header>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Task</th><th>Resolves</th><th>Defence value</th><th>Technical risk</th></tr></thead>
+      <tbody>
+        <tr><td>Separate the barrier from the device's bytes. Recompute the density and the extrapolation. Correct both abstracts, the conclusion and Figure 5.3's annotation.</td><td class="k">F1</td><td><span class="val v-hi">High</span></td><td>None. Arithmetic only.</td></tr>
+        <tr><td>Rewrite §5.3.1's opening to name what the debug server already carries and what it does not reach. Apply the same scoping to §1.2.3.</td><td class="k">F22, F7</td><td><span class="val v-hi">High</span></td><td>None.</td></tr>
+        <tr><td>Rename the frozen counts in Table 5.4 and rewrite Table 5.6's FR5 evidence to state what was checked.</td><td class="k">F2</td><td><span class="val v-hi">High</span></td><td>None.</td></tr>
+        <tr><td>Replace §4.3.4.2's first sentence. Leave the following paragraph alone.</td><td class="k">F4</td><td><span class="val v-hi">High</span></td><td>None.</td></tr>
+        <tr><td>Add the five omitted tests to Table 5.4 and name them in Table 5.6's FR9, FR11 and FR12 rows.</td><td class="k">F15</td><td><span class="val v-hi">High</span></td><td>None. Pure gain.</td></tr>
+        <tr><td>Correct <code>C_HALT</code>, the DBGMCU citation and the PE comparator register name.</td><td class="k">F11, F12, F13</td><td><span class="val v-med">Medium</span></td><td>None. All three verified against the specifications.</td></tr>
+        <tr><td>Correct the transform description, split the gaps row, fix the two component-discovery senses, remove the handler count from the Results, give the ETMv3 exclusion its reason, state the containment's second consequence.</td><td class="k">F3, F25, F14, F17, F18, F19</td><td><span class="val v-med">Medium</span></td><td>None.</td></tr>
+        <tr><td>Route Figure 4.1's trace arrow through the probe.</td><td class="k">F5</td><td><span class="val v-hi">High</span></td><td>None. One TikZ line.</td></tr>
+        <tr><td>Add four <code>\adjustmtc</code> calls, clear <code>aux/</code>, rebuild twice, verify each chapter's list.</td><td class="k">F6</td><td><span class="val v-med">Medium</span></td><td>None. Fallback is removing the lists.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="phase">
+    <header><span class="step">Phase 2</span><h4>High-value experiments and tests</h4><span class="meta">One hardware session, plus an hour of code</span></header>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Task</th><th>Resolves</th><th>Defence value</th><th>Technical risk</th></tr></thead>
+      <tbody>
+        <tr><td>E1, single-step ground truth against the reconstructed sequence.</td><td class="k">F2</td><td><span class="val v-hi">High</span></td><td>A discrepancy would be a real defect. Finding it now is the point.</td></tr>
+        <tr><td>E2, one capture long enough to wrap the buffer.</td><td class="k">F9, defence Q5</td><td><span class="val v-hi">High</span></td><td>The wrapped path may fail. Better discovered here.</td></tr>
+        <tr><td>E3, two captures in one session, plus the second <code>Append</code> in the provider test.</td><td class="k">F3, F25</td><td><span class="val v-med">Medium</span></td><td>None.</td></tr>
+        <tr><td>E4, five consecutive steps with trace enabled.</td><td class="k">F24</td><td><span class="val v-med">Medium</span></td><td>None, and skipping it carries risk.</td></tr>
+        <tr><td>E5, timing instrumentation and twenty runs.</td><td class="k">F9</td><td><span class="val v-hi">High</span></td><td>None.</td></tr>
+        <tr><td>E7, the bench photograph.</td><td class="k">F33</td><td><span class="val v-hi">High</span></td><td>None.</td></tr>
+        <tr><td>E6, control-flow validity assertion, if E1 cannot be run.</td><td class="k">F2 partially</td><td><span class="val v-med">Medium</span></td><td>None.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="phase">
+    <header><span class="step">Phase 3</span><h4>Rewriting</h4><span class="meta">Two days, and the results of Phase 2 feed it</span></header>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Task</th><th>Resolves</th><th>Defence value</th><th>Technical risk</th></tr></thead>
+      <tbody>
+        <tr><td>Write the contribution paragraph: two drivers, a pipeline, a live view, over an ordinary probe.</td><td class="k">Omission two</td><td><span class="val v-hi">High</span></td><td>None.</td></tr>
+        <tr><td>Repair the introduction and §1.2. Fix the problem statement's central sentence, the two spellings, the contractions, the first person and the comma splices. Announce the plan.</td><td class="k">F29, F28</td><td><span class="val v-hi">High</span></td><td>None. Check every replacement against the report's style rules.</td></tr>
+        <tr><td>Position the work against FrankenTrace. Cite Ninja and Rath. Caption Tables 1.2 and 1.4 with their source. Soften the universal negative.</td><td class="k">F7</td><td><span class="val v-hi">High</span></td><td>None.</td></tr>
+        <tr><td>Report the Phase 2 results: the ground-truth comparison, the wrapped capture, the second capture, the step behavior, the timing method.</td><td class="k">F2, F9, F24, F25</td><td><span class="val v-hi">High</span></td><td>Write only what was observed.</td></tr>
+        <tr><td>Add the five one-sentence omissions: the window's purpose, the formatter overhead, the launch-only results, the attach consequence, the instruction listing.</td><td class="k">Omissions one, three, four, six</td><td><span class="val v-med">Medium</span></td><td>None.</td></tr>
+        <tr><td>Remove the count-announcing openers in §4.2.3, the Results and the Limitations.</td><td class="k">F30</td><td><span class="val v-lo">Low</span></td><td>None. Do not leave a paragraph without a topic sentence.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="phase">
+    <header><span class="step">Phase 4</span><h4>Diagram and table cleanup</h4><span class="meta">Half a day</span></header>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Task</th><th>Resolves</th><th>Defence value</th><th>Technical risk</th></tr></thead>
+      <tbody>
+        <tr><td>Add the trace-unit architecture column to Table 2.9, cite the rows, narrow the caption, state the one-directional relation.</td><td class="k">F8</td><td><span class="val v-med">Medium</span></td><td>Do not write "coincide exactly".</td></tr>
+        <tr><td>Reverse the transport-to-handlers arrow. Move the protocol label in Figure 2.1 to a process boundary.</td><td class="k">F16, F23</td><td><span class="val v-med">Medium</span></td><td>None.</td></tr>
+        <tr><td>Rename Table 1.4's capture column. Split Table 1.1's debugger column. Fix the product spellings.</td><td class="k">F20, F21</td><td><span class="val v-med">Medium</span></td><td>None.</td></tr>
+        <tr><td>Nine evidence sentences and about thirty inserted figure and table references.</td><td class="k">F10</td><td><span class="val v-hi">High</span> for this jury</td><td>None.</td></tr>
+        <tr><td>Unabbreviate the Debug Adapter Protocol on the figure arrows and in Table 3.8. Split the acronym entry.</td><td class="k">F26</td><td><span class="val v-med">Medium</span></td><td>None.</td></tr>
+        <tr><td>Give Chapter 1 an Introduction, after Phase 1's minitoc fix is verified.</td><td class="k">F27</td><td><span class="val v-lo">Low</span></td><td>None.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="phase">
+    <header><span class="step">Phase 5</span><h4>Final consistency and build audit</h4><span class="meta">Half a day, last</span></header>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Task</th><th>Resolves</th><th>Defence value</th><th>Technical risk</th></tr></thead>
+      <tbody>
+        <tr><td>Reset the overfull-box threshold, rebuild, fix what appears, restore only if something cannot be fixed.</td><td class="k">F32</td><td><span class="val v-lo">Low</span></td><td>None.</td></tr>
+        <tr><td>Unify Arm, ST-LINK, I-jet, ULINK and on-chip. Correct the chapter reference at §4.3.4.3.</td><td class="k">F31</td><td><span class="val v-lo">Low</span></td><td>None.</td></tr>
+        <tr><td>Confirm no placeholder box survives, every reference resolves, and every number changed by F1 is consistent across the abstracts, the conclusion, Table 5.7 and Figure 5.3.</td><td class="k">F1, F33</td><td><span class="val v-hi">High</span></td><td>The one place where a partial F1 edit does real damage.</td></tr>
+        <tr><td>Three clean passes with the project's own build command, checking the output timestamp rather than the tool's message.</td><td class="k">&mdash;</td><td><span class="val v-med">Medium</span></td><td>None.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<footer class="end">
+  <p>Verdict counts across the thirty-three numbered findings: eighteen accepted as written, eleven accepted with a modified correction, two challenged in whole or part, one held for verification, and one reclassified as optional. Twelve specific claims in the first review do not survive re-examination and are listed under D. The one item that carries real risk if applied without evidence is F24.</p>
+  <p>The first review's closing assessment holds and is worth repeating: the corrections make the result look stronger, not weaker, because the true numbers are better than the reported ones and the true scope decisions are better justified than the report currently admits.</p>
+</footer>
+
+</div>

@@ -1,0 +1,24 @@
+\documentclass[border=3pt]{standalone}
+\input{fig-preamble}
+\begin{document}
+\begin{tikzpicture}[fig,
+  ly/.style={draw,thick,minimum height=8mm,minimum width=40mm,align=center,font=\small}]
+
+\node[ly] (tr) {Transport};
+\node[ly,below=4mm of tr] (or) {Orchestrator};
+\node[ly,below=4mm of or] (hd) {Handlers};
+\node[ly,below=6mm of hd] (co) {Context};
+\node[ly,left=16mm of hd,minimum width=28mm] (ty) {Protocol types};
+\node[ly,below=4mm of co] (mg) {Managers};
+\node[ly,below=4mm of mg] (pv) {Providers};
+
+\draw[ln] (tr) -- (or);
+\draw[ln] (or) -- (hd);
+\draw[ln] (hd) -- (co);
+\draw[ln] (co) -- (mg);
+\draw[ln] (mg) -- (pv);
+\draw[ln] (tr.west) -- ++(-8mm,0) |- (ty.east);
+\draw[ln] (co.west) -- ++(-8mm,0) |- (ty.east);
+
+\end{tikzpicture}
+\end{document}

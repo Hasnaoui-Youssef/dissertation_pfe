@@ -1,5 +1,8 @@
 \chapter{Context \& Problem Statement}
-\label{chap:premierchapitre}
+\chaplabel{ch:context}
+
+\section*{Introduction}
+This chapter states the setting of the project and the problem it addresses. It presents the host organization, then examines what existing development tools offer for instruction trace, what they withhold, and what the hardware makes possible regardless.
 
 \section{Host Organization}
 \subsection{STMicroelectronics}
@@ -11,7 +14,7 @@ Founded in 1987 through the merger of SGS Microelettronica of Italy and Thomson 
 \subsection{Activity Sectors}
 
 ST's mission is to be the undisputed leader in the semiconductor market, delivering sustainable and innovative solutions that make a positive impact on people's lives. The company's vision is to create technology that enables a more intelligent and connected world, driving progress in key areas such as smart driving, smart industry, smart home, and smart city applications.\\
-The following illustration highlights the key end markets targetted by ST's solutions.
+Figure \ref{fig:st_activities} highlights the key end markets targeted by ST's solutions.
 
 \begin{figure}[H]
   \centering
@@ -41,7 +44,7 @@ STMicroelectronics operates in more than 35 countries, with a strong presence in
 
 The STMicroelectronics Tunis site, located in the El Ghazela Technopark, employs over 100 professionals in various fields such as tools, applications, quality, and support functions. The facility is involved in all stages of the microelectronics industry, from initial circuit design to final verification before mass production.
 
-With expertise in both hardware and software, the Tunis center's activities include electronic circuit design, software tool development, application software support, and the electrical validation and verification of new circuits. This diverse skill set allows the center to contribute significantly to ST's global operations.
+With expertise in both hardware and software, the Tunis center's activities include electronic circuit design, software tool development, application software support, and the electrical validation and verification of new circuits. This diverse skill set allows the center to contribute significantly to ST's global operations. Figure \ref{fig:st_tn} shows the site.
 
  \begin{figure}[htp]
   \centering
@@ -52,97 +55,74 @@ With expertise in both hardware and software, the Tunis center's activities incl
 
 
 \subsection{Application \& Product Support Team}
-The Application \& Product Support team is dedicated to delivering comprehensive customer support while managing and publishing STM32 product documentation. Their role includes providing in-depth technical support for ST’s tools and products, helping customers troubleshoot problems and optimize their use of these technologies. They ensure the accuracy, clarity, and consistency of all technical documentation, which is regularly updated to reflect the latest developments and innovations. The team is also involved in enhancing and maintaining existing products, as well as defining new products, derivatives, and application references to meet evolving market needs. Additionally, they lead initiatives related to intellectual property applications, offering specific support through the development of application notes, training programs, and other resources that help customers fully understand and utilize ST’s products. This multifaceted approach ensures both customer satisfaction and continuous improvement in the STM32 ecosystem.
+The Application \& Product Support team is dedicated to delivering comprehensive customer support while managing and publishing STM32 product documentation. Their role includes providing in-depth technical support for ST’s tools and products, helping customers troubleshoot problems and optimize their use of these technologies. They ensure the accuracy, clarity, and consistency of all technical documentation, which is regularly updated to reflect the latest developments and innovations.
+
+The team is also involved in enhancing and maintaining existing products, as well as defining new products, derivatives, and application references to meet evolving market needs. Additionally, they lead initiatives related to intellectual property applications, offering specific support through the development of application notes, training programs, and other resources that help customers fully understand and utilize ST’s products. This multifaceted approach ensures both customer satisfaction and continuous improvement in the STM32 ecosystem.
 \section{Project Context}
 
 \subsection{Problem Statement}
-Debugging software is designed to offer a unified experience across a wide range of chips, vendors and architectures, for this, it relies on a common layer of abstraction that groups these heterogeneous targets behind a single conceptual model, This approach is valid for simple primitives such as memory views and breakpoints, however, the shortcomings appear when we move to more advanced features, such as reconstructing execution flow, conditional and cross-triggering of debug events, or recovering execution history after the system failed. These features do not generalize properly, and are tightly coupled to vendor-specific implementations.
+Debugging software offers a unified experience across many chips, vendors and architectures. It achieves this through a common layer of abstraction that presents heterogeneous targets behind a single conceptual model. The abstraction holds for simple primitives such as memory views and breakpoints. It fails for the advanced features, such as reconstructing execution flow, conditional and cross-triggering of debug events, or recovering execution history after a failure. Those features do not generalize, since each is tightly coupled to a vendor-specific implementation.
 
-Further more, the current debugging workflows stop at the presentation of symptomps, A variable having unexpected values, or the code execution reaching an undesired path, while these views provide observability over the system, they do not explain why a fault has happened in the first place, observability and root-cause analysis remain separate concerns, and this is reinforced by the fact that the notion of an "erroneous state" has no formal standing in the debugging process.
-
-The gap between what the silicon can do and what the developer can actually reach, alongside the lack of formality behind the definition of an erroneous state are the central concerns of this thesis.
+The gap between what a chip provides and what a developer can reach is the central concern of this project.
 \subsection{State of the Art}
-Debugging an embedded system from a host machine needs multiple tools to work together in order to achieve the desired goal: Beyond the debug interface present on the microcontroller itself, the user needs a debug probe physically connected to the device, and software on the host machine called a debugger. Generally, the entire workflow is is tightly coupled from a specific vendor, so it's worth looking at the state of the art based on vendors.
+Debugging an embedded system from a host machine like a computer needs multiple components to work together, starting with the debug interface present on the microcontroller chip, the debugger software, and a hardware debug probe that links the microcontroller and the host machine.
 
 \begin{table}[htbp]
     \centering
     \caption{Embedded Systems IDE Vendors}
     \label{tab:ide_vendors}
-    \begin{tabularx}{\linewidth}{| @{}>{\bfseries}Y | Y | Y | Y@{} |}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.05\hsize\bfseries}Y | >{\hsize=1.05\hsize}Y | >{\hsize=0.95\hsize}Y | >{\hsize=0.95\hsize}Y | >{\hsize=1.0\hsize}Y@{} |}
         \hline
-        Vendor & \textbf{Toolchain} & \textbf{Debugger} & \textbf{Debug Probe} \\
+        Vendor & \textbf{Toolchain} & \textbf{Debugger} & \textbf{Debug server} & \textbf{Debug probe} \\
         \hline
-        IAR & IAR toolchain & C-Spy & I-Jet/I-Jet Trace \\
+        IAR & IAR toolchain (ICCARM) & C-SPY & Integrated & I-jet, I-jet Trace \\
         \hline
-        Keil & ARMCC & Keil \textmu Vision Debugger & ULink Family\\
+        Keil & Arm Compiler (armcc, armclang) & \textmu Vision debugger & Integrated & ULINK family \\
         \hline
-        Arm & ARMCC & Arm Debugger & Arm DSTREAM family \\
+        SEGGER & SEGGER toolchain & Ozone & J-Link GDB server & J-Link, J-Trace \\
         \hline
-        SEGGER & SEGGER toolchain & Ozone & J-Link/J-Trace \\
+        STMicroelectronics & ST-Clang & GDB & ST-LINK GDB server & ST-LINK \\
         \hline
-        STMicroelectronics & ST-Clang & ST-OpenOCD & STLink \\
-        \hline
-        Free & GCC/LLVM Clang  & OpenOCD/PyOCD & CMSIS-DAP \\
+        Free & GCC, LLVM & GDB or LLDB & OpenOCD or pyOCD & CMSIS-DAP \\
         \hline
     \end{tabularx}
 \end{table}
-It is also worth looking at the features provided by the proprietary debuggers for CoreSight based debug infrastructures:
+The features the proprietary debuggers provide for devices based on the Arm architecture are worth examining in turn. ST's tools are specialized forks of open-source projects and are therefore excluded from this comparison.
 
-\textit{Note: ST's tools are specialized forks of open-source projects, therefore won't be included in the comparison}
 \begin{table}[htbp]
     \centering
     \begin{threeparttable}
     \caption{Debugger Features}
     \label{tab:debugger_features}
-    \begin{tabularx}{\linewidth}{| @{}>{\bfseries}Y | Y | Y | Y | Y@{} |}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.3\hsize\bfseries}Y | >{\hsize=0.9\hsize}Y | >{\hsize=0.9\hsize}Y | >{\hsize=0.9\hsize}Y@{} |}
         \hline
-        Feature & \textbf{IAR} & \textbf{Keil} & \textbf{Arm} & \textbf{SEGGER} \\
+        Feature & \textbf{IAR} & \textbf{Keil} & \textbf{SEGGER} \\
         \hline
-        ITM trace & \cmark & \cmark & \cmark & \cmark\tnote{1} \\
+        ITM trace & \cmark & \cmark & \cmark\tnote{1} \\
         \hline
-        Instruction Trace & \cmark & \cmark & \cmark & \cmark \\
+        Instruction trace & \cmark & \cmark & \cmark \\
         \hline
-        CTI support  & \xmark & \xmark & \cmark & \xmark \\
+        CTI support & \xmark & \xmark & \xmark \\
         \hline
-        Scripting Interface & \cmark & \cmark & \cmark & \cmark \\
+        Scripting interface & \cmark & \cmark & \cmark \\
         \hline
-        Multi-Core Debugging & Limited & Limited & \cmark  & Limited \\
+        Multi-core debugging & Limited & Limited & Limited \\
         \hline
-        IDE coupling & \cmark\tnote{2} & \cmark & \cmark & \xmark \\
+        IDE coupling & \cmark\tnote{2} & \cmark & \xmark \\
         \hline
     \end{tabularx}
     \begin{tablenotes}
         \item[1] Supports UART encoding only
-        \item[2] Implemented in the IDE but can work as a standalone server
+        \item[2] Implemented in the IDE, and able to work as a standalone server
     \end{tablenotes}
     \end{threeparttable}
 \end{table}
+
 \subsection{Critique of Current State of the Art}
-While toolchain vendors aim to provide many features within their IDEs, and to a degree, an extensible platform via the scripting interface. However, the main limitation comes in the form of the UI coupling.
-The fact that the UI, or the debugger's state needs to be aware of the state of the debuggee limits the capabilities of the scripting interface, as with CoreSight components, programming happens via a memory-mapped interface, and a debugger generally has no idea about the component or register behind the address of a read/write command.
+\label{subsec:critique}
+Vendor IDEs expose a fixed set of tracing settings through their interface. they therefore reapplies the fixed configuration at every resume, which is consistent behavior from the point of view of the tool and leaves a developer no way to hold a configuration of their own.
 
-Diving more into details, IDEs generally provide a set of configurable settings for tracing capabilities, and no configuration beyond that is possible. More Specifically, when executing a program in a debug environment, the debugger will perform a sequence of actions which includes overriding the configuration registers of CoreSight components with preset values. This makes any extending behaviour on proprietary tools pretty much impossible.
-Below is a list of unacheivable features:
-\begin{table}[htbp]
-    \centering
-    \caption{Debugger Limitations}
-    \label{tab:debugger_limitations}
-    \begin{tabularx}{\linewidth}{| @{}>{\bfseries}Y | Y@{} |}
-        \hline
-        Feature & \textbf{Description} \\
-        \hline
-        Conditional Tracing & Conditional tracing relies on managing the resources of the ETM to start/stop or include/exclude portions of the execution history. \\
-        \hline
-        Event tracing & Events are elements that signal the occurence of specific conditions related to the execution and/or state of the application, they can be used to infer more specific details about the runtime context. \\
-        \hline
-        CTI awarness  & The CTI is a component that allows the propagation of events across many components, this can for example allow for the synchronization of halting multiple cores, or generating interruputs from within the debug elements. \\
-        \hline
-    \end{tabularx}
-\end{table}
-
-It is also worth looking at the limitations behind debug probes, as a note, each toolchain vendor, that being IAR, Keil, and SEGGER provide two versions of their probes, a base model, and an extended one capable of capturing trace via dedicated trace pins.
-
-\textit{Note: due to not being able to obtain and work with the DSTREAM family, it will be ommitted from this comparison.}
+Debug probes impose limitations of their own. IAR, Keil and SEGGER each supply two versions of their probe, a base model and an extended model that captures trace through dedicated pins.
 
 \begin{table}[htbp]
     \centering
@@ -151,30 +131,38 @@ It is also worth looking at the limitations behind debug probes, as a note, each
     \label{tab:debug_probe_limitations}
         \begin{tabularx}{\linewidth}{| @{}>{\bfseries}Y | Y | Y | Y | Y@{} |}
         \hline
-        Probe & \textbf{Supported by IAR} & \textbf{Supported by Keil} & \textbf{Supported by SEGGER} & \textbf{Trace Stream Capture} \\
+        Probe & \textbf{Supported by IAR} & \textbf{Supported by Keil} & \textbf{Supported by SEGGER} & \textbf{Trace pin capture} \\
         \hline
-        I-Jet & \cmark & \xmark & \xmark & \cmark \tnote{1} \\
+        I-jet & \cmark & \xmark & \xmark & \cmark \tnote{1} \\
         \hline
-        ULink & \xmark & \cmark & \xmark & \cmark \tnote{1} \\
+        ULINK & \xmark & \cmark & \xmark & \cmark \tnote{1} \\
         \hline
-        J-Link/J-Trace & \cmark & \cmark & \cmark & \cmark \tnote{1} \\
+        J-Link, J-Trace & \cmark & \cmark & \cmark & \cmark \tnote{1} \\
         \hline
-        STLink & \cmark & \cmark & \cmark & \xmark \\
+        ST-LINK & \cmark & \cmark & \cmark & \xmark \\
         \hline
         CMSIS-DAP & \cmark & \cmark & \cmark & \xmark \\
         \hline
     \end{tabularx}
     \begin{tablenotes}
         \item[1] Given the appropriate model
+        \item[2] Established by evaluating the probes during this work, in the versions given in Table \ref{tab:debugger_features}.
     \end{tablenotes}
     \end{threeparttable}
 \end{table}
 
-\subsection{Proposed Solution}
-The proposed contributions to the gaps found in the debugging ecosystem follows the same two parts as the stated problems, as a first step, the work revolved around adding support for CoreSight components in open-source tools, as well as integrating trace decoding for the newer protocols. This will allow users access to advanced features that the microcontroller is capable off without relying on expensive hardware.
+Among the tools examined, none exposes on-chip trace capture through a probe other than its own, none decodes trace capture outside of a live debug session, or a capture obtained by other means than a debug probe.
 
-For the second part, the efforts were concentrated on developing a framework for defining erroneous states, and providing a formal methodology for working up the causality chain given the available information.
+\subsection{Proposed Solution}
+The proposed solution takes the form of four results.
+
+An application note assembles into one document the procedure for using instruction trace on these devices.
+
+An implementation of drivers that allow a host machine to configure the concerned trace and debug components.
+
+A pipeline for trace decoding processing and analysis that is decoupled from the trace extraction means, and of a debugging session, allowing for offline trace analysis.
+
+A debug engine carries that chain alongside the conventional debugging capabilities and presents the result inside a development tool during a live session.
+
 \section{Conclusion}
 This first chapter introduces the host organization, STMicroelectronics, and provides the context and objectives of the project. It sets the stage for understanding the foundational aspects of the project and its significance.
-In the next chapter, the focus will shift to the theories and concepts relevant to the project, providing
-a detailed overview of the technical background and key components involved.

@@ -3,66 +3,295 @@
 %==============================================%
 
 
-article{Working,
+% Template examples kept for reference (commented out so that they are not
+% parsed as malformed entries):
+%
+% @article{key,
+%     author = {},
+%     title  = {},
+%     year   = {},
+%     note   = {[Accessed on ...]}
+% }
+%
+% @techreport{key,
+%     author      = {},
+%     title       = {},
+%     institution = {},
+%     year        = {}
+% }
+
+@misc{st_comp,
     author = {STMicroelectronics},
-    title = {Who we Are - STMicroelectronics},
-    year = 2024,
-
-    note   = {[Accessed on 13-March-2024]}
-}
-
-
-
-techreport{citation-key,
-    author = ,
-    title = ,
-    institution = ,
-    year =
-}
-
-@article{st_comp,
-    author = {STMicroelectronics},
-    title = {ST company presentation},
+    title = {{ST company presentation}},
     url           = "https://www.st.com/resource/en/company_presentation/company_presentation.pdf",
     year = 2024,
     note = {[Accessed July 2025]}
 }
-@article{cm_wp,
-    author = {Shay Gal-On and Markus Levy},
-    title = {Exploring CoreMark - A Benchmark Maximizing Simplicity and Efficacy},
-    url           = "https://www.eembc.org/techlit/articles/coremark-whitepaper.pdf",
-    year = 2012
+
+
+@mastersthesis{markusson2008,
+    author      = {Christoffer Markusson},
+    title       = {Implementation of an application debugger for software in embedded systems},
+    school      = {Link\"{o}pings universitet, Department of Computer {and} Information Science},
+    year        = 2008,
+    note        = {Report no.\ LIU-IDA/LITH-EX-A-\allowbreak{}-08/\allowbreak{}050-\allowbreak{}-SE}
 }
 
-@misc{cm_gh,
-    author = {EEMBC},
-    title = {CoreMark Github Repository},
-    url           = "https://github.com/eembc/coremark",
-    year = 2018
+@misc{dap_spec,
+    author      = {Microsoft},
+    title       = {{Debug Adapter Protocol}},
+    url         = "https://microsoft.github.io/debug-adapter-protocol/",
+    note        = {[Accessed August 2026]}
 }
-@article{csol_doc,
-    author = {Open-CMSIS-Pack},
-    title = {CMSIS-Toolbox User Guide},
-    url           = "https://open-cmsis-pack.github.io/cmsis-toolbox",
-    year = 2023
+
+@misc{gdb_rsp,
+    author      = {{Free Software Foundation}},
+    title       = {{Debugging with GDB: The GDB Remote Serial Protocol}},
+    url         = "https://sourceware.org/gdb/current/onlinedocs/gdb.html/Remote-Protocol.html",
+    note        = {[Accessed August 2026]}
 }
-@article{cmsis_pack,
-    author = {Open-CMSIS-Pack},
-    title = {Open-CMSIS-Pack Specifications},
-    url           = "https://open-cmsis-pack.github.io/Open-CMSIS-Pack-Spec/main/html/index.html",
-    year = 2012
-}
-@article{csol_ex,
-    author = {Open-CMSIS-Pack},
-    title = {csolution project examples},
-    url           = "https://github.com/Open-CMSIS-Pack/csolution-examples",
-    year = 2022
-}
-@article{csol_gh,
-    author = {Open-CMSIS-Pack},
-    title = {CMSIS-Toolbox Source Code Github Repository},
-    url           = "https://github.com/Open-CMSIS-Pack/devtools",
-    year = 2021
+
+@misc{lldb_rsp,
+    author      = {{The LLVM Project}},
+    title       = {{LLDB GDB Remote Protocol Extensions}},
+    url         = "https://lldb.llvm.org/resources/lldbgdbremote.html",
+    note        = {[Accessed August 2026]}
 }
 
 
+
+@manual{armv7m_arm,
+    author       = {{Arm Limited}},
+    title        = {{Arm Architecture Reference Manual, Armv7-M Architecture Profile}},
+    organization = {Arm Limited},
+    year         = 2021,
+    note         = {Issue E.e, ARM DDI 0403E.e}
+}
+
+@manual{cortexm7_trm,
+    author       = {{Arm Limited}},
+    title        = {{Arm Cortex-M7 Processor Technical Reference Manual}},
+    organization = {Arm Limited},
+    year         = 2018,
+    note         = {Revision r1p2, ARM DDI 0489D}
+}
+
+@manual{adiv5,
+    author       = {{Arm Limited}},
+    title        = {{Arm Debug Interface Architecture Specification, ADIv5.0 to ADIv5.2}},
+    organization = {Arm Limited},
+    year         = 2022,
+    note         = {ARM IHI 0031H}
+}
+
+@manual{coresight_arch,
+    author       = {{Arm Limited}},
+    title        = {{Arm CoreSight Architecture Specification v3.0}},
+    organization = {Arm Limited},
+    year         = 2022,
+    note         = {ARM IHI 0029G}
+}
+
+@manual{coresight_guide,
+    author       = {{Arm Limited}},
+    title        = {{Learn the Architecture: Introducing CoreSight Debug and Trace}},
+    organization = {Arm Limited},
+    year         = 2025,
+    note         = {Issue 01, document 102520\_0101\_01\_en}
+}
+
+@manual{understanding_trace,
+    author       = {{Arm Limited}},
+    title        = {{Understanding Trace: Trace Overview}},
+    organization = {Arm Limited},
+    year         = 2020,
+    note         = {Version 2.0, document 102119\_0200\_00}
+}
+
+@manual{etmv4_spec,
+    author       = {{Arm Limited}},
+    title        = {{Arm Embedded Trace Macrocell Architecture Specification, ETMv4.0 to ETMv4.6}},
+    organization = {Arm Limited},
+    year         = 2023,
+    note         = {ARM IHI 0064H.b}
+}
+
+@manual{etmv3_spec,
+    author       = {{Arm Limited}},
+    title        = {{Embedded Trace Macrocell Architecture Specification, ETMv1.0 to ETMv3.5}},
+    organization = {Arm Limited},
+    year         = 2011,
+    note         = {ARM IHI 0014Q}
+}
+
+@manual{soc400_trm,
+    author       = {{Arm Limited}},
+    title        = {{Arm CoreSight SoC-400 Technical Reference Manual}},
+    organization = {Arm Limited},
+    year         = 2023,
+    note         = {Issue 09, document 100536\_0302\_09\_en}
+}
+
+@manual{etm_m7_trm,
+    author       = {{Arm Limited}},
+    title        = {{Arm CoreSight ETM-M7 Technical Reference Manual}},
+    organization = {Arm Limited},
+    year         = 2016,
+    note         = {Revision r0p1, ARM DDI 0494D}
+}
+
+@manual{tmc_trm,
+    author       = {{Arm Limited}},
+    title        = {{Arm CoreSight Trace Memory Controller Technical Reference Manual}},
+    organization = {Arm Limited},
+    year         = 2013,
+    note         = {Revision r0p1, ARM DDI 0461B}
+}
+
+@manual{atb_spec,
+    author       = {{Arm Limited}},
+    title        = {{AMBA ATB Protocol Specification, ATBv1.0 and ATBv1.1}},
+    organization = {Arm Limited},
+    year         = 2012,
+    note         = {ARM IHI 0032C}
+}
+
+@manual{dwarf5,
+    author       = {{DWARF Debugging Information Format Committee}},
+    title        = {{DWARF Debugging Information Format Version 5}},
+    year         = 2017,
+    url          = "https://dwarfstd.org/doc/DWARF5.pdf"
+}
+
+@manual{aaelf32,
+    author       = {{Arm Limited}},
+    title        = {{ELF for the Arm Architecture}},
+    organization = {Arm Limited},
+    year         = 2024,
+    note         = {AAELF32, ARM IHI 0044},
+    url          = "https://github.com/ARM-software/abi-aa/blob/main/aaelf32/aaelf32.rst"
+}
+
+@misc{llvm_mc,
+    author       = {{The LLVM Project}},
+    title        = {{The LLVM Target-Independent Code Generator: The MC Layer}},
+    url          = "https://llvm.org/docs/CodeGenerator.html",
+    note         = {LLVM 22. [Accessed August 2026]}
+}
+
+@misc{cmsis_svd,
+    author       = {{Arm Limited}},
+    title        = {{CMSIS System View Description (CMSIS-SVD)}},
+    url          = "https://open-cmsis-pack.github.io/svd-spec/main/index.html",
+    note         = {[Accessed August 2026]}
+}
+
+@manual{armv8m_arm,
+    author       = {{Arm Limited}},
+    title        = {{Arm Architecture Reference Manual, Armv8-M Architecture Profile}},
+    organization = {Arm Limited},
+    year         = 2024,
+    note         = {Version DDI0553B.z}
+}
+
+@manual{an4989,
+    author       = {STMicroelectronics},
+    title        = {{AN4989: STM32 Microcontroller Debug Toolbox}},
+    organization = {STMicroelectronics},
+    year         = 2026,
+    note         = {Rev 4}
+}
+
+@manual{rm0477,
+    author       = {STMicroelectronics},
+    title        = {{RM0477: STM32H7Rx/7Sx Arm-based 32-bit MCUs Reference Manual}},
+    organization = {STMicroelectronics},
+    year         = 2025,
+    note         = {Rev 9}
+}
+
+@manual{um3276,
+    author       = {STMicroelectronics},
+    title        = {{UM3276: STM32H7Rx/7Sx Nucleo-144 Board (MB1737)}},
+    organization = {STMicroelectronics},
+    year         = 2024,
+    note         = {Rev 2}
+}
+
+@manual{ds_h7s3,
+    author       = {STMicroelectronics},
+    title        = {{STM32H7S3x8, STM32H7S7x8 Datasheet}},
+    organization = {STMicroelectronics},
+    year         = 2025,
+    note         = {DS14359 Rev 6}
+}
+
+@misc{openocd,
+    author       = {{The OpenOCD Project}},
+    title        = {{Open On-Chip Debugger}},
+    url          = "https://openocd.org/",
+    note         = {Version 0.12.0. [Accessed August 2026]}
+}
+
+@misc{opencsd,
+    author       = {{Linaro Limited}},
+    title        = {{OpenCSD: An Open Source CoreSight Trace Decode Library}},
+    url          = "https://github.com/Linaro/OpenCSD",
+    note         = {Version 1.8.3. [Accessed August 2026]}
+}
+
+@misc{lldb,
+    author       = {{The LLVM Project}},
+    title        = {{The LLDB Debugger}},
+    url          = "https://lldb.llvm.org/",
+    note         = {LLVM 22. [Accessed August 2026]}
+}
+
+
+@manual{rm0090,
+    author       = {STMicroelectronics},
+    title        = {{RM0090: STM32F405/415, STM32F407/417, STM32F427/437 and STM32F429/439 Advanced Arm-based 32-bit MCUs Reference Manual}},
+    organization = {STMicroelectronics},
+    year         = 2021,
+    note         = {Rev 19}
+}
+
+@manual{rm0433,
+    author       = {STMicroelectronics},
+    title        = {{RM0433: STM32H742, STM32H743/753 and STM32H750 Advanced Arm-based 32-bit MCUs Reference Manual}},
+    organization = {STMicroelectronics},
+    year         = 2023,
+    note         = {Rev 8}
+}
+
+@misc{iar_etm_trace,
+    author       = {{IAR Systems}},
+    title        = {{Requirements for Using ETM Trace, IAR Embedded Workbench for Arm}},
+    url          = "https://docs.iar.com/ewarm/10.1x/en/c-spy-debugging/trace/introduction-to-using-trace/requirements-for-using-etm-trace.html",
+    note         = {[Accessed September 2026]}
+}
+
+@inproceedings{frankentrace,
+    author    = {Matraszek, Maciej and Banaszek, Mateusz and Ciszewski, Wojciech and Iwanicki, Konrad},
+    title     = {{FrankenTrace: Low-Cost, Cycle-Level, Widely Applicable Program Execution Tracing for ARM Cortex-M SoC}},
+    booktitle = {Cyber-Physical Systems and Internet of Things Week 2023 (CPS-IoT Week Workshops '23)},
+    year      = 2023,
+    publisher = {ACM},
+    doi       = {10.1145/3576914.3587521}
+}
+
+@inproceedings{ninja,
+    author    = {Ning, Zhenyu and Zhang, Fengwei},
+    title     = {{Ninja: Towards Transparent Tracing and Debugging on ARM}},
+    booktitle = {26th USENIX Security Symposium},
+    year      = 2017,
+    publisher = {USENIX Association}
+}
+
+@thesis{rath_openocd,
+    author      = {Rath, Dominic},
+    title       = {{Open On-Chip Debugger: Design and Implementation of an On-Chip Debug Solution for Embedded Target Systems}},
+    type        = {Diploma thesis},
+    institution = {University of Applied Sciences Augsburg},
+    year        = 2005
+}

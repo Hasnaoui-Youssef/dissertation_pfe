@@ -1,0 +1,29 @@
+@startuml
+!include puml-style.iuml
+skinparam ClassAttributeIconSize 0
+class "Session" as S {
+  capabilities advertised
+  enable the matching views
+}
+class "Trace view model" as TM {
+  append an increment
+}
+class "Trace view" as TV
+class "Memory view model" as MM
+class "Memory view" as MV
+class "Peripheral view model" as PM
+class "Peripheral view" as PV
+S *-- TM
+S *-- MM
+S *-- PM
+TM <-- TV : renders
+MM <-- MV : renders
+PM <-- PV : renders
+S -> "Engine" : extension requests
+"Engine" -> S : extension events
+note bottom of TM
+  The engine sends increments,
+  so the cost of an update is
+  proportional to what changed.
+end note
+@enduml

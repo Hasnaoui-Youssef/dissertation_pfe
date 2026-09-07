@@ -1,0 +1,31 @@
+@startuml
+!include puml-style.iuml
+participant "Engine" as E
+participant "Debug primitives\nprovider" as L
+participant "Extended capabilities\nprovider" as S
+participant "Target" as T
+
+group Source-level step
+  E -> L : step
+  L -> S : RSP step
+  S -> T : halt, step, resume
+  T --> S : stopped
+  S --> L : stop reply
+  L --> E : stopped event
+end
+
+group Peripheral read while running
+  E -> S : read memory
+  S -> T : debug-hardware access
+  T --> S : value
+  S --> E : value
+  note right of L : not involved,\nthe program keeps running
+end
+
+group Reset
+  E -> S : reset
+  S -> T : reset
+  E -> L : resynchronize
+  note right of L : held a view of a program\nthat no longer exists
+end
+@enduml

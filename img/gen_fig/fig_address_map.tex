@@ -1,0 +1,46 @@
+\documentclass[border=3pt]{standalone}
+\input{fig-preamble}
+\begin{document}
+\begin{tikzpicture}[fig,
+  seg/.style={draw,thick,minimum width=22mm,minimum height=8mm,anchor=south west,
+              font=\small,inner sep=1pt},
+  side/.style={font=\scriptsize,anchor=west,inner sep=0pt},
+  brc/.style={decorate,decoration={brace,amplitude=3pt},thick}]
+
+\def\sh{8}   % segment height in mm
+\def\bw{22}  % bar width in mm
+
+% ---- the eight partitions, low address at the bottom --------------------
+\foreach \n/\name in {0/Code, 1/SRAM, 2/Peripheral, 3/RAM, 4/RAM,
+                      5/Device, 6/Device, 7/System}
+  {\node[seg] (p\n) at (0,\n*\sh mm) {\name};}
+
+% ---- direction of increasing address ------------------------------------
+\draw[ln] (-5mm,0) -- (-5mm,8*\sh mm)
+      node[midway,rotate=90,anchor=south,font=\scriptsize,yshift=1mm]
+      {increasing address};
+
+% ---- purposes -----------------------------------------------------------
+\node[side] at ($(p0.east)+(2mm,0)$) {program, typically flash memory};
+\node[side] at ($(p1.east)+(2mm,0)$) {on-chip memory};
+\node[side] at ($(p2.east)+(2mm,0)$) {on-chip peripherals};
+\draw[brc] ($(p4.north east)+(2mm,-0.8mm)$) -- ($(p3.south east)+(2mm,0.8mm)$);
+\node[side] at ($(p3.north east)+(5mm,0)$) {external memory};
+\draw[brc] ($(p6.north east)+(2mm,-0.8mm)$) -- ($(p5.south east)+(2mm,0.8mm)$);
+\node[side] at ($(p5.north east)+(5mm,0)$) {external devices};
+
+% ---- the System partition, expanded -------------------------------------
+\node[seg,minimum height=6mm,minimum width=26mm,fill=figgrey,anchor=south west]
+     (ppb) at (58mm,56mm) {\scriptsize Private Peripheral Bus};
+\node[seg,minimum height=6mm,minimum width=26mm,anchor=south west]
+     (vsy) at (58mm,62mm) {\scriptsize Vendor\_SYS};
+
+\draw[figdark,thin] (p7.north east) -- (vsy.north west);
+\draw[figdark,thin] (p7.south east) -- (ppb.south west);
+
+\node[side,anchor=west] at ($(ppb.east)+(2mm,0)$)
+     {\begin{minipage}{34mm}\scriptsize registers of the system and\\debug components\end{minipage}};
+\node[note,anchor=north] at ($(ppb.south)+(0,-1mm)$) {not to scale};
+
+\end{tikzpicture}
+\end{document}

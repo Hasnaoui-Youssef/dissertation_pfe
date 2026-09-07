@@ -1,0 +1,37 @@
+@startuml
+!include puml-style.iuml
+skinparam ClassAttributeIconSize 0
+class "Decoder record" as REC {
+  instruction range
+  exception
+  trace-on
+  loss of synchronization
+}
+class "Reconstructed instruction" as RI {
+  address
+  encoding
+  printed form
+  position in capture
+}
+class "Source location" as SL {
+  file
+  line
+  function
+}
+class "Line block" as LB
+class "Function block" as FB
+class Gap {
+  reason
+  position
+}
+REC ..> RI : expands to
+FB *-- "1..*" LB
+LB *-- "1..*" RI
+RI *-- "1..*" SL : innermost first
+note right of Gap
+  Outside the containment.
+  Indexed into the
+  instruction stream
+  by position.
+end note
+@enduml

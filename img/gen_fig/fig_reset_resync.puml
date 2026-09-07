@@ -1,0 +1,22 @@
+@startuml
+!include puml-style.iuml
+participant "Frontend" as F
+participant "Engine" as E
+participant "Debugger library" as L
+participant "Debug server" as S
+participant "Target" as T
+F -> E : restart
+activate E
+E -> E : shut down the trace pipeline,\ndiscard the accumulated record
+E -> S : reset and halt (direct path)
+S -> T : reset
+E -> S : arm the resynchronization flag
+E -> L : step one instruction
+L -> S : RSP step
+S -> S : flag armed, do not execute
+S --> L : report of the current state
+L --> E : stopped event
+E -> E : rebuild the trace pipeline
+E -> F : state update
+deactivate E
+@enduml

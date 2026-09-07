@@ -1,0 +1,221 @@
+\chapter{Architecture}
+\chaplabel{ch:architecture}
+
+\section*{Introduction}
+This chapter states the structure of the solution. It names the components, states what each is responsible for, and states why the responsibilities were divided as they were. Implementation is the subject of Chapter \ref{ch:implementation}.
+
+\section{System Overview}
+\label{sec:overview}
+
+\subsection{Global Architecture}
+The frontend presents the debug session to the developer. The engine implements the debug logic. The debug probe is reached from the host over USB and reaches the target over SWD. The target executes the program under examination.
+
+The frontend and the engine are separate programs joined by the Debug Adapter Protocol. That protocol is the only boundary in the system between separate programs. Every decision about what a debug operation means is taken inside the engine.
+
+The engine contains a debug server, and every access to the device passes through it. A debugger library sits beside that server inside the same program and supplies the conventional debug primitives. Section \ref{subsec:division} states how the two divide the work.
+
+Captured trace is stored on the device and read back over the connection that already carries every other operation. No trace port and no trace-capable probe are used.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{fig_global_architecture.pdf}
+    \caption{Global architecture of the solution}
+    \label{fig:global_arch}
+\end{figure}
+
+\subsection{Design Rules}
+The engine holds every debug capability. The frontend contains no logic that decides what a debug operation means, so a second frontend can be written against the same engine. No component of the engine names an interface of a particular development tool.
+
+Capabilities the standard protocol does not define are exposed through its extension mechanism. Instruction trace, live memory observation and peripheral inspection are reached this way.
+
+The layers that carry the protocol depend on no debugger library, so their behavior can be exercised with no device attached.
+
+External constraints shaped the result. Instruction trace and live observation need operations the conventional debug path does not provide, which produced the division of Section \ref{subsec:division}. The libraries used are built without run-time type information, which restricts how components requiring it may be linked, as Section \ref{subsec:boundaries} states.
+
+\section{Instruction Trace Architecture}
+\label{sec:trace_arch}
+This section states the pipeline that turns the execution of a program into a record expressed in source terms. It is the primary contribution of the project.
+
+\subsection{Pipeline Stages}
+Trace leaves the processor as a compressed packet stream, and reconstructing execution from it requires the program image.
+
+Generation and capture configure the components on the device and cause trace to be produced and stored. Extraction moves the stored bytes to the host. Decoding converts those bytes into trace elements. Reconstruction and correlation convert those elements into executed instructions, each attributed to a source location.
+
+Each stage depends on one thing. Generation and capture depend on the device and on the debug server. Extraction depends on the debug server. Decoding depends on the trace protocol. Reconstruction depends on the program image and its debug information. The last two stages therefore run on a stored capture with no device present.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{fig_pipeline.pdf}
+    \caption{The four-stage instruction trace pipeline}
+    \label{fig:pipeline}
+\end{figure}
+
+\subsection{Generation and Capture}
+\label{subsec:gen_capture}
+The trace source is the trace unit paired with the processor. The trace sink is a TMC operating as an on-chip buffer. An on-chip sink removes the need for trace pins and for a probe able to capture them.
+
+Neither component is commanded by the host while the program runs. Both follow the run state of the processor through the event callbacks of the debug server. They are armed when the processor is about to resume, and capture stops when the processor halts.
+
+Configuration therefore happens while the processor is stopped, which is when access to these components is reliable. The host issues no command during a run, so the technique remains non-intrusive.
+
+\subsection{Extraction}
+Extraction begins when the processor halts and capture has stopped.
+
+The quantity to read is determined before reading. The fill level of the buffer is interrogated. A buffer that has wrapped is read whole, since every word then holds data.
+
+The buffer is read through a single register that returns successive words, so the address does not advance between reads. The result reaches the engine as a callback, and the engine runs no polling loop.
+
+A fixed synchronization pattern is emitted ahead of every payload. A decoder starting at that point recovers alignment with no dependence on what preceded it. Each capture is therefore decodable on its own. The capture boundaries of Section \ref{subsec:trace_lifecycle} rely on that property.
+
+\subsection{Decoding}
+Decoding is performed by an external library. The packet protocol is large and a conforming implementation already exists.
+
+The decoder is assembled for each capture. The deformatter configuration states whether the stream carries formatter frames. The configuration of the trace unit is read from the identification and control registers of the device itself, so the decoder matches the hardware that produced the capture. The program image is registered as a source of instruction bytes. A sink object receives the decoded elements.
+
+The engine keeps instruction ranges, exceptions, exception returns, trace-on indications and loss-of-synchronization indications. Timestamps and cycle counts are discarded at this boundary. Timing analysis would be reintroduced at this point.
+
+\subsection{Reconstruction and Source Correlation}
+The decoder reports execution as ranges. Each range names a start address, an end address and a count. Expanding a range into instructions requires the length of every instruction within it.
+
+The engine disassembles the whole image once, when it is loaded. For every instruction it records the address, the length, the printed form, the control flow classification and the source location. Reconstruction is then a sequence of lookups.
+
+Source correlation happens in that same pass. Every instruction carries the chain of source locations obtained from the debug information, innermost first, so an address inside an inlined expansion reports both the expanded function and the call site.
+
+The reconstructed instructions are then transformed. Ranges are expanded into instructions. Consecutive instructions sharing a source location are grouped into line blocks, and consecutive line blocks sharing a function into function blocks. Discontinuities are detected and represented explicitly.
+
+\subsection{Trace Data Model}
+The stages exchange value types.
+
+A reconstructed instruction records one instruction reported by the trace. It carries the decoded instruction, the offset within the capture that produced it, and the identifier of the stream it came from. A line block records a run of instructions sharing one source location, and carries that location, an address range and an instruction count. A function block carries a function name and the line blocks belonging to it. A gap carries a reason and the instruction index at which it occurred.
+
+The source location of an instruction is obtained by looking up its address in the table built when the image was loaded. A capture therefore produces the instructions, the function blocks and the gaps as separate results over the same execution.
+
+The model is chronological and holds no deduplication. A loop executed ten times produces ten blocks. The record states what happened.
+
+\subsection{Trace Lifecycle}
+\label{subsec:trace_lifecycle}
+Trace is a series of captures, each bounded by a halt.
+
+Trace is unavailable when the device provides no usable components. It is idle when the components exist and tracing has not been requested. It is armed when tracing has been requested and the processor has not resumed. It is capturing while the processor runs. It returns to armed after a halt, once the buffer has been drained.
+
+A reset returns the trace components to their unconfigured state. The pipeline is torn down and rebuilt, and the accumulated record is discarded, since it describes a program run that no longer exists.
+
+A buffer that fills during a run loses its oldest data, and the loss appears in the record as a gap.
+
+The boundary between two captures is itself a discontinuity. The processor was halted between them and nothing was recorded during that interval. Representing the boundary prevents the record from implying a transfer of control from the last instruction of one capture to the first instruction of the next.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{fig_trace_lifecycle.pdf}
+    \caption{The trace lifecycle}
+    \label{fig:trace_life}
+\end{figure}
+
+\section{Debugger Architecture}
+\label{sec:debugger_arch}
+The pipeline requires a host that configures a device, halts it, reads its memory and loads its program image. Providing those capabilities amounts to building a debugger. Making the result usable required the conventional debug primitives alongside them.
+
+\subsection{Layers}
+The protocol types layer defines the protocol messages as value types. The protocol transport layer carries them and performs framing, dispatch and cancellation. Neither depends on a debugger library. The handler layer implements one class per protocol request, and a handler parses its arguments, calls the layer below and returns a response. The core layer holds the debug logic. The provider layer wraps the external systems the engine drives, presenting each behind a narrow interface.
+
+The core layer depends on the protocol types, since the values it produces are the values that travel on the wire. It does not depend on the transport, so a frontend speaking another protocol could reuse it.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{fig_module_layers.pdf}
+    \caption{Module dependency graph}
+    \label{fig:layers}
+\end{figure}
+
+\subsection{The Debug Context}
+A single object composes the core layer. It owns the event bus, the debugger provider, the debug server provider and ten components, and every handler holds a reference to it. The disassembler, device and trace providers are owned by the components that use them.
+
+Each component owns one area of debug state. Their responsibilities are the placement and resolution of breakpoints, memory access, disassembly, the tracking of loaded modules, the presentation of variables and expressions, the control of execution, the lifecycle of the session, live memory observation, device and peripheral knowledge, and instruction trace.
+
+Components reach one another through the composing object. Several operations cross areas. Placing a breakpoint consults the device memory map. Reporting trace consults the disassembly of the program image.
+
+\subsection{Providers}
+A provider adapts an external system to the needs of the engine.
+
+The debugger provider holds the debugger object and the target object, together with the single operation that serializes access to them. That operation is its only public entry point, so no caller can take the underlying lock incorrectly.
+
+The debug server provider wraps OpenOCD. It exposes memory access, command execution, enumeration and configuration of the trace components, subscription to trace data, and subscription to target state changes.
+
+The device provider supplies the memory map, which states which regions exist and whether each is writable, and the peripheral description. The breakpoint decision of Section \ref{subsec:division} consults the memory map.
+
+The disassembler provider loads a program image and produces the precomputed instruction table.
+
+The trace provider owns the decoding and reconstruction stages. It accepts a block of captured bytes together with a way of looking up instructions, and returns the increment of instructions, blocks and gaps that the block produced.
+
+No type belonging to an external library appears in any of these interfaces.
+
+\subsection{Division of Work Between the Debugger Library and the Debug Server}
+\label{subsec:division}
+The engine drives two systems against one device. Neither alone provides what the project requires.
+
+The debugger library supplies the conventional primitives already implemented, covering the interpretation of debug information, expression evaluation, stepping at source granularity and stack unwinding. Reimplementing these would have consumed the time available without producing anything the project set out to contribute. The library reaches the target over the GDB remote serial protocol, served by the debug server inside the same process.
+
+That protocol does not carry what the trace pipeline needs. Its escape hatch transports a server command as text and returns an unstructured reply, while the decoder must be configured from typed register values read out of the hardware. A capture arrives as a push from the server at the moment of a halt, and the protocol defines no channel for delivering one. The engine therefore also calls the debug server directly, through its provider, and the debugger library is unaware of those calls.
+
+A direct call does not require the processor to be halted. Reading memory through the debugger library requires a stopped program, since the protocol carrying that read reports only when the program is stopped. A direct read is performed by the debug hardware while the processor runs. Live observation of memory and of peripherals depends entirely on that distinction.
+
+Run control belongs to the debugger library. Every request to continue, pause or step passes through it, and the debug server carries those requests.
+
+Memory access is selected when the session is established. A session the engine launched installs the direct path, and every developer read and write then uses it. A session attached to a server the engine did not create has no direct path, so trace, live memory observation and peripheral inspection are unavailable in that mode.
+
+Reset is performed on the direct path, because the reset behavior required is not reachable through the conventional one. The debugger library is then holding a view of a program that no longer exists, and a mechanism is required to inform it. Chapter \ref{ch:implementation} describes that mechanism.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.62\linewidth]{fig_division_responsibility.pdf}
+    \caption{Division of work between the debugger library and the debug server}
+    \label{fig:division}
+\end{figure}
+
+\subsection{Concurrency}
+\label{subsec:concurrency}
+The engine is multi-threaded by necessity. Protocol messages must be read while a request is being handled, so that cancellation is possible. Observation of memory and peripherals must continue while the program runs. The debugger library delivers its events on a thread of its own.
+
+One thread reads messages from the wire and one executes them. A cancellation is recorded as soon as it is read, so a request still queued may be abandoned. Execution remains single-threaded, so no two handlers run at once and no handler needs to defend itself against another.
+
+The debug server runs a loop that waits on its sockets, and every server operation executes on that thread.
+
+Worker threads perform the remaining work. One runs per active observation, one decodes trace, one precomputes the disassembly of the program image, one parses the device description, and one reports the progress of long operations.
+
+The debugger library is not safe against concurrent use. Access to its target object is serialized by a single operation that takes a callable and runs it under the lock, and the lock is not otherwise reachable. Observation workers stand outside that arrangement, since they read through the debug server and never touch the debugger library. Observation therefore continues while a request is being handled.
+
+\subsubsection{The Event Bus}
+Work performed on a background thread must reach the frontend, and the threads that produce it do not construct protocol messages. A producer publishes a typed value describing what happened, and a single subscriber converts that value into a protocol event and sends it. Events are serialized onto the wire in one place, and every producer stays free of any knowledge of the wire format.
+
+\subsection{Protocol Layer}
+Capabilities are declared at the start of a session. The declaration is assembled from the handlers themselves. Each handler states the capabilities it provides, and the set sent to the frontend is the union of those statements. Adding a handler advertises its capability with no central list to update.
+
+Capabilities the standard protocol does not define are carried by extension requests and events under names of their own, covering instruction trace, live memory observation, peripheral inspection and module symbols. Each is advertised through the same mechanism, so a frontend discovers at connection time what the engine provides. Table \ref{tab:handlers} lists them.
+
+\subsection{Frontend}
+The frontend is an extension for a development tool. It contributes the views the standard protocol does not provide.
+
+A session object tracks which capabilities the engine advertised and enables the matching views. Each view holds a model that accumulates what the engine sends and a presentation that renders it. No view interprets a debug concept on its own.
+
+The engine sends increments. The model appends and the view renders the accumulation, so the cost of an update follows the size of the change.
+
+\section{System-Wide Rules}
+\label{sec:design_rules}
+
+\subsection{Error Model}
+A failed operation produces an error response and the process continues. A device may be absent, held in reset, protected against connection or unresponsive, and none of those conditions is a defect of the engine.
+
+Providers report failure as a value carrying a message. The core and protocol layers use the error representation of the library that carries the protocol, since a failure there becomes an error response.
+
+\subsection{Module Boundaries}
+\label{subsec:boundaries}
+No component of the core layer constructs a protocol message. Components publish typed values and one place converts them. Without that rule every background thread would need to know the wire format, and a change to that format would reach into every component.
+
+The compiler library used for disassembly is built without run-time type information. The trace decoding library requires it. The two cannot be combined within a single translation unit. The disassembler provider is the only component that touches the first, and its interface exposes none of its types. The trace decoder links the second privately. The pipeline is split across two components for this reason as well as for the separation stated in Section \ref{sec:trace_arch}.
+
+\section{Conclusion}
+The instruction trace pipeline is the contribution of the project. Its stages are separated so that each depends on one thing, which is the device, the debug server, the trace protocol, or the program image.
+
+The debugger is the vehicle. Its structure follows from driving a debugger library and a debug server against one device, so that the capabilities each provides are available without the limitations of either.
+
+Consequences of that arrangement recur in the next chapter. Observation continues while the program runs, which makes live memory and peripheral views possible. Reset is performed outside the conventional path, which makes resynchronization necessary. Chapter \ref{ch:implementation} describes how each was realized.

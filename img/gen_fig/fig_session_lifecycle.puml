@@ -1,0 +1,19 @@
+@startuml
+!include puml-style.iuml
+hide empty description
+[*] --> Unconfigured
+Unconfigured --> Configuring : launch
+Unconfigured --> Configuring : attach
+Configuring --> Stopped : configuration complete
+Stopped --> Running : continue, step
+Running --> Stopped : breakpoint, watchpoint, halt
+Stopped --> Terminated : disconnect
+Running --> Terminated : disconnect
+Terminated --> [*]
+note bottom of Configuring
+  On the attach path the direct
+  path is absent, so trace, live
+  memory observation and peripheral
+  inspection are unavailable.
+end note
+@enduml

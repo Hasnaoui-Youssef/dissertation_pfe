@@ -1,0 +1,13 @@
+@startuml
+!include puml-style.iuml
+hide empty description
+left to right direction
+[*] --> Unavailable
+Unavailable --> Idle : components found
+Idle --> Armed : trace enabled
+Armed --> Idle : trace disabled
+Armed --> Capturing : processor resumes
+Capturing --> Armed : processor halts,\nbuffer drained,\ncapture boundary emitted
+Capturing --> Idle : reset,\npipeline torn down,\nrecord discarded
+Armed --> Idle : reset,\npipeline torn down
+@enduml

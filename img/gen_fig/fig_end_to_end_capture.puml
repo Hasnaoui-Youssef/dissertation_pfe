@@ -1,0 +1,23 @@
+@startuml
+!include puml-style.iuml
+participant "Target" as T
+participant "Debug server\n(server thread)" as S
+participant "Trace component\n(decode worker)" as D
+participant "Event bus\nsubscriber" as B
+participant "Frontend" as F
+T -> S : halt event
+activate S
+S -> S : stop capture, flush
+S -> S : read fill level
+S -> S : drain buffer
+S -> D : payload (callback)
+deactivate S
+activate D
+D -> D : decode bytes into elements
+D -> D : reconstruct instructions,\nattribute source locations
+D -> B : publish increment
+deactivate D
+activate B
+B -> F : extension event
+deactivate B
+@enduml

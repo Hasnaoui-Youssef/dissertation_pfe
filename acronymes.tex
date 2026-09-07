@@ -1,4 +1,8 @@
 \chapter*{List of Acronyms}
+\phantomsection
+\addcontentsline{toc}{chapter}{List of Acronyms}
+\adjustmtc
+\markboth{List of Acronyms}{}
 
 %=============== Glossary example ==============%
 % it's an enhanced itemize list to make it      %
@@ -7,44 +11,24 @@
 
 \begin{acronyms}
 
-
-    \sortitem[MCU]{
-        \textbf{M}icro \textbf{C}ontroller \textbf{U}nit
-    }
-    \sortitem[ABI]{
-    	\textbf{A}pplication \textbf{B}inary \textbf{I}nterface
-    }
-     \sortitem[IV]{
-        \textbf{I}nitialization \textbf{V}ector
-    }
-    \sortitem[HAL]{
-        \textbf{H}ardware \textbf{A}bstraction \textbf{L}ayer
-    }
     \sortitem[ARM]{
         \textbf{A}dvanced \textbf{R}ISC \textbf{M}achine
     }
-    \sortitem[USART]{
-        \textbf{U}niversal \textbf{S}ynchronous \textbf{A}synchronous
-    \textbf{R}eceiver \textbf{T}ransmitter
+    \sortitem[MCU]{
+        \textbf{M}icro\textbf{c}ontroller \textbf{U}nit
     }
     \sortitem[UART]{
         \textbf{U}niversal \textbf{A}synchronous
     \textbf{R}eceiver \textbf{T}ransmitter
     }
-    \sortitem[FPU]{
-        \textbf{F}loating \textbf{P}oint \textbf{U}nit
-    }
-    \sortitem[IP]{
-        \textbf{I}ntegrated \textbf{P}eripheral
+    \sortitem[VCP]{
+        \textbf{V}irtual \textbf{C}OM \textbf{P}ort
     }
     \sortitem[IDE]{
         \textbf{I}ntegrated \textbf{D}evelopement \textbf{E}nvironment
     }
     \sortitem[CMSIS]{
         \textbf{C}ortex \textbf{M}icrocontroller \textbf{S}oftware \textbf{I}nterface \textbf{S}tandard
-    }
-    \sortitem[LL]{
-        \textbf{L}ow-\textbf{L}ayer
     }
     \sortitem[GNU]{
         \textbf{G}NU's \textbf{N}ot \textbf{U}nix
@@ -61,23 +45,11 @@
     \sortitem[API]{
         \textbf{A}pplication \textbf{P}rogramming \textbf{I}nterface
     }
-    \sortitem[RTOS]{
-        \textbf{R}eal-\textbf{T}ime \textbf{O}perating \textbf{S}ystem
-    }
-    \sortitem[RTE]{
-        \textbf{R}un\textbf{T}ime \textbf{E}nvironment
-    }
-    \sortitem[PLM]{
-        \textbf{P}roject \textbf{L}ifetime \textbf{M}anagement
-    }
-    \sortitem[YAML]{
-        \textbf{Y}et \textbf{A}nother \textbf{M}arkup \textbf{L}anguage
+    \sortitem[SB]{
+        \textbf{S}cripting \textbf{B}ridge
     }
     \sortitem[JSON]{
         \textbf{J}ava\textbf{S}cript \textbf{O}bject \textbf{N}otation
-    }
-    \sortitem[GUI]{
-        \textbf{G}raphical \textbf{U}ser \textbf{I}nterface
     }
     \sortitem[ELF]{
         \textbf{E}xecutable and \textbf{L}inkable \textbf{F}ormat
@@ -85,41 +57,8 @@
     \sortitem[DWARF]{
         \textbf{D}ebugging \textbf{W}ith \textbf{A}ttributed \textbf{R}ecord \textbf{F}ormats
     }
-    \sortitem[DFP]{
-        \textbf{D}evice \textbf{F}amily \textbf{P}ack
-    }
-    \sortitem[BSP]{
-        \textbf{B}oard \textbf{S}upport \textbf{P}ack
-    }
     \sortitem[SVD]{
         \textbf{S}ystem \textbf{V}iew \textbf{D}escription
-    }
-    \sortitem[SCVD]{
-        \textbf{S}oftware \textbf{C}omponent \textbf{V}iewer \textbf{D}escription
-    }
-    \sortitem[RegEx]{
-        \textbf{Reg}ular \textbf{Ex}pression
-    }
-    \sortitem[OCD]{
-        \textbf{O}n-\textbf{C}hip \textbf{D}ebugger
-    }
-    \sortitem[I/O]{
-        \textbf{I}nput/\textbf{O}utput
-    }
-    \sortitem[CLI] {
-        \textbf{C}ommand-\textbf{L}ine \textbf{I}nterface
-    }
-    \sortitem[BRE]{
-        \textbf{B}asic \textbf{R}egular \textbf{E}xpression
-    }
-    \sortitem[ERE]{
-        \textbf{E}xtended \textbf{R}egular \textbf{E}xpression
-    }
-    \sortitem[SRE]{
-        \textbf{S}imple \textbf{R}egular \textbf{E}xpression
-    }
-    \sortitem[POSIX]{
-        \textbf{P}ortable \textbf{O}perating \textbf{S}ystem \textbf{I}nterface
     }
     \sortitem[IEEE]{
         \textbf{I}nstitute of \textbf{E}lectrical and \textbf{E}lectronics \textbf{E}ngineers
@@ -127,29 +66,17 @@
     \sortitem[RAM]{
         \textbf{R}andom \textbf{A}ccess \textbf{M}emory
     }
-    \sortitem[SRAM]{
-        \textbf{S}tatic \textbf{R}andom \textbf{A}ccess \textbf{M}emory
-    }
-    \sortitem[DRAM]{
-        \textbf{D}ynamic \textbf{R}andom \textbf{A}ccess \textbf{M}emory
-    }
-    \sortitem[SDRAM]{
-        \textbf{S}ynchronous \textbf{D}ynamic \textbf{R}andom \textbf{A}ccess \textbf{M}emory
-    }
     \sortitem[ROM]{
         \textbf{R}ead-\textbf{O}nly \textbf{M}emory
     }
-    \sortitem[HFSR]{
-    	\textbf{H}ard\textbf{F}ault \textbf{S}tatus \textbf{R}egister
-    }
-    \sortitem[CFSR]{
-    	\textbf{H}ard\textbf{F}ault \textbf{S}tatus \textbf{R}egister
-    }
     \sortitem[DAP]{
-    	\textbf{D}ebug \textbf{A}dapter \textbf{P}ort
+    	\textbf{D}ebug \textbf{A}ccess \textbf{P}ort (Arm Debug Interface)
+    }
+    \sortitem[CMSIS-DAP]{
+    	The standard interface between a debug probe and a host, defined by Arm as part of CMSIS
     }
     \sortitem[SWD]{
-    	\textbf{S}ingle-\textbf{W}ire \textbf{D}ebug
+    	\textbf{S}erial \textbf{W}ire \textbf{D}ebug
     }
     \sortitem[SWO]{
     	\textbf{S}erial \textbf{W}ire \textbf{O}utput
@@ -157,38 +84,93 @@
     \sortitem[JTAG]{
     	\textbf{J}oint \textbf{T}est \textbf{A}ction \textbf{G}roup
     }
-    \sortitem[CPU]{
-    	\textbf{C}entral \textbf{P}rocessing \textbf{U}nit
-    }
     \sortitem[GDB]{
     	\textbf{G}NU \textbf{D}e\textbf{b}ugger
     }
-    \sortitem[SCB]{
-    	\textbf{S}ystem \textbf{C}ontrol \textbf{B}lock
+
+    \sortitem[AMBA]{
+        \textbf{A}dvanced \textbf{M}icrocontroller \textbf{B}us \textbf{A}rchitecture
     }
-    \sortitem[MVE]{
-    	\textbf{M}-Profile \textbf{V}ector \textbf{E}xtension
+    \sortitem[APB]{
+        \textbf{A}dvanced \textbf{P}eripheral \textbf{B}us
     }
-    \sortitem[FPU]{
-    	\textbf{F}loating-\textbf{P}oint \textbf{U}nit
+    \sortitem[AHB]{
+        \textbf{A}dvanced \textbf{H}igh-performance \textbf{B}us
     }
-    \sortitem[DSP]{
-    	\textbf{D}igital \textbf{S}ignal \textbf{P}rocessor
+    \sortitem[AXI]{
+        \textbf{A}dvanced e\textbf{X}tensible \textbf{I}nterface
     }
-    \sortitem[MOPS]{
-    	\textbf{M}ega \textbf{O}perations \textbf{P}er \textbf{S}econd
+    \sortitem[ATB]{
+        \textbf{A}dvanced \textbf{T}race \textbf{B}us
     }
-    \sortitem[MFLOPS]{
-    	\textbf{M}ega \textbf{Fl}oating-point \textbf{O}perations \textbf{P}er \textbf{S}econd
+    \sortitem[ADI]{
+        \textbf{A}rm \textbf{D}ebug \textbf{I}nterface
     }
-    \sortitem[EEMBC]{
-    	\textbf{E}mbedded \textbf{M}icroprocessor \textbf{B}enchmark \textbf{C}onsortium
+    \sortitem[PPB]{
+        \textbf{P}rivate \textbf{P}eripheral \textbf{B}us
     }
-    \sortitem[VCP]{
-        \textbf{V}irtual \textbf{C}OM \textbf{P}ort
+    \sortitem[MEM-AP]{
+        \textbf{Mem}ory \textbf{A}ccess \textbf{P}ort
     }
-    \sortitem[BSS]{
-        \textbf{B}lock \textbf{S}tarted by \textbf{S}ymbol
+    \sortitem[ETM]{
+        \textbf{E}mbedded \textbf{T}race \textbf{M}acrocell
+    }
+    \sortitem[ITM]{
+        \textbf{I}nstrumentation \textbf{T}race \textbf{M}acrocell
+    }
+    \sortitem[DWT]{
+        \textbf{D}ata \textbf{W}atchpoint and \textbf{T}race
+    }
+    \sortitem[FPB]{
+        \textbf{F}lash \textbf{P}atch and \textbf{B}reakpoint
+    }
+    \sortitem[CTI]{
+        \textbf{C}ross-\textbf{T}rigger \textbf{I}nterface
+    }
+    \sortitem[TMC]{
+        \textbf{T}race \textbf{M}emory \textbf{C}ontroller
+    }
+    \sortitem[ETB]{
+        \textbf{E}mbedded \textbf{T}race \textbf{B}uffer
+    }
+    \sortitem[ETF]{
+        \textbf{E}mbedded \textbf{T}race \textbf{F}IFO
+    }
+    \sortitem[ETR]{
+        \textbf{E}mbedded \textbf{T}race \textbf{R}outer
+    }
+    \sortitem[TPIU]{
+        \textbf{T}race \textbf{P}ort \textbf{I}nterface \textbf{U}nit
+    }
+    \sortitem[DBGMCU]{
+        \textbf{D}e\textbf{b}u\textbf{g} \textbf{M}icro\textbf{c}ontroller \textbf{U}nit
+    }
+    \sortitem[DHCSR]{
+        \textbf{D}ebug \textbf{H}alting \textbf{C}ontrol and \textbf{S}tatus \textbf{R}egister
+    }
+    \sortitem[DEMCR]{
+        \textbf{D}ebug \textbf{E}xception and \textbf{M}onitor \textbf{C}ontrol \textbf{R}egister
+    }
+    \sortitem[DFSR]{
+        \textbf{D}ebug \textbf{F}ault \textbf{S}tatus \textbf{R}egister
+    }
+    \sortitem[DIE]{
+        \textbf{D}ebugging \textbf{I}nformation \textbf{E}ntry
+    }
+    \sortitem[CFA]{
+        \textbf{C}anonical \textbf{F}rame \textbf{A}ddress
+    }
+    \sortitem[RSP]{
+        \textbf{R}emote \textbf{S}erial \textbf{P}rotocol
+    }
+    \sortitem[XML]{
+        e\textbf{X}tensible \textbf{M}arkup \textbf{L}anguage
+    }
+    \sortitem[MIPI]{
+        \textbf{M}obile \textbf{I}ndustry \textbf{P}rocessor \textbf{I}nterface
+    }
+    \sortitem[TFBGA]{
+        \textbf{T}hin \textbf{F}ine-pitch \textbf{B}all \textbf{G}rid \textbf{A}rray
     }
 
 \end{acronyms}

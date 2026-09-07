@@ -1,0 +1,33 @@
+@startuml
+!include puml-style.iuml
+skinparam ClassAttributeIconSize 0
+class "Command context" as CTX {
+  registered commands
+  script interpreter
+}
+class Adapter
+class Transport
+class "Debug Access Port" as DAP
+class "Access port" as AP
+class "Processor target" as PT
+class "MEM-AP target" as MT
+class "Trace source" as SRC
+class "Trace sink" as SNK
+CTX ..> Adapter : creates
+CTX ..> PT : creates
+CTX ..> MT : creates
+CTX ..> SRC : creates
+CTX ..> SNK : creates
+Adapter *-- Transport
+Transport *-- DAP
+DAP *-- "1..*" AP
+PT --> AP : reached through
+MT --> AP : reached through
+SRC --> AP : reached through
+SNK --> AP : reached through
+note bottom of CTX
+  Objects are created by
+  configuration scripts,
+  never discovered.
+end note
+@enduml

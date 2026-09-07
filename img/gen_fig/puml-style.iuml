@@ -1,0 +1,27 @@
+@startuml
+' Shared style: match the report (Times, greyscale, no gradients, no shadows).
+skinparam defaultFontName Times
+skinparam defaultFontSize 15
+skinparam dpi 300
+skinparam shadowing false
+skinparam monochrome true
+skinparam backgroundColor transparent
+skinparam roundcorner 0
+skinparam ArrowColor Black
+skinparam ClassBackgroundColor White
+skinparam ClassBorderColor Black
+skinparam NoteBackgroundColor #EEEEEE
+skinparam NoteBorderColor Black
+skinparam SequenceBoxBackgroundColor #F4F4F4
+skinparam ParticipantBackgroundColor White
+skinparam ParticipantBorderColor Black
+skinparam LifeLineBorderColor Black
+skinparam StateBackgroundColor White
+skinparam StateBorderColor Black
+skinparam ActivityBackgroundColor White
+skinparam ActivityBorderColor Black
+skinparam ComponentBackgroundColor White
+skinparam ComponentBorderColor Black
+hide empty members
+hide circle
+@enduml

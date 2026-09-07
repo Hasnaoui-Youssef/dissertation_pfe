@@ -22,7 +22,7 @@
 
 %========= Config the cover section ==========%
 
-\title{Trace \& Debug Features in STM32 Microcontrollers}
+\title{Design and Implementation of a Debugger with Instruction Trace Capabilities}
 
 \author{Youssef HASNAOUI}
 %%% if necessary
@@ -63,16 +63,12 @@
 %%%%
 
 %%% FR
-\frenchAbstract{Ce rapport décrit les travaux réalisés lors de mon stage d'été chez STMicroelectronics, axé sur l'analyse comparative indépendante de la plateforme. L'objectif principal était d'exécuter Coremark sur des microcontrôleurs STM32 en utilisant la structure de projet Csolution. Pour ce faire, j'ai mis à profit mes connaissances en développement logiciel et embarqué, en compilation et génération de code C, à l'aide d'outils tels que CMSIS-Toolbox, C et Golang. Les résultats ont permis de réduire considérablement le temps nécessaire à la configuration et à l'exécution des projets Coremark avec plusieurs compilateurs, tout en optimisant les résultats. Ce stage m'a également permis de renforcer mes compétences en compilation, en conception d'architecture de projets embarqués et de mieux comprendre les défis spécifiques de l'ingénierie des systèmes embarqués.}
-
-\frenchAbstractKeywords{C/C++, Golang, Systèmes embarqués, STM32, Compilation, Génération de Code.}
-
+\frenchAbstract{Ce rapport décrit un débogueur capable de capturer, de décoder et de présenter la trace d'instructions d'un microcontrôleur STM32. La trace d'instructions enregistre le chemin que le programme a réellement suivi dans son code. Le matériel qui la génère équipe une grande partie de la gamme STM32, mais il n'est exploitable qu'au moyen d'outils propriétaires et de sondes dont la plupart des développeurs ne disposent pas. Deux pilotes CoreSight ont été ajoutés à un serveur de débogage libre, afin que l'unité de trace et la mémoire tampon de trace intégrée au circuit puissent être configurées et vidées via la connexion de débogage habituelle. Une chaîne de traitement décode ensuite les octets capturés à l'aide de l'image du programme, reconstruit les instructions exécutées, rattache chacune à une fonction, à un fichier source et à une ligne, et présente le résultat au sein d'un environnement de développement, pendant une session de débogage. Une capture de 128 octets, extraite de la mémoire tampon intégrée au circuit et obtenue sans recourir aux broches de trace, permet de reconstruire 114 instructions exécutées.}
+\frenchAbstractKeywords{Trace d'instructions, CoreSight, Embedded Trace Macrocell, Débogage embarqué, STM32, Debug Adapter Protocol, OpenOCD.}
 %% dont go over 10 lines
 %%% EN
-\englishAbstract{This report describes the work carried out during my summer internship at STMicroelectronics, focused on platform-agnostic benchmarking. The main objective was to run Coremark on STM32 devices using Csolution project structure. To achieve this, I put to use my knowledge in software and embedded development,C code compilation and code generation, using tools such as CMSIS-Toolbox, C and Golang. The results helped to drastically reduce the time required to setup and run Coremark projects using multiple compilers, as well as generating the most optimal results. This internship also allowed me to strengthen my skills in the compilation process, embedded projects architecture design and gain insight into the specific challenges of embedded systems engineering.}
-
-\englishAbstractKeywords{C/C++, Golang, Embedded Systems, STM32, Compilation, Code Generation.}
-
+\englishAbstract{This report describes a debugger that captures, decodes and presents the instruction trace of an STM32 microcontroller. Instruction trace records the path a program actually took through its code. The hardware producing it is present across much of the STM32 range, yet it is reachable only through proprietary tools and probes most developers do not have. Two CoreSight drivers were added to an open-source debug server, so that the trace unit and the on-chip trace buffer may be configured and drained over the ordinary debug connection. A pipeline decodes the captured bytes against the program image, reconstructs the executed instructions, attributes each to a function, a source file and a line, and presents the result inside a development tool during a live debug session. A capture of 128 bytes, drained from the on-chip buffer with no trace pins in use, reconstructs 114 executed instructions.}
+\englishAbstractKeywords{Instruction trace, CoreSight, Embedded Trace Macrocell, Embedded debugging, STM32, Debug Adapter Protocol, OpenOCD.}
 %% if you want to get rid of the company address just set the boolean variable to false
 % PS : it's optional
 \setboolean{wantToTypeCompanyAddress}{false}
@@ -82,3 +78,40 @@
 \companyFax{71 222 222}
 \companyAddressAR{نهج بحيرة ملاران - ضفاف البحيرة - تونس}
 \companyAddressFR{Rue du Lac Malaren, Les Berges du Lac 1053 Tunis}
+
+%============= Drafting placeholders ==============%
+% Visible markers for artwork that is still to be produced.
+% Grep for \needfig, \needtab or \needshot to find every outstanding item.
+\newcommand{\needartwork}[3]{%
+  \begin{center}
+  \fbox{\parbox{0.92\linewidth}{%
+    \textbf{[#1]}\\[2pt]
+    \textit{Caption:} #2\\[2pt]
+    \textit{Content:} #3}}
+  \end{center}}
+\newcommand{\needfig}[2]{\needartwork{FIGURE TO PRODUCE}{#1}{#2}}
+\newcommand{\needtab}[2]{\needartwork{TABLE TO PRODUCE}{#1}{#2}}
+\newcommand{\needshot}[2]{\needartwork{SCREENSHOT TO CAPTURE}{#1}{#2}}
+% Outstanding work on the text itself, as opposed to missing artwork.
+\newcommand{\needwork}[1]{%
+  \begin{center}
+  \fbox{\parbox{0.92\linewidth}{\textbf{[TODO]}\\[2pt] #1}}
+  \end{center}}
+%==================================================%
+
+%============= Chapter cross-references ==============%
+% The class calls \minitoc from inside \@makechapterhead, which leaves
+% \@currentlabel holding the number of the preceding section. A \label placed
+% after \chapter therefore records that section number instead of the chapter
+% number. \chaplabel sets \@currentlabel to the chapter number first.
+% isipfe.cls calls \makeatletter and never restores the catcode, and
+% tpl/cover_page.tex relies on that, so the previous state is saved and
+% restored here rather than forcing \makeatother.
+\expandafter\edef\csname restore@at@code\endcsname{%
+  \catcode`\noexpand\@=\the\catcode`\@\relax}
+\makeatletter
+\newcommand{\chaplabel}[1]{%
+  \protected@edef\@currentlabel{\thechapter}%
+  \label{#1}}
+\csname restore@at@code\endcsname
+%==================================================%

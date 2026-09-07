@@ -1,0 +1,20 @@
+\documentclass[border=3pt]{standalone}
+\input{fig-preamble}
+\begin{document}
+\begin{tikzpicture}[fig,
+  bx/.style={draw,thick,minimum height=9mm,minimum width=28mm,align=center,
+             font=\scriptsize},
+  comp/.style={thick,{Diamond[length=3mm,width=2.2mm,fill=black]}-}]
+
+\node[bx,minimum width=32mm] (ctx) at (28mm,0) {Debug context\\(facade)};
+
+\node[bx] (bus) at (0,-22mm) {Event bus};
+\node[bx] (mgr) at (28mm,-22mm) {Managers};
+\node[bx] (prov) at (56mm,-22mm) {Providers};
+
+\draw[comp] (ctx.south) ++(-10mm,0) -- (bus.north);
+\draw[comp] (ctx.south)             -- (mgr.north);
+\draw[comp] (ctx.south) ++(10mm,0)  -- (prov.north);
+
+\end{tikzpicture}
+\end{document}

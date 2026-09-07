@@ -1,0 +1,17 @@
+@startuml
+!include puml-style.iuml
+start
+:processor halts;
+:stop capture;
+:flush the trace path;
+:read the fill level;
+if (buffer wrapped?) then (yes)
+  :whole buffer is valid,\nread from the write pointer;
+else (no)
+  :read from the start\nto the fill level;
+endif
+:read the data register repeatedly,\nthe address does not advance;
+:emit the synchronization barrier;
+:deliver the payload to the engine\nby callback;
+stop
+@enduml

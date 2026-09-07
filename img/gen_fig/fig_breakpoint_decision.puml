@@ -1,0 +1,31 @@
+@startuml
+!include puml-style.iuml
+start
+:requested source location;
+:resolve to addresses;
+if (address decodes to an instruction?) then (no)
+  :disable the location;
+  stop
+else (yes)
+endif
+if (developer override set?) then (yes)
+  :use the chosen mechanism;
+else (no)
+  if (memory map available?) then (no)
+    :hardware breakpoint;
+  else (yes)
+    if (every location writable?) then (yes)
+      :software breakpoint;
+    else (no)
+      :hardware breakpoint;
+    endif
+  endif
+endif
+if (hardware comparator allocated?) then (no)
+  :report against this breakpoint,\ncomparators exhausted;
+  stop
+else (yes)
+endif
+:breakpoint placed;
+stop
+@enduml

@@ -1,0 +1,32 @@
+@startuml
+!include puml-style.iuml
+skinparam ClassAttributeIconSize 0
+
+class "Debug context\n(facade)" as CTX
+
+class "Event bus" as BUS
+class "Debug primitives\nprovider" as PD
+class "Extended capabilities\nprovider" as PS
+class "Managers" as MGR
+
+class "Disassembler\nprovider" as PDIS
+class "Device\nprovider" as PDEV
+class "Trace\nprovider" as PTR
+
+' Force second-row ordering
+BUS -[hidden]right- PD
+PD -[hidden]right- PS
+PS -[hidden]right- MGR
+
+CTX *-- BUS
+CTX *-- PD
+CTX *-- PS
+CTX *-- MGR
+
+MGR *-- PDIS
+MGR *-- PDEV
+MGR *-- PTR
+
+MGR ..> PD
+MGR ..> PS
+@enduml

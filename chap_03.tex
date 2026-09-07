@@ -1,425 +1,253 @@
 \chapter{Objectives Specification and Work Environment}
+\chaplabel{ch:specification}
 
 \section*{Introduction}
-This chapter will first define the project's functional and non-functional requirements, then we will discuss the structural decisions, going over the reasons behind these choices. Finally we will specify the hardware and software resources necessary for this project.
+Chapter \ref{ch:context} identified a gap between the debug and trace capability a microcontroller implements and the capability a developer can reach through available tools. This chapter states what the project undertook to do about that gap, the requirements derived from it, and the hardware and software used to produce the result.
 
-\section{Project Specification}
-Requirements analysis is a fundamental phase in every project realization process. It is based on the study of the project's features as well as the constraints. In this section, we will cover both the functional and non-functional requirements.
+\section{Project Objectives and Deliverables}
+\label{sec:objectives}
+The internship produced the three deliverables of Table \ref{tab:deliverables}. Chapter \ref{ch:implementation} presents the chronology.
 
-\subsection{Functional Requirements}
-
-The goal of the project is to generate a running CoreMark project on STM32 devices using CMSIS-Toolbox in an automated way. Within this context, this means guaranteeing the following concepts:
-
-%\begin{itemize}
-%    \item \textbf{Automation:} Ensuring that the user can generate a ready-to-build project without manually setting up peripheral configurations or memory layouts.
-%    \item \textbf{Device Adaptability:} The project template must be dynamic in order to accomodate for the device specific characteristics of STM32 MCUs.
-%    \item \textbf{CoreMark Integration:} CoreMark must be pre-configured and integrated within the project so that it can be executed immediately without further setup.
-%    \item \textbf{Result Reporting:} The CoreMark results must be ouput in a standardized format, enabling consistent performance comparisons between devices.
-%    \item \textbf{Multi-Toolchain Support:} The user should be able to build the project using any of the main embedded systems compilers without any extra configuration steps.
-%\end{itemize}
-%
-%Table \ref{tab:functional_requirements} neatly summarizes the functional requirements for our project.
-
-\begin{table}[htbp]
+\begin{table}[H]
     \centering
-    \caption{Functional Requirements for CMSIS-Toolbox based automated benchmarking}
-    \label{tab:functional_requirements}
-    \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X X@{}}
-        \toprule
-        Requirements & Description \\
-        \midrule
-        Automation & The system must automatically generate a CoreMark benchmarking project for STM32 devices without requiring manual configuration. \\ \midrule
-        Device Adaptability & The generated project must adapt to different STM32 families and configurations. \\ \midrule
-        CoreMark Integration & The CoreMark benchmark must be integrated and ready to run immediately on the target hardware. \\ \midrule
-        Result Reporting & The system must provide a standardized mechanism for reporting benchmark results. \\ \midrule
-        Multi-Toolchain Support & The project must support multiple compilers such as GCC, ARM Compiler, and IAR. \\ \bottomrule
+    \caption{Deliverables}
+    \label{tab:deliverables}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.5\hsize\bfseries}Y | >{\hsize=1.5\hsize}Y@{} |}
+        \hline
+        Deliverable & \textbf{Description} \\
+        \hline
+        Application note & The instruction trace infrastructure of STM32 microcontrollers, a reference implementation for decoding the trace such an infrastructure produces, and guidance on working with instruction trace features on vendor IDEs. \\
+        \hline
+        Proof of Concept & A demonstration that instruction trace is obtainable on an STM32 device using an on-chip trace sink. \\
+        \hline
+        Debugger & A debugger with instruction trace features. \\
+        \hline
     \end{tabularx}
 \end{table}
-\subsection{Non-Functional Requirements}
-Below are the non-functional requirements or the constraints that the functional expectations must abide by:
-\begin{itemize}
-    \item \textbf{Performance Requirements:}
-    \begin{itemize}
-        \item \textbf{Low Overhead} The project must not add significant, if any overhead besides the CoreMark runtime, this insures the integrity of the benchmarking results.
-        \item \textbf{Compiler Optimizations} The project must provide the most optimal compiler configuration to ensure the maxmium performance results.
-    \end{itemize}
-   \item \textbf{Reliability Requirements:}
-   \begin{itemize}
-    \item \textbf{Correctness} The project must be functional and able to run without manual fixes.
-    \item \textbf{Consistency} The project must produce consistent results amongst STM32 devices.
-    \item \textbf{Error Handling} The project must fail gracefully and generate meaningful error messages.
-   \end{itemize}
-   \item \textbf{Usability Requirements:}
-   \begin{itemize}
-    \item \textbf{Ease of use} The generation process must be simple and intuitive, the project structure must be clear and consistent.
-    \item \textbf{Standardized Output} The results must be presented in a clear format to facilitate further automation and data collection.
-   \end{itemize}
-\end{itemize}
 
-\section{Structural Decisions}
-Before delving further into the implementation details, it is crucial to understand the rationale behind the structural decisions chosen, for both the generation tool and the CoreMark project. This sections elucidates the reasons behind the choices and their relevence to the project's objectives.
-\subsection{CoreMark Project}
-The CoreMark project is the end result of the generation tool, it is meant to be runnable out of the box with the 3 main compilers (GCC, ARM, and IAR).
+\subsection{Scope}
+\label{subsec:scope}
 
-Ensuring the cross-toolchain support is done by providing the necessary compiler specific directives:
-\begin{itemize}
-	\item \textbf{Linker Scripts}
-	Each compiler has their own unique format for linker scripts:
-	\begin{itemize}
-		\item \textbf{GCC:} GCC uses the .ld file extension and the LDScript syntax for the linking phase, it is structued in a declarative way to generate regions, sections and describe behavior within elements as well as exporting symbols.
-		\item \textbf{IAR:} IAR uses the .icf file extension as well as proprietary syntax for the linking phase, it allows the user to simply declare regions and optionally sections and takes care of the rest.
-		\item \textbf{ARM:} ARM compiler uses the .sct file extension, you only have to declare memory regions and the rest is handled either in C code or by the compiler directly.
-	\end{itemize}
-    \item \textbf{Startup Files} Within the provided versions in the STM32CubeFirmware, startup files are toolchain dependent, the main reason is that they depend on the linker script's specific symbols.
-	\item \textbf{Compiler Options} Each compiler has their own set of compiler flags to be used.
-\end{itemize}
-The table \ref{tab:cm_prj_struct} provides an overview of the architecture of the CoreMark project.
 \begin{table}[H]
-	\centering
-   	\caption{CoreMark Project Structure}
-   	\label{tab:cm_prj_struct}
-   	\begin{tabularx}{\linewidth}{@{}>{\bfseries}l X X@{}}
-    \toprule
-    Element & Description \\
-    \midrule
-    User Code & This component provides the definition for the user application's entry point as well as the UART peripheral configuration. \\
-    \midrule
-    Driver & This component includes the necessary HAL drivers to enable the UART peripheral. \\
-    \midrule
-    Modifiable Files & This component contains the toolchain specific source and header files to modify if the user wants to modify system configurations such as linker scripts and startup files. \\
-    \midrule
-    CoreMark & This component contains the source code of the CoreMark benchmark to be invoked within the usercode's entry point. \\
-    \midrule
-    coremark.csolution.yml & This is the workspace file for CMSIS-Toolbox to have knowledge of the project, it defines the DFP, ARM's CORE component, alongside the target device, build types and compiler selection. \\
-    \midrule
-    coremark.cproject.yml & This is the project description file, it contains the source files to be compiled, user defines for UART functionality and the include paths. \\
-    \midrule
-    cdefault.yml & This is the file that contains all the compiler options, in our context, the configuration is meant to provide the most performance-oriented setup. \\
-    \bottomrule
-   \end{tabularx}
+    \centering
+    \caption{Scope of the three deliverables}
+    \label{tab:scope}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.6\hsize\bfseries}Y | >{\hsize=1.4\hsize}Y@{} |}
+        \hline
+        Deliverable & \textbf{Scope} \\
+        \hline
+        \multirow{3}{*}{Application note} & Instruction trace infrastructure of every STM32 family that implements it \\
+        \cline{2-2}
+        & Keil \textmu Vision with the ULINKpro probe \\
+        \cline{2-2}
+        & IAR Embedded Workbench with the I-jet Trace probe \\
+        \hline
+        \multirow{3}{*}{Proof of Concept} & ETMv4 implementations \\
+        \cline{2-2}
+        & On-chip trace sink \\
+        \cline{2-2}
+        & Instruction trace \\
+        \hline
+        \multirow{4}{*}{Debugger} & STM32 MCUs \\
+        \cline{2-2}
+        & Breakpoints and variable inspection \\
+        \cline{2-2}
+        & Peripheral inspection, memory views and disassembly \\
+        \cline{2-2}
+        & Instruction trace \\
+        \hline
+    \end{tabularx}
 \end{table}
 
+\section{Requirements Analysis}
+\label{sec:requirements}
 
-\subsection{Project Generation Tool}
-The architecture of the CoreMark project is quite complex and contains multiple pieces that must be either generated dynamically or fetched from different resources.
+\subsection{Functional Requirements}
+\label{subsec:fr}
+
+\begin{table}[H]
+    \centering
+    \caption{Functional requirements}
+    \label{tab:fr}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.4\hsize\bfseries}Y | >{\hsize=1.6\hsize}Y@{} |}
+        \hline
+        ID & \textbf{Requirement} \\
+        \hline
+        FR1 & Configure the trace unit and the on-chip trace sink of the target through the debug connection. \\
+        \hline
+        FR2 & Start and stop trace capture in step with the run state of the program, without a separate command from the developer. \\
+        \hline
+        FR3 & Extract the captured trace over the same debug connection that carries every other debug operation. \\
+        \hline
+        FR4 & Decode the extracted byte stream into trace elements. \\
+        \hline
+        FR5 & Reconstruct the sequence of executed instructions from those elements together with the program image. \\
+        \hline
+        FR6 & Attribute each reconstructed instruction to a function, a source file and a line. \\
+        \hline
+        FR7 & Represent a discontinuity in the capture explicitly, rather than joining the two sides of it. \\
+        \hline
+        FR8 & Present the reconstruction inside a development tool during a live debug session. \\
+        \hline
+        FR9 & Provide the run control primitives of Section \ref{sec:primitives}, namely halting, resuming, stepping, breakpoints and watchpoints. \\
+        \hline
+        FR10 & Read and write memory and processor registers. \\
+        \hline
+        FR11 & Present the registers of a peripheral by name and by field, using a description of the device. \\
+        \hline
+        FR12 & Provide disassembly and source-level inspection of variables. \\
+        \hline
+        FR13 & Reset the target and restore the debug session to a state consistent with the reset device. \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\subsection{Non-Functional Requirements}
+\label{subsec:nfr}
+
+\begin{table}[H]
+    \centering
+    \caption{Non-functional requirements}
+    \label{tab:nfr}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.4\hsize\bfseries}Y | >{\hsize=1.6\hsize}Y@{} |}
+        \hline
+        ID & \textbf{Requirement} \\
+        \hline
+        NFR1 & Require no hardware beyond the debug probe already present on the development board, and no trace pins. \\
+        \hline
+        NFR2 & Operate on Windows and on Linux. \\
+        \hline
+        NFR3 & Integrate with existing development tools. \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\subsection{Traceability to Deliverables}
+\label{subsec:traceability}
+
+\begin{table}[H]
+    \centering
+    \caption{Traceability of requirements to deliverables}
+    \label{tab:traceability}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.2\hsize\bfseries}Y | >{\hsize=0.9\hsize}Y | >{\hsize=0.9\hsize}Y@{} |}
+        \hline
+        Deliverable & \textbf{Functional} & \textbf{Non-functional} \\
+        \hline
+        Application note & FR1 to FR5 & NFR1 \\
+        \hline
+        Proof of Concept & FR1 to FR8 & NFR1 \\
+        \hline
+        Debugger & FR8 to FR13 & NFR2, NFR3 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\section{Hardware Environment}
+\label{sec:hardware}
+
+\subsection{Microcontroller: STM32H7S3L8}
+\label{subsec:target}
+The main device used during the development period of the project is an STM32H7S3L8, a member of the STM32H7RS family. It carries an Arm Cortex-M7 processor \cite{cortexm7_trm} running at up to 600 MHz with a memory protection unit, a double-precision floating-point unit and separate instruction and data caches of 32 kilobytes each. The device provides 64 kilobytes of internal flash memory and 620 kilobytes of internal SRAM, and is supplied in a TFBGA225 package \cite{ds_h7s3}.
+
+Figure \ref{fig:target_debug} shows the debug and trace components of the device and the buses that connect them.
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=15cm]{ST_Summer_Internship/GenerationToolComponents.png}
-    \caption{Project Generation Tool Architecture}
-    \label{fig:gen_tool_arch}
+    \includegraphics[width=\linewidth]{stm32h7rs_debug_infrastructure.pdf}
+    \caption[Debug and trace infrastructure of the target]{Debug and trace infrastructure of the target, adapted from \cite{rm0477}}
+    \label{fig:target_debug}
 \end{figure}
-The figure \ref{fig:gen_tool_arch} shows the multiple modules within the project generation tool.
-\begin{table}[htbp]
-   \centering
-   \caption{Project Generation Tool Structure}
-   \begin{tabularx}{\linewidth}{@{}>{\bfseries}l X X@{}}
-    \toprule
-    Module & Description \\
-    \midrule
-       Device Manager & Extracts the device metadata \\
-    \midrule
-       Firmware Manager & Manages the device's firmware pack and extracting the necessary files \\
-    \midrule
-       Template Processor & Generates files from the template files and the gathered data \\
-    \midrule
-       File Processor & Modifies firmware files that cannot be templated to accomodate for our project's context \\
-    \midrule
-       cm\_gen Engine & Orchestrates and runs the different modules \\
-    \bottomrule
-   \end{tabularx}
+
+\subsection{Development Board: NUCLEO-H7S3L8}
+\label{subsec:board}
+The microcontroller is used on a NUCLEO-H7S3L8. It exposes a MIPI20 connector for external debug tools, which carries the serial wire and JTAG signals together with a four-bit trace port \cite{um3276}.
+
+\subsection{Debug Probe: STLINK-V3EC}
+\label{subsec:probe}
+The probe is the STLINK-V3EC embedded on the board, which supports both SWD and JTAG \cite{um3276}. It connects to the host through a USB Type-C connector and additionally provides a virtual COM port (VCP) and mass storage programming.
+
+\subsection{Trace Resources Available on the Target}
+\label{subsec:trace_resources}
+
+\begin{table}[H]
+    \centering
+    \caption{Trace components of the target device}
+    \label{tab:trace_resources}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.55\hsize\bfseries}Y | >{\hsize=0.8\hsize}Y | >{\hsize=1.65\hsize}Y@{} |}
+        \hline
+        Name & \textbf{Base address} & \textbf{Note} \\
+        \hline
+        ETM & 0xE0041000 & Implementation of the Cortex-M7 ETM, configured for instruction trace only \cite{etm_m7_trm}. \\
+        \hline
+        TMC & 0xE00F4000 & ETF configuration, providing two kilobytes of memory. \\
+        \hline
+        TPIU & 0xE00F5000 & - \\
+        \hline
+        Funnel & 0xE00F3000 & Funnels the ETM trace data into the TMC. It also carries the stream of the instrumentation macrocell \cite{rm0477}, which this work does not use. \\
+        \hline
+    \end{tabularx}
 \end{table}
 
-\section{Use-Case Diagram}
+\section{Software Environment}
+\label{sec:software}
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=15cm]{img/ST_Summer_Internship/use_case2.png}
-	\caption{Automated CoreMark Benchmarking Use-Case Diagram}
-	\label{fig:use_case_diagram}
-\end{figure}
+\subsection{Development Environment}
+\label{subsec:devenv}
 
-The Use-Case diagram in Figure \ref{fig:use_case_diagram} illustrates the interactions between a user, the project generation tool and the project's execution space.
-Refer to Table \ref{tab:use_cases} for an in-depth explanation:
+\begin{table}[H]
+    \centering
+    \caption{Development environment}
+    \label{tab:devenv}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.85\hsize\bfseries}Y | >{\hsize=1.15\hsize}Y@{} |}
+        \hline
+        Element & \textbf{Choice} \\
+        \hline
+        Host platforms & Linux and Windows \\
+        \hline
+        Backend language & C++23 \\
+        \hline
+        Frontend language & TypeScript \\
+        \hline
+        Compiler & Clang \\
+        \hline
+        Build system & CMake, Ninja generator \\
+        \hline
+        Frontend bundler & esbuild \\
+        \hline
+        Editor & Visual Studio Code \\
+        \hline
+    \end{tabularx}
+\end{table}
 
-\begin{xltabular}{\linewidth}{@{}>{\bfseries}l X@{}}
-	\caption{Automated CoreMark Benchmarking\label{tab:use_cases}} \\
-	\toprule
-	\textbf{Use Case} & \textbf{Relevance} \\
-	\midrule
-	\endfirsthead % Header for first page
+\subsection{External Software Components}
+\label{subsec:extsw}
 
-	\multicolumn{2}{c}{{\tablename\ \thetable{} -- Continued from previous page}} \\
-	\toprule
-	\textbf{Use Case} & \textbf{Relevance} \\
-	\midrule
-	\endhead % Header for subsequent pages
+\begin{table}[H]
+    \centering
+    \caption{External software components}
+    \label{tab:software}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.65\hsize\bfseries}Y | >{\hsize=0.4\hsize}Y | >{\hsize=1.45\hsize}Y | >{\hsize=1.5\hsize}Y@{} |}
+        \hline
+        Component & \textbf{Version} & \textbf{Description} & \textbf{Justification} \\
+        \hline
+        OpenOCD & Fork of 0.12.0 & Open-source on-chip debugger \cite{openocd}. & Supplies the groundwork the trace drivers extend. \\
+        \hline
+        LLVM & 22 & Compiler infrastructure and debugger, of which the machine code layer \cite{llvm_mc} and the debugger \cite{lldb} are used. & Supplies the core debug functionality and the analysis of the program image. \\
+        \hline
+        OpenCSD & 1.8.3 & Library for decoding CoreSight trace \cite{opencsd}. & Simplifies the trace decoding process. \\
+        \hline
+        Xerces-C & 3.2.4 & XML parser. & Reads the CMSIS-SVD device descriptions. \\
+        \hline
+        CodeSynthesis XSD & 4.2.0 & Generator of C++ bindings from an XML schema. & Avoids writing the CMSIS-SVD bindings by hand. \\
+        \hline
+        Visual Studio Code & 1.125 & Editor hosting the frontend extension. & Already implements the client side of the Debug Adapter Protocol. \\
+        \hline
+    \end{tabularx}
+\end{table}
 
-	\midrule
-	\multicolumn{2}{r}{{Continued on next page}} \\
-	\endfoot % Footer for all pages except last
+\section{Conclusion}
+This chapter has stated the three deliverables of the project, the requirements derived from them, and the environment in which they were produced. Two facts from it govern everything that follows.
 
-	\bottomrule
-	\endlastfoot % Footer for the last page
+The first is the hardware. The target implements both routes by which trace leaves a processor, and the bench can use only one of them, since the probe available cannot capture a trace port. The on-chip sink is therefore the route the work takes, and its capacity of two kilobytes is the constraint against which the results are read.
 
-	\multicolumn{2}{ c }{\textbf{Project Generation Subsystem}} \\
-	\midrule
-	Select Target Device &
-	The developer selects the STM32 device or family for which the CoreMark project should be generated.
-	This ensures that the automation tool generates the correct configuration files and CMSIS device support. \\
-	\midrule
-	Configure Project Settings &
-	The developer configures CoreMark-specific parameters such as iteration counts, seed values, and compiler optimization flags
-	before building and running the benchmark. \\
-	\midrule
-	Generate CoreMark Project &
-	The automation tool generates a complete project structure, including the \texttt{csolution} files and necessary source code,
-	ready to be built and deployed for the selected STM32 target. \\
-	\midrule
-	\multicolumn{2}{ c }{\textbf{CoreMark Project Subsystem}} \\
-	\midrule
-	Build Project &
-	The CoreMark project is compiled using the CMSIS build system and toolchain to produce a firmware image for the target hardware. \\
-	\midrule
-	Flash Target &
-	The compiled binary is flashed to the STM32 device to prepare it for execution.\\
-	\midrule
-	Run CoreMark &
-	The benchmark executes on the STM32 target, performing operations such as list processing, matrix manipulation, and state machine handling
-	to measure CPU performance. \\
-	\midrule
-	Collect CoreMark Results &
-	During execution, CoreMark outputs the cycle count, execution time, and final score. \\
-	\midrule
-	Analyze Performance &
-	The developer interprets the CoreMark/MHz score and other performance metrics to determine how well the device performs within the specified context. \\
-	\midrule
-	Compare Scores &
-	Performance results are compared across different devices, toolchains, or configurations to guide hardware selection or optimization decisions.
-\end{xltabular}
-
-\newpage
-
-\section*{Work Environment}
-In this section, we outline the hardware and software resources utilized during the internship project that were essential for the development testing, and validation.
-
-\section{Hardware Resources}
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=15cm]{img/ST_Summer_Internship/arm_cortex_mcu_portfolio.png}
-	\caption{STM32 Microcontroller Portfolio}
-	\label{fig:stm32_portfolio}
-\end{figure}
-The project is meant to work on all STM32 MCUs, therefore as a base unit, the validation was done on a single board from all STM32 MCU families.
-Table \ref{tab:stm32_mcu_families} describes all the available families:
-\begin{xltabular}{\linewidth}{@{}>{\bfseries}l X@{} X@{} X@{} X@{} X@{}}
-	\caption{STM32 Microcontroller Families\label{tab:stm32_mcu_families}} \\
-	\toprule
-	\textbf{Family} & \textbf{Core} & \textbf{Maximum Frequency(MHz)} & \textbf{Read-Only Memory} & \textbf{Random Access Memory} & \textbf{Additional Features} \\
-	\midrule
-	\endfirsthead % Header for first page
-
-	\multicolumn{6}{c}{{\tablename\ \thetable{} -- Continued from previous page}} \\
-	\toprule
-	\textbf{Family} & \textbf{Core} & \textbf{Maximum Frequency} & \textbf{Read-Only Memory} & \textbf{Random Access Memory} & \textbf{Additional Features} \\
-	\midrule
-	\endhead % Header for subsequent pages
-
-	\multicolumn{6}{r}{{Continued on next page}} \\
-	\endfoot % Footer for all pages except last
-
-	\bottomrule
-	\endlastfoot % Footer for the last page
-
-	STM32C0 &
-	Arm Cortex-M0+ &
-	48MHZ & 16-256KB & 6-36KB & - \\
-	\midrule
-	STM32F0 &
-	Arm Cortex-M0 &
-	48MHz & 16-256KB & 4-32KB & - \\
-	\midrule
-	STM32F1 &
-	Arm Cortex-M3 &
-	72MHz & 16KB-1MB & 4-96KB & - \\
-	\midrule
-	STM32F2 &
-	Arm Cortex-M3 &
-	120MHz & 128KB-1MB & 64KB-128KB & ART Accelerator \\
-	\midrule
-	STM32F3 &
-	Arm Cortex-M4 &
-	72MHz & 32-512KB & 16-80KB & CCM-SRAM and FPU/DSP instructions \\
-	\midrule
-	STM32F4 &
-	Arm Cortex-M4 &
-	180MHz & 64KB-2MB & 32-384KB & Chrom-ART Accelerator\\
-	\midrule
-	STM32F7 &
-	Arm Cortex-M7 &
-	216MHz & 64K-2MB & 256-512KB & L1 Data and Instruction Caches, TCM, Read-While-write Flash capabilities \\
-	\midrule
-	STM32G0 &
-	Arm Cortex-M0+ &
-	64MHz & 16-512KB & 8-144KB & \\
-	\midrule
-	STM32G4 &
-	Arm Cortex-M4 &
-	170MHz & 32-512KB & 32-128KB & CCM-SRAM and FPU/DSP instructions \\
-	\midrule
-	STM32H5 &
-	Arm Cortex-M33 &
-	250MHz & 128KB-2MB & 32-640KB & Integrated Instruction and Data Cache peripherals \\
-	\midrule
-	STM32H7 &
-	Arm Cortex-M7 &
-	600MHz & 64KB-2MB & 536KB-1.4MB & L1 Data and Instruction Cache, TCM, Chrome-ART and NeoChrom Accelerators.  \\
-	\midrule
-	STM32L0 &
-	Arm Cortex-M0+ &
-	32MHz & 8-192KB & 2-20KB & Up to 6KB of EEPROM \\
-	\midrule
-	STM32L1 &
-	Arm Cortex-M3 &
-	32MHz & 32-512KB & 4-80KB & Up to 16KB of EEPROM \\
-	\midrule
-	STM32L4 &
-	Arm Cortex-M4 &
-	80MHz & 64KB-1MB & 40-320KB & Chrom-ART Accelerator \\
-	\midrule
-	STM32L4+ &
-	Arm Cortex-M4 &
-	120MHz & 512KB-2MB & 320-640KB & Chrom-ART Accelerator \\
-	\midrule
-	STM32L5 &
-	Arm Cortex-M33 &
-	110MHz & 256-512MB & 256KB & ART Accelerator \\
-	\midrule
-	STM32N6 &
-	Arm Cortex-M55 &
-	800MHz & 0 & 4.2MB & Neural-ART Accelerator(Up to 1GHz Clock Speed) \\
-	\midrule
-	STM32U0 &
-	Arm Cortex-M0+ &
-	56MHz & 16-256KB & 12-40KB & - \\
-	\midrule
-	STM32U3 &
-	Arm Cortex-M33 &
-	96MHz & 512KB-1MB & 256KB & Integrated Instruction and Data Cache peripherals \\
-	\midrule
-	STM32U5 &
-	Arm Cortex-M33 &
-	160MHz & 128-4MB & 274KB-3MB & Integrated Instruction and Data Cache peripherals \\
-	\midrule
-	STM32WB &
-	Arm Cortex-M4 &
-	64MHz & 256KB-1MB & 48-256KB & - \\
-	\midrule
-	STM32WB0 &
-	Arm Cortex-M0+ &
-	64MHz & 192-512KB & 24-64KB & - \\
-	\midrule
-	STM32WBA &
-	Arm Cortex-M33 &
-	100MHz & 512KB-2MB & 64-512KB & Integrated Instruction and Data Cache peripherals \\
-	\midrule
-	STM32WL &
-	Arm Cortex-M4 &
-	64MHz & 64-256KB & 8-64KB & - \\
-
-\end{xltabular}
-
-\section{Software Resources}
-The following software tools were used for the development, debugging and testing of the project:
-\subsection{Programming Languages}
-\begin{itemize}
-	\item \textbf{C:}
-	 C is a general-purpose programming language. By design, it gives the programmer relatively direct access to the features of the typical CPU architecture, customized for the target instruction set. It has been and continues to be used to implement operating systems (especially kernels), device drivers, protocol stacks, and embedded applications.
-	\item \textbf{Go:}
-	 Go (or Golang) is a high-level general purpose programming language that is statically typed and compiled. It is known for the simplicity of its syntax and the efficiency of development that it enables by the inclusion of a large standard library supplying many needs for common projects.
-\end{itemize}
-\subsection{Integrated Development Environments and Text Editors}
-\subsubsection{Visual Studio Code}
-Visual Studio Code (VS Code) is an extensible code editor developed by Microsoft for Windows, Linux, macOS and web browsers. Features include support for debugging, syntax highlighting, intelligent code completion, snippets, code refactoring, and embedded version control with Git. Users can install extensions that add functionality.
-Table \ref{tab:vscode_extensions} goes over the most impactful extensions during the development of the project.
-\begin{xltabular}{\linewidth}{@{}>{\bfseries}l X@{}}
-	\caption{Relevant VSCode Extensions\label{tab:vscode_extensions}} \\
-	\toprule
-	\textbf{Extension} & \textbf{Description} \\
-	\midrule
-	\endfirsthead % Header for first page
-
-	\multicolumn{2}{c}{{\tablename\ \thetable{} -- Continued from previous page}} \\
-	\toprule
-	\textbf{Extension} & \textbf{Description} \\
-	\midrule
-	\endhead % Header for subsequent pages
-
-	\multicolumn{2}{r}{{Continued on next page}} \\
-	\endfoot % Footer for all pages except last
-	\bottomrule
-	\endlastfoot % Footer for the last page
-
-	Arm CMSIS Solution & The Arm CMSIS Solution extension is a graphical user interface for csolution projects that use the CMSIS-Toolbox. The extension supports microcontroller devices that incorporate Arm Cortex®-M processors and works with various C/C++ compilers and debuggers.\\
-	\midrule
-	Arm CMSIS Debugger & The Arm CMSIS Debugger extension pack is a comprehensive debug platform for Arm Cortex-M processor-based devices that uses the GDB/MI protocol. It supports single and multi-core processor systems, it includes pyOCD for target connection and image download, as well as GDB for core debugging features.\\
-	\midrule
-	Serial Monitor & The Serial Monitor extension provides a serial monitor to view output from as well as send messages to serial ports. This is often useful when testing or debugging programs on embedded devices. \\
-	\midrule
-	ELFInsight & ElfInsight is an extension to analyze ARM Cortex-M ELF files, it offers a streamlined interface to view symbol tables, inspect memory usage and visualize function call graph.\\
-\end{xltabular}
-\subsection{Compiler Toolchains}
-\subsubsection{GCC}
-The GCC compiler is an open-source C/C++ compiler, and is part of the GNU utilities, ARM provides their own implementation, prefixed with "arm-none-eabi" and can target most ARM architectures.
-\subsubsection{ARM Compiler v6}
-ARM has their own closed source compiler based on CLANG and LLVM technologies.
-\subsubsection{IAR Toolchain}
-IAR Systems is a Swedish computer software company that offers development tools for embedded systems. They are known for having a comprehensive development suite and an optimized compiler based on GCC.
-\subsection{Development Tools}
-\subsubsection{CMake}
-CMake is a free, open-source, cross-platform, software development tool for building applications via compiler-independent instructions. It also can automate testing, packaging and installation. It runs on a variety of platforms and supports many programming languages.
-As a meta-build tool, CMake configures native build tools which in turn build the codebase. CMake generates configuration files for other build tools based on CMake-specific configuration files. The other tools are responsible for more directly building; using the generated files. A single set of CMake-specific configuration files can be used to build a codebase using the native build tools of multiple platforms.
-\subsubsection{Ninja}
-Ninja is a small build runner with a focus on speed. It differs from other build systems in two major respects: it is designed to have its input files generated by a higher-level build system, and it is designed to run builds as fast as possible.
-\subsubsection{CMSIS-Toolbox}
-The CMSIS-Toolbox provides command-line tools for project creation and build of embedded applications utilizing CMSIS-Packs. It supports multiple compilation tools. It also helps with software pack creation, maintenance, and distribution utilizing the CMSIS-Pack format.
-\subsubsection*{Overall Workflow}
-The CMSIS-Toolbox includes the following tools for the creation of embedded applications:
-\begin{itemize}
-	\item \textbf{ Pack Manager (cpackget):} install and manage software packs in the host development environment.
-	\item \textbf{Project Manager (csolution):} create build information for embedded applications that consist of one or more related projects. It performs the following operations:
-	\begin{itemize}
-		\item \textbf{In the Project Area:} Generate build information files *.cbuild-idx.yml and *.cbuild.yml with all relevant project information for the build process.
-		\item \textbf{In the RTE Directory:}
-		\begin{itemize}
-			\item Generate for each context the RTE\_components.h file and pre-include files from the software pack (*.pdsc) metadata.
-			\item Copy the configuration files from selected software componentsand provide PLM information.
-		\end{itemize}
-	\end{itemize}
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=15cm]{img/ST_Summer_Internship/csolution-operation.png}
-		\caption{Csolution Operation}
-		\label{fig:csolution_op}
-	\end{figure}
-	\item \textbf{Build Invocation (cbuild):} orchestrate the build steps utilizing CMSIS tools and a CMake compilation process. It has two overall modes :
-	\begin{itemize}
-		\item \textbf{build mode:} generates the application and is the default command.
-		\begin{itemize}
-			\item When option --packs is used, it downloads missing software packs using cpackget.
-			\item It calls csolution to process the the <name>.csolution.yml project. The output are build information files with all relevant project information for the build process.
-		\end{itemize}
-		\item \textbf{setup mode:} generates the setup information for an IDE to populate dialogues, IntelliSense, and project outline views.
-		\begin{itemize}
-			\item Check YML file syntax against schema for all files specified by *.csolution.yml.
-			\item Check the correctness of all files specified by *.csolution.yml.
-		\end{itemize}
-	\end{itemize}
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=15cm]{img/ST_Summer_Internship/cbuild-workflow.png}
-		\caption{Cbuild Workflow}
-		\label{fig:cbuild_wf}
-	\end{figure}
-\end{itemize}
-\section*{Conclusion}
-The work environment for this internship includes both hardware and software resources that are essential for the successful implementation of the project.
+The second is the requirement set. The functional requirements describe a pipeline running from the configuration of a trace unit to the display of an executed source line, and the non-functional requirements constrain it to hardware already present and to an existing development tool. Chapter \ref{ch:architecture} describes the structure built to satisfy them.

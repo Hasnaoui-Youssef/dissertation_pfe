@@ -1,0 +1,18 @@
+\documentclass[border=3pt]{standalone}
+\input{fig-preamble}
+\begin{document}
+\begin{tikzpicture}[fig,
+  st/.style={draw,thick,minimum height=10mm,minimum width=26mm,align=center,font=\small},
+  ev/.style={font=\scriptsize,align=center,inner sep=1pt}]
+
+\node[st] (dis) {Disabled};
+\node[st,right=30mm of dis] (stp) {Stopped};
+\node[st,right=30mm of stp] (run) {Running};
+
+\draw[ln] (dis) -- node[ev,above]{init / reset} (stp);
+\draw[ln] (stp) to[bend left=20] node[ev,above]{resume / step end} (run);
+\draw[ln] (run) to[bend left=20] node[ev,below]{halt (extract)} (stp);
+\draw[ln] (stp) to[bend right=40] node[ev,below]{disable} (dis);
+
+\end{tikzpicture}
+\end{document}

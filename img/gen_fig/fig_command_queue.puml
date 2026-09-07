@@ -1,0 +1,19 @@
+@startuml
+!include puml-style.iuml
+participant "Caller\n(engine thread)" as C
+participant "Work queue" as Q
+participant "Wake connection" as W
+participant "Server loop\n(server thread)" as L
+C -> Q : submit work
+activate C
+C -> W : send one byte
+W -> L : socket becomes readable
+activate L
+L -> L : return from wait
+L -> Q : drain
+L -> L : execute the work
+L -> C : result
+deactivate L
+note right of C : waits with a bounded\ntimeout, so no caller\nblocks indefinitely
+deactivate C
+@enduml

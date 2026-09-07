@@ -1,0 +1,33 @@
+\documentclass[border=3pt]{standalone}
+\input{fig-preamble}
+\begin{document}
+\begin{tikzpicture}[fig,
+  el/.style={draw,thick,minimum height=10mm,minimum width=26mm,align=center,font=\small},
+  tr/.style={-{Stealth[length=2.2mm,width=1.8mm]},thick,figmid,line width=1.1pt}]
+
+\node[el] (en) {Engine};
+
+\node[el,left=20mm of en] (fe) {Frontend};
+\draw[lnb] (fe) -- node[lbl,above,align=center]{Debug Adapter\\Protocol} (en);
+
+\begin{scope}[on background layer]
+  \node[draw,thick,fill=figgrey,fit=(fe)(en),inner xsep=5mm,inner ysep=7mm] (host) {};
+\end{scope}
+\node[lbl,anchor=north west] at ($(host.north west)+(1.5mm,-1mm)$) {Host computer};
+
+\node[el,right=16mm of host] (pr) {Debug\\probe};
+\node[el,right=16mm of pr] (tg) {Target\\device};
+
+\draw[lnb] (host.east) -- node[lbl,above]{USB} (pr.west);
+\draw[lnb] (pr) -- node[lbl,above]{SWD} (tg);
+
+\coordinate (ry) at ($(host.south)+(0,-12mm)$);
+\coordinate (ee) at (en.south);
+\coordinate (pl) at ($(pr.south)+(-3mm,0)$);
+\coordinate (prr) at ($(pr.south)+(3mm,0)$);
+\draw[tr] (tg.south) -- (tg.south |- ry) -- (prr |- ry) -- (prr);
+\draw[tr] (pl) -- (pl |- ry) -- (ee |- ry) -- (ee);
+\node[lbl,below=1mm] at ($(pl |- ry)!0.5!(ee |- ry)$) {captured trace, over the same connection};
+
+\end{tikzpicture}
+\end{document}

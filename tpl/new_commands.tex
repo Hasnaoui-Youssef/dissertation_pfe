@@ -110,7 +110,11 @@
 
 %================== required packages ===================%
 
-\usepackage{enumerate}  
+% isipfe.cls already loads enumitem, which supersedes the enumerate package.
+% Loading enumerate afterwards redefines \enumerate without redefining
+% \endenumerate, so every enumerate environment fails with an undefined
+% \enit@after. enumitem provides the same optional-label syntax.
+%\usepackage{enumerate}
 
 \usepackage{tcolorbox}
 \usepackage{afterpage}

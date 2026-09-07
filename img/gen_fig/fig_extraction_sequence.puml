@@ -1,0 +1,26 @@
+@startuml
+!include puml-style.iuml
+participant "Target" as T
+participant "Sink driver" as D
+participant "Trace sink" as S
+participant "Engine" as E
+T -> D : halt event
+activate D
+D -> S : stop on flush
+D -> S : manual flush
+D -> S : poll until ready
+D -> S : read fill level
+note right of D : read before capture\nis disabled, the level is\nonly valid while enabled
+alt buffer wrapped
+  D -> S : read the whole buffer
+else not wrapped
+  D -> S : read up to the fill level
+end
+loop until the extent is read
+  D -> S : read the data register\n(address does not advance)
+end
+D -> S : disable capture
+D -> E : synchronization barrier
+D -> E : payload
+deactivate D
+@enduml

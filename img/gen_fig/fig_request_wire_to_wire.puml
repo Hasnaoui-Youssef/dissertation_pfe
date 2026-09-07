@@ -1,0 +1,23 @@
+@startuml
+!include puml-style.iuml
+participant "Frontend" as F
+participant "Transport\n(reading thread)" as R
+participant "Dispatcher\n(dispatch thread)" as D
+participant "Handler" as H
+participant "Context" as C
+F -> R : request
+activate R
+R -> D : queue
+deactivate R
+activate D
+D -> H : execute
+activate H
+H -> C : operation
+activate C
+C --> H : result
+deactivate C
+H --> D : response
+deactivate H
+D -> F : response
+deactivate D
+@enduml

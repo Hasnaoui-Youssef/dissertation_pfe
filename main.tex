@@ -11,8 +11,8 @@
 
 %\documentclass[pfe]{./tpl/isipfe}
 \documentclass[]{isipfe}
-\graphicspath{{./img/}}
-\hfuzz=100pt
+\graphicspath{{./img/}{./img/gen_fig/}}
+\hfuzz=25pt
 
 %\usepackage{hyperref}
 
@@ -40,16 +40,23 @@
         \setcounter{tocdepth}{2}
         \dominitoc
         \tableofcontents
-        \adjustmtc
         \thispagestyle{frontmatter}
         %uncomment from here ----
+        \clearpage
+        \phantomsection
+        \addcontentsline{toc}{chapter}{\listfigurename}
+        \adjustmtc
         \listoffigures
         \thispagestyle{frontmatter}
+        \clearpage
+        \phantomsection
+        \addcontentsline{toc}{chapter}{\listtablename}
+        \adjustmtc
         \listoftables
         \thispagestyle{frontmatter}
         %to here  ----
-        %\input{acronymes}
-        %\thispagestyle{frontmatter}
+        \input{acronymes}
+        \thispagestyle{frontmatter}
 
     \mainmatter
         \input{introduction}
@@ -58,27 +65,30 @@
         \input{chap_01}
         \clearpage
 
-        %\input{chap_02}
-        %\clearpage
+        \input{chap_02}
+        \clearpage
 
-        %\input{chap_03}
-        %\clearpage
+        \input{chap_03}
+        \clearpage
 
-        %\input{chap_04}
-        %\clearpage
+        \input{chap_04}
+        \clearpage
 
-        %\input{conclusion}
-        %\clearpage
+        \input{chap_05}
+        \clearpage
 
-        % @author: Stoufa
-		% the command `\nocite{*}` is mandatory to avoid the “no \citation commands” error
-        % https://tex.stackexchange.com/questions/18045/problem-with-compiling-bibtex-no-citation-commands-error
-       %\nocite{*}
-       %\printbibliography[heading=bibintoc]
-       %\clearpage
+        \input{conclusion}
+        \clearpage
 
-        %\input{annexes}
-        %\clearpage
+        % `\nocite{*}` forces every entry of biblio.bib into the bibliography,
+        % including entries that are never cited. It is only needed with the
+        % bibtex backend when the document contains no \cite at all.
+        %\nocite{*}
+        \printbibliography[heading=bibintoc]
+        \clearpage
+
+        \input{annexes}
+        \clearpage
 
     %\backmatter
         \input{./tpl/resume}

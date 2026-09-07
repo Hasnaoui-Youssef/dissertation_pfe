@@ -1,0 +1,28 @@
+\documentclass[border=3pt]{standalone}
+\input{fig-preamble}
+\begin{document}
+\begin{tikzpicture}[fig,
+  fr/.style={draw,thick,minimum height=9mm,align=center,font=\scriptsize},
+  ret/.style={-{Stealth[length=2.4mm,width=2mm]},thick,figdark,dashed}]
+
+\node[fr,minimum width=34mm] (eng) {Engine};
+\node[fr,minimum width=34mm,below=5mm of eng] (grd) {Guard\\\textit{arms the jump target}};
+\node[fr,minimum width=34mm,below=5mm of grd] (ent) {Server entry point};
+\node[fr,minimum width=34mm,below=5mm of ent] (deep) {\vdots\ deep inside the server};
+\node[fr,minimum width=34mm,below=5mm of deep] (term) {Termination call};
+\node[fr,minimum width=40mm,right=22mm of term] (repl) {Replacement function\\\textit{examines the per-thread state}};
+
+\draw[ln] (eng) -- (grd);
+\draw[ln] (grd) -- (ent);
+\draw[ln] (ent) -- (deep);
+\draw[ln] (deep) -- (term);
+\draw[ln] (term) -- (repl);
+
+\draw[ret] (repl.north) |- node[lbl,pos=0.75,above,align=center]{non-local jump,\\guarded call in progress} (grd.east);
+\draw[ret] (grd.west) -- ++(-9mm,0) |- node[lbl,pos=0.25,left,align=right]{failure\\value} (eng.west);
+
+\node[note,below=4mm of repl,align=center]
+     {with no guarded call in progress\\it terminates as before};
+
+\end{tikzpicture}
+\end{document}

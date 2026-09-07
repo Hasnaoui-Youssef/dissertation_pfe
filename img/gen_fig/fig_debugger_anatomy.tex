@@ -1,0 +1,30 @@
+\documentclass[border=3pt]{standalone}
+\input{fig-preamble}
+\begin{document}
+\begin{tikzpicture}[fig]
+
+% --- backend, drawn first so the outer box can be fitted to its contents
+\node[smallbox,fill=figgrey,minimum width=20mm,minimum height=12mm] (rep)
+      {Program\\representation};
+\node[smallbox,fill=figgrey,minimum width=20mm,minimum height=12mm,
+      right=13mm of rep] (int) {Target\\interaction};
+\draw[lnb] (rep) -- (int);
+
+\begin{scope}[on background layer]
+  \node[box,fit=(rep)(int),inner xsep=3mm,inner ysep=4mm] (be) {};
+\end{scope}
+\node[lbl,anchor=south] at (be.north) {Backend};
+
+% --- the rest of the chain ----------------------------------------------
+\node[box,minimum width=24mm,minimum height=12mm,left=12mm of be]  (fe) {Frontend};
+\node[box,minimum width=24mm,minimum height=12mm,right=12mm of be] (sv) {Debug\\server};
+\node[box,minimum width=24mm,minimum height=12mm,right=12mm of sv] (pr) {Debug\\probe};
+\node[box,minimum width=24mm,minimum height=12mm,right=16mm of pr] (tg) {Target};
+
+\draw[lnb] (fe) -- node[lbl,above,align=center]{Debug Adapter\\Protocol} (be);
+\draw[lnb] (be) -- node[lbl,above]{RSP} (sv);
+\draw[lnb] (sv) -- (pr);
+\draw[lnb] (pr) -- node[lbl,above,align=center]{debug\\connection} (tg);
+
+\end{tikzpicture}
+\end{document}

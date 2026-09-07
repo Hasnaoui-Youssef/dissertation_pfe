@@ -5,43 +5,83 @@
 \addtocontents{lot}{\vspace{3.8mm}}
 \addtocontents{lof}{\vspace{3.8mm}}
 
-%Mettez vos annexes ici...
-
 %===================== ANNEXE 1 =====================%
-\section*{Annexe 1.~Exemple d'annexe}
-\addcontentsline{toc}{section}{Annexe 1.~Exemple d'annexe}
+\section*{Annexe 1.~Registered Protocol Requests}
+\addcontentsline{toc}{section}{Annexe 1.~Registered Protocol Requests}
 
-Les chapitres doivent présenter l’essentiel du travail. Certaines informations-trop  détaillées  ou constituant un complément d’information pour toute personne qui désire mieux comprendre ou refaire une expérience décrite dans le document- peuvent être mises au niveau des annexes. Les annexes, {\bf placées après la bibliographie}, doivent donc être numérotées avec des titres (Annexe1, Annexe2, etc.).
-
-\addcontentsline{lot}{table}{Annexe 1.1~~~Exemple tableau dans l'annexe}
-
-Le tableau annexe 1.1 présente un exemple d'un tableau dans l'annexe.
-
-{\raggedright \textbf{Tableau annexe 1.1:}~Exemple tableau dans l'annexe}
-\begin{longtable}[c]{
-    | p{.20\textwidth}
-    | p{.50\textwidth} |
-}
-    \hline
-        0 & 0 \\ \hline 
-        1 & 1 \\ \hline 
-        2 & 2 \\ \hline
-        3 & 3 \\ \hline
-        4 & 4 \\
-    \hline
-
-\end{longtable}
+\begin{table}[H]
+    \centering
+    \caption{Registered protocol requests by area}
+    \label{tab:handlers}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.6\hsize\bfseries}Y | >{\hsize=1.85\hsize}Y | >{\hsize=0.55\hsize}Y@{} |}
+        \hline
+        Area & \textbf{Requests} & \textbf{Kind} \\
+        \hline
+        Lifecycle & initialize, launch, attach, configurationDone, restart, disconnect, cancel & Standard \\
+        \hline
+        Execution & continue, next, stepIn, stepOut, stepInTargets, pause & Standard \\
+        \hline
+        Breakpoints & setBreakpoints, setFunctionBreakpoints, setInstructionBreakpoints, setDataBreakpoints, setExceptionBreakpoints, breakpointLocations, dataBreakpointInfo & Standard \\
+        \hline
+        Inspection & threads, stackTrace, scopes, variables, setVariable, evaluate, completions, exceptionInfo & Standard \\
+        \hline
+        Memory & readMemory, writeMemory & Standard \\
+        \hline
+        Disassembly & disassemble & Standard \\
+        \hline
+        Symbols & modules, moduleSymbols, compileUnits, locations, source & Standard and custom \\
+        \hline
+        Trace & trailerTraceEnable, trailerTraceDisable, trailerTraceStatus & Custom \\
+        \hline
+        Observation & trailerWatchStart, trailerWatchStop & Custom \\
+        \hline
+        Peripherals & trailerDeviceInfo, trailerPeripheralDetail, trailerPeripheralRead, trailerPeripheralWrite, trailerPeripheralWatchStart, trailerPeripheralWatchStop & Custom \\
+        \hline
+    \end{tabularx}
+\end{table}
 
 \newpage
 %===================== ANNEXE 2 =====================%
-\section*{Annexe 2.~Entreprise}
-\addcontentsline{toc}{section}{Annexe 2.~Entreprise}
+\section*{Annexe 2.~Test Inventory}
+\addcontentsline{toc}{section}{Annexe 2.~Test Inventory}
 
-\addcontentsline{lof}{figure}{Annexe 2.1~~~Logo d'entreprise}
-
-La figure annexe 2.1 présente le logo entreprise.
-\begin{figure}[htpb]
+\begin{table}[H]
     \centering
-    \frame{\includegraphics[width=0.45\columnwidth]{Logo_Entreprise}}
-    {\\\textbf{Figure annexe 2.1:} Logo d'entreprise}
-\end{figure}
+    \caption{Test inventory}
+    \label{tab:tests}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.85\hsize\bfseries\ttfamily\scriptsize}Y | >{\hsize=0.4\hsize}Y | >{\hsize=1.75\hsize}Y@{} |}
+        \hline
+        \rmfamily\normalsize Test & \textbf{Tier} & \textbf{What it verifies} \\
+        \hline
+        device\_svd\_test & \rmfamily One & The device description parser against a vendor file \\
+        \hline
+        device\_provider\_test & \rmfamily One & The memory map and the peripheral model built from that description \\
+        \hline
+        program\_disassembler\_test & \rmfamily One & Spans, instruction decoding and source resolution \\
+        \hline
+        trace\_decoder\_test & \rmfamily One & A full decode of a stored capture without a fatal response \\
+        \hline
+        transform\_test & \rmfamily One & Instruction expansion and function block grouping over a record sequence \\
+        \hline
+        trace\_provider\_test & \rmfamily One & The whole offline pipeline, against counts frozen from a verified run and against properties checked independently \\
+        \hline
+        event\_bus\_test & \rmfamily One & Publication on the event bus from several threads at once \\
+        \hline
+        orchestrator\_cancel\_test & \rmfamily One & The cancellation path through the dispatcher \\
+        \hline
+        llvm\_lldb\_coexistence\_test & \rmfamily One & That the compiler library and the trace decoder link into one program \\
+        \hline
+        handshake\_test & \rmfamily One & The protocol handshake and the capability set returned to the client \\
+        \hline
+        openocd\_provider\_hw\_test & \rmfamily Two & Trace components located, register readback and capture delivery \\
+        \hline
+        launch\_smoke\_test & \rmfamily Two & Threads, call stack, memory reading, disassembly and variable inspection in a launched session \\
+        \hline
+        attach\_smoke\_test & \rmfamily Two & Threads and call stack in a session attached to a running server \\
+        \hline
+        stepping\_smoke\_test & \rmfamily Two & Stepping over, into and out of a call, and the behavior when the comparators are exhausted \\
+        \hline
+        peripheral\_smoke\_test & \rmfamily Two & Peripheral enumeration, register reading and writing, and an observation discarding a frame that overlaps a write \\
+        \hline
+    \end{tabularx}
+\end{table}

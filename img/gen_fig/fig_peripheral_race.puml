@@ -1,0 +1,21 @@
+@startuml
+!include puml-style.iuml
+participant "Developer" as D
+participant "Engine" as E
+participant "Observation worker" as W
+participant "Target" as T
+W -> T : begin read of the register
+activate W
+D -> E : write the register
+activate E
+E -> T : write
+T --> E : written
+E -> E : advance the write counter
+E --> D : acknowledged
+deactivate E
+T --> W : value
+W -> W : counter advanced since\nthe read began
+W -> W : discard, do not publish
+deactivate W
+note over W : a stale value is never\npresented as current
+@enduml

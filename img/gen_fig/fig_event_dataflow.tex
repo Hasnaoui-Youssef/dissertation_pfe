@@ -1,0 +1,24 @@
+\documentclass[border=3pt]{standalone}
+\input{fig-preamble}
+\begin{document}
+\begin{tikzpicture}[fig,
+  pr/.style={draw,thick,minimum height=12mm,minimum width=48mm,align=center,font=\scriptsize},
+  bx/.style={draw,thick,minimum height=11mm,minimum width=26mm,align=center,font=\small}]
+
+\node[pr] (w1) {Observation workers\\[1pt]\textit{memory and peripheral values}};
+\node[pr,below=5mm of w1] (w2) {Trace decode worker\\[1pt]\textit{trace increments}};
+\node[pr,below=5mm of w2] (w3) {Debugger library thread\\[1pt]\textit{stopped, continued, modules}};
+\node[pr,below=5mm of w3] (w4) {Debug server thread\\[1pt]\textit{target state changes}};
+
+\node[bx,right=22mm of w2,yshift=-8.5mm] (bus) {Event bus};
+\node[bx,right=15mm of bus] (sub) {Subscriber};
+\node[bx,right=15mm of sub] (tx) {Transport};
+
+\foreach \w in {w1,w2,w3,w4} \draw[ln] (\w.east) -- (bus.west);
+\draw[ln] (bus) -- (sub);
+\draw[ln] (sub) -- node[lbl,above,align=center]{protocol\\event} (tx);
+
+\node[note,below=4mm of sub,align=center] {the one place where\\the wire format is known};
+
+\end{tikzpicture}
+\end{document}

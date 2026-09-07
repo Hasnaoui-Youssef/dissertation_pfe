@@ -1,0 +1,34 @@
+@startuml
+!include puml-style.iuml
+skinparam ClassAttributeIconSize 0
+interface "Debug primitives provider" as PD {
+  symbol resolution
+  expression evaluation
+  stepping
+  stack unwinding
+  breakpoint management
+}
+interface "Extended capabilities provider" as PS {
+  direct memory access
+  command execution
+  trace component management
+  target state observation
+}
+interface "Device provider" as PDEV {
+  memory map
+  peripheral description
+}
+interface "Disassembler provider" as PDIS {
+  load a program image
+  look up an instruction
+}
+interface "Trace provider" as PTR {
+  append a captured block
+  return the increment
+}
+note bottom
+  No type belonging to an external
+  system appears in any of these
+  interfaces.
+end note
+@enduml
