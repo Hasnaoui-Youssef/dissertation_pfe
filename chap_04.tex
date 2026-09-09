@@ -19,7 +19,7 @@ The engine connects to the target device through a debug probe. The probe is rea
     \label{fig:global_arch}
 \end{figure}
 
-\subsection{Capabilities}
+\subsection{Debugger Capabilities}
 The engine provides the following capabilities, grouped by area.
 
 \begin{itemize}
@@ -43,8 +43,6 @@ Capabilities the standard protocol does not cover are exposed through its extens
 
 \section{Debugger Architecture}
 \label{sec:debugger_arch}
-
-\subsection{Layers}
 The engine is divided into six layers. Each depends only on the layers below it. The protocol types are a shared dependency used by the handlers and the context.
 
 \begin{figure}[H]
@@ -54,13 +52,13 @@ The engine is divided into six layers. Each depends only on the layers below it.
     \label{fig:layers}
 \end{figure}
 
-\subsection{Transport}
+\subsection{Transport Layer}
 The transport is the outer boundary of the engine. It reads and writes framed messages on a pair of channels. It performs no interpretation of message content. It is not bound to a particular protocol or a particular channel type.
 
-\subsection{Event Bus}
+\subsection{The Event Bus}
 The event bus is a typed publish-subscribe mechanism. A producer publishes a domain event describing what happened. A single subscriber converts each domain event into a protocol message and sends it through the transport. Every producer stays free of knowledge of the wire format.
 
-\subsection{Orchestrator}
+\subsection{Orchestration Layer}
 The orchestrator receives messages from the transport and routes each to the handler responsible for it. It consumes events from the event bus and sends them outward through the transport. It tracks operations in progress and supports their cancellation.
 
 \begin{figure}[H]
@@ -70,7 +68,7 @@ The orchestrator receives messages from the transport and routes each to the han
     \label{fig:request_flow}
 \end{figure}
 
-\subsection{Handlers}
+\subsection{Request Handlers}
 The handler interface defines the contract for fulfilling a single request. A handler receives a parsed request and produces a response or an error. Handlers may respond synchronously, completing before the next request is dispatched, or asynchronously, deferring their response while the engine continues to accept other messages.
 
 \subsection{The Debug Context}
@@ -84,10 +82,10 @@ The debug context is a facade. It composes the event bus, the shared providers a
     \label{fig:debug_ctx}
 \end{figure}
 
-\subsection{Managers}
+\subsection{State Managers}
 Each manager owns one area of debug state: breakpoints, memory, disassembly, modules, variables and expressions, execution control, session lifecycle, live observation, device and peripherals, and instruction trace. A manager that needs a dedicated external resource owns the provider for it. All managers use the shared providers through the debug context.
 
-\subsection{Providers}
+\subsection{External-System Providers}
 \label{subsec:providers}
 A provider adapts an external system to the needs of the engine. No type belonging to an external system appears in any provider interface. Five providers exist.
 
@@ -112,7 +110,7 @@ A provider adapts an external system to the needs of the engine. No type belongi
     \end{tabularx}
 \end{table}
 
-\subsection{Concurrency}
+\subsection{Concurrency Model}
 \label{subsec:concurrency}
 The engine is multi-threaded. Three requirements drive the model.
 
@@ -174,7 +172,7 @@ Two kinds of discontinuity appear in the record. A buffer overflow during a run 
     \label{fig:trace_life}
 \end{figure}
 
-\section{Frontend}
+\section{Frontend Architecture}
 The frontend is an extension for a development tool. A session object tracks which capabilities the engine advertised and enables the matching views. Each view holds a model that accumulates what the engine sends and a presentation that renders it. The engine sends increments, so the cost of an update follows the size of the change.
 
 \section{Conclusion}

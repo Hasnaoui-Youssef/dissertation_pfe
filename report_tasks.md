@@ -24,7 +24,7 @@ Tasks derived from the reporter's remarks (`reporter_remarks.md`), bucketed by k
 ## Structure
 
 - [ ] A 5-page chapter isn't a chapter — merge/restructure (p.5)
-- [ ] Make chapter title "Theory and Key Concepts" specific (p.5)
+- [x] Make chapter title "Theory and Key Concepts" specific (p.5)
 - [ ] Verify flagged heading "2.5.1 Device Description: CMSIS-SVD" — reason unstated (p.6)
 - [ ] Narrow "State of the Art" title/scope to its domain (p.21)
 - [ ] Remove per-chapter tables of contents (p.17)
@@ -34,8 +34,8 @@ Tasks derived from the reporter's remarks (`reporter_remarks.md`), bucketed by k
 - [ ] Add early objectives/constraints/deliverables synthesis in chapter 1 (p.47)
 - [ ] Rename section to "Development Methodology" (p.62)
 - [ ] Promote validation to standalone chapter "Experimental Validation and Results" (p.75)
-- [ ] Make title "Layers" self-contained (p.55)
-- [ ] Make all titles self-contained — global rule (p.55)
+- [x] Make title "Layers" self-contained (p.55)
+- [x] Make all titles self-contained — global rule (p.55)
 
 ## Content
 
