@@ -22,7 +22,7 @@
 \node[box,minimum width=24mm,minimum height=12mm,right=16mm of pr] (tg) {Target};
 
 \draw[lnb] (fe) -- node[lbl,above,align=center]{Debug Adapter\\Protocol} (be);
-\draw[lnb] (be) -- node[lbl,above]{RSP} (sv);
+\draw[lnb] (be) -- (sv);
 \draw[lnb] (sv) -- (pr);
 \draw[lnb] (pr) -- node[lbl,above,align=center]{debug\\connection} (tg);
 

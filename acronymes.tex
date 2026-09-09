@@ -9,6 +9,8 @@
 % sortable automatically.                       %
 %===============================================%
 
+\begingroup
+\setstretch{1.0}
 \begin{acronyms}
 
     \sortitem[ARM]{
@@ -17,21 +19,11 @@
     \sortitem[MCU]{
         \textbf{M}icro\textbf{c}ontroller \textbf{U}nit
     }
-    \sortitem[UART]{
-        \textbf{U}niversal \textbf{A}synchronous
-    \textbf{R}eceiver \textbf{T}ransmitter
-    }
-    \sortitem[VCP]{
-        \textbf{V}irtual \textbf{C}OM \textbf{P}ort
-    }
     \sortitem[IDE]{
-        \textbf{I}ntegrated \textbf{D}evelopement \textbf{E}nvironment
+        \textbf{I}ntegrated \textbf{D}evelopment \textbf{E}nvironment
     }
     \sortitem[CMSIS]{
         \textbf{C}ortex \textbf{M}icrocontroller \textbf{S}oftware \textbf{I}nterface \textbf{S}tandard
-    }
-    \sortitem[GNU]{
-        \textbf{G}NU's \textbf{N}ot \textbf{U}nix
     }
     \sortitem[GCC]{
         \textbf{G}NU \textbf{C}ompiler \textbf{C}ollection
@@ -42,14 +34,8 @@
     \sortitem[LLVM]{
         \textbf{L}ow \textbf{L}evel \textbf{V}irtual \textbf{M}achine
     }
-    \sortitem[API]{
-        \textbf{A}pplication \textbf{P}rogramming \textbf{I}nterface
-    }
     \sortitem[SB]{
         \textbf{S}cripting \textbf{B}ridge
-    }
-    \sortitem[JSON]{
-        \textbf{J}ava\textbf{S}cript \textbf{O}bject \textbf{N}otation
     }
     \sortitem[ELF]{
         \textbf{E}xecutable and \textbf{L}inkable \textbf{F}ormat
@@ -60,34 +46,21 @@
     \sortitem[SVD]{
         \textbf{S}ystem \textbf{V}iew \textbf{D}escription
     }
-    \sortitem[IEEE]{
-        \textbf{I}nstitute of \textbf{E}lectrical and \textbf{E}lectronics \textbf{E}ngineers
-    }
-    \sortitem[RAM]{
-        \textbf{R}andom \textbf{A}ccess \textbf{M}emory
-    }
-    \sortitem[ROM]{
-        \textbf{R}ead-\textbf{O}nly \textbf{M}emory
-    }
     \sortitem[DAP]{
-    	\textbf{D}ebug \textbf{A}ccess \textbf{P}ort (Arm Debug Interface)
-    }
-    \sortitem[CMSIS-DAP]{
-    	The standard interface between a debug probe and a host, defined by Arm as part of CMSIS
+        \textbf{D}ebug \textbf{A}ccess \textbf{P}ort (ARM Debug Interface)
     }
     \sortitem[SWD]{
-    	\textbf{S}erial \textbf{W}ire \textbf{D}ebug
+        \textbf{S}erial \textbf{W}ire \textbf{D}ebug
     }
     \sortitem[SWO]{
-    	\textbf{S}erial \textbf{W}ire \textbf{O}utput
+        \textbf{S}erial \textbf{W}ire \textbf{O}utput
     }
     \sortitem[JTAG]{
-    	\textbf{J}oint \textbf{T}est \textbf{A}ction \textbf{G}roup
+        \textbf{J}oint \textbf{T}est \textbf{A}ction \textbf{G}roup
     }
     \sortitem[GDB]{
-    	\textbf{G}NU \textbf{D}e\textbf{b}ugger
+        \textbf{G}NU \textbf{D}e\textbf{b}ugger
     }
-
     \sortitem[AMBA]{
         \textbf{A}dvanced \textbf{M}icrocontroller \textbf{B}us \textbf{A}rchitecture
     }
@@ -104,7 +77,7 @@
         \textbf{A}dvanced \textbf{T}race \textbf{B}us
     }
     \sortitem[ADI]{
-        \textbf{A}rm \textbf{D}ebug \textbf{I}nterface
+        \textbf{A}RM \textbf{D}ebug \textbf{I}nterface
     }
     \sortitem[PPB]{
         \textbf{P}rivate \textbf{P}eripheral \textbf{B}us
@@ -142,35 +115,9 @@
     \sortitem[TPIU]{
         \textbf{T}race \textbf{P}ort \textbf{I}nterface \textbf{U}nit
     }
-    \sortitem[DBGMCU]{
-        \textbf{D}e\textbf{b}u\textbf{g} \textbf{M}icro\textbf{c}ontroller \textbf{U}nit
-    }
-    \sortitem[DHCSR]{
-        \textbf{D}ebug \textbf{H}alting \textbf{C}ontrol and \textbf{S}tatus \textbf{R}egister
-    }
-    \sortitem[DEMCR]{
-        \textbf{D}ebug \textbf{E}xception and \textbf{M}onitor \textbf{C}ontrol \textbf{R}egister
-    }
-    \sortitem[DFSR]{
-        \textbf{D}ebug \textbf{F}ault \textbf{S}tatus \textbf{R}egister
-    }
-    \sortitem[DIE]{
-        \textbf{D}ebugging \textbf{I}nformation \textbf{E}ntry
-    }
-    \sortitem[CFA]{
-        \textbf{C}anonical \textbf{F}rame \textbf{A}ddress
-    }
     \sortitem[RSP]{
         \textbf{R}emote \textbf{S}erial \textbf{P}rotocol
     }
-    \sortitem[XML]{
-        e\textbf{X}tensible \textbf{M}arkup \textbf{L}anguage
-    }
-    \sortitem[MIPI]{
-        \textbf{M}obile \textbf{I}ndustry \textbf{P}rocessor \textbf{I}nterface
-    }
-    \sortitem[TFBGA]{
-        \textbf{T}hin \textbf{F}ine-pitch \textbf{B}all \textbf{G}rid \textbf{A}rray
-    }
 
 \end{acronyms}
+\endgroup

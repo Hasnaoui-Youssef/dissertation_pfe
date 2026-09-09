@@ -248,7 +248,7 @@ A command was added to OpenOCD that arms a synchronization flag on the GDB RSP c
 
 The choice between a software and a hardware breakpoint follows from the memory region the address lies in. The engine makes that choice automatically.
 
-For each breakpoint the engine consults the memory map provided by the device description. if the  location lies in writable memory, a software breakpoint is used. Otherwise a hardware breakpoint is used. Where no memory map is available, a hardware breakpoint is used by default.
+For each breakpoint the engine consults the memory map provided by the device description. If the location lies in writable memory, a software breakpoint is used. Otherwise a hardware breakpoint is used. Where no memory map is available, a hardware breakpoint is used by default.
 
 The developer may override the decision.
 
@@ -318,24 +318,34 @@ The frontend is a VS Code extension. It contributes the views that the standard 
 
 Two views present trace. One groups the record by function and line. The other lists executed instructions in order. Both render source locations as links, so selecting an entry opens the corresponding source position. Discontinuities appear as explicit separators.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[height=76mm]{debugger_screenshots/function_trace_ui.png}
-    \hspace{4mm}
-    \includegraphics[height=76mm]{debugger_screenshots/instruction_trace_ui.png}
-    \caption[The trace views]{The trace views. The record is grouped by function on the left and listed instruction by instruction on the right, each instruction carrying the source location resolved for it.}
-    \label{fig:trace_views}
+    \includegraphics[width=0.65\linewidth,height=190mm,keepaspectratio]{debugger_screenshots/function_trace_ui.png}
+    \caption[The function trace view]{The function trace view. The record is grouped by function, each instruction carrying the source location resolved for it.}
+    \label{fig:function_trace}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\linewidth,height=190mm,keepaspectratio]{debugger_screenshots/instruction_trace_ui.png}
+    \caption[The instruction trace view]{The instruction trace view. Executed instructions are listed in order, each carrying the source location resolved for it.}
+    \label{fig:instruction_trace}
 \end{figure}
 
 A memory view and a set of live memory panels present regions of memory. A peripheral view presents the device description, with registers expanded to their individual fields.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[height=78mm]{debugger_screenshots/peripheral_view_ui.png}
-    \hspace{4mm}
-    \raisebox{13mm}{\includegraphics[height=50mm]{debugger_screenshots/memory_view_ui.png}}
-    \caption[Memory and peripheral views]{The peripheral view with a register expanded to its fields, beside a live memory panel}
-    \label{fig:mem_periph_views}
+    \includegraphics[width=0.85\linewidth,height=150mm,keepaspectratio]{debugger_screenshots/peripheral_view_ui.png}
+    \caption[The peripheral view]{The peripheral view, with a register expanded to its individual fields.}
+    \label{fig:peripheral_view}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth,height=190mm,keepaspectratio]{debugger_screenshots/memory_view_ui.png}
+    \caption[The live memory view]{A live memory panel.}
+    \label{fig:memory_view}
 \end{figure}
 
 

@@ -2,7 +2,7 @@
 \chaplabel{ch:theory}
 
 \section*{Introduction}
-This chapter establishes the concepts on which the remainder of this report depends. The presentation moves from the general to the particular. It opens with the definition of debugging and of the tool that performs it, then describes the operations a debugger provides and the categories into which debugging techniques fall. It continues with the representation of a compiled program, then narrows to microcontrollers, to the Arm M-profile architecture, to the debug and trace infrastructure that Arm defines for it, and finally to the implementation of that infrastructure in STM32 devices.
+This chapter establishes the concepts on which the remainder of this report depends. The presentation moves from the general to the particular. It opens with the definition of debugging and of the tool that performs it, then describes the operations a debugger provides and the categories into which debugging techniques fall. It continues with the representation of a compiled program, then narrows to microcontrollers, to the ARM M-profile architecture, to the debug and trace infrastructure that ARM defines for it, and finally to the implementation of that infrastructure in STM32 devices.
 
 \section{Debugging Fundamentals}
 \label{sec:fundamentals}
@@ -11,9 +11,9 @@ This chapter establishes the concepts on which the remainder of this report depe
 \label{subsec:bugs}
 A defect is a condition in a program that causes its behavior to violate its specification. Debugging is the process of investigating program behavior to identify the cause of such defects. The term \textit{bug} is used interchangeably with defect.
 
-Identifying a defect requires a specification to compare against. A program required to toggle an LED once per second provides a simple example. An LED that remains static, or that toggles at a different rate, is a case of a program violating its specification.
+Identifying a defect requires a specification to compare against. A program required to toggle a LED once per second provides a simple example. A LED that remains static, or that toggles at a different rate, is a case of a program violating its specification.
 
-A specification states an end result, and that result implies intermediate behavior. Toggling an LED on a microcontroller requires initializing the device, configuring its power supply and clock tree, and writing to the registers that drive the output pin. A fault at any of these stages produces the same observable symptom, namely an LED that does not blink at the required rate. Writing to an incorrect register and omitting the clock configuration are distinct defects with identical symptoms.
+A specification states an end result, and that result implies intermediate behavior. Toggling a LED on a microcontroller requires initializing the device, configuring its power supply and clock tree, and writing to the registers that drive the output pin. A fault at any of these stages produces the same observable symptom, namely a LED that does not blink at the required rate. Writing to an incorrect register and omitting the clock configuration are distinct defects with identical symptoms.
 
 Locating a defect requires identifying the stage at which the program departs from its specification. Debugging therefore depends on a means of observing the state of the system, either by executing the program under a debugger or by instrumenting the program to report it through logging.
 
@@ -65,7 +65,7 @@ The mechanisms by which breakpoints are implemented are divided into two categor
 
 A \textit{software breakpoint} replaces the instruction at the target address with a dedicated instruction that raises a debug event, and restores the original instruction once the breakpoint is removed.
 
-A \textit{hardware breakpoint} instead configures dedicated hardware components on the device such as comparators that watch the address of instructions fetched and raises a debug event on a match without midoifying the program. Figure \ref{fig:breakpoints} contrasts the two mechanisms.
+A \textit{hardware breakpoint} instead configures dedicated hardware components on the device such as comparators that watch the address of instructions fetched and raises a debug event on a match without modifying the program. Figure \ref{fig:breakpoints} contrasts the two mechanisms.
 
 \begin{figure}[H]
     \centering
@@ -124,21 +124,21 @@ Embedded development has different properties in this aspect to host machines, m
 The debugger consumes the same image. extracting machine code to be disassembled, the addresses at which functions and variables reside, and the debug information relating those addresses to the source.
 
 \subsection{The ELF Format}
-The Executable and Linkable Format (ELF) is the object file format used by the toolchains considered in this work. Arm defines a processor-specific supplement to it for its own architecture \cite{aaelf32}.
+The Executable and Linkable Format (ELF) is the object file format used by the toolchains considered in this work. ARM defines a processor-specific supplement to it for its own architecture \cite{aaelf32}.
 
 \subsubsection{Segments, Sections and the Loadable Image}
 An ELF file describes its contents in two manners. The section header table describes the file as a set of \textit{sections}, which groups related content under a name and a type, so that machine code, initialized data, uninitialized data and debug information each occupy sections of their own. The program header table describes the file as a set of \textit{segments}, which is the view used when the program is loaded. A segment of loadable type identifies a range of the file together with the address at which that range must appear in memory.
 
 \subsubsection{Symbol Tables}
-A symbol table is a data structure where each symbol in the source code is associated with the necessary information for its functionning. Each entry records the name of an entity, its address, the number of bytes it occupies, and its kind, which distinguishes a function from a data object among other categories.
+A symbol table is a data structure where each symbol in the source code is associated with the necessary information for its functioning. Each entry records the name of an entity, its address, the number of bytes it occupies, and its kind, which distinguishes a function from a data object among other categories.
 
-\subsubsection{Arm Mapping and Tagging Symbols}
+\subsubsection{ARM Mapping and Tagging Symbols}
 \label{subsec:mapping_symbols}
 A section of an ARM ELF file can contain a mixture of ARM code, Thumb code and data. The mapping and tagging symbols are used in the symbols table to denote the start of a specific section of the appropriate type.
 
 \begin{table}[H]
     \centering
-    \caption{Arm Mapping Symbols}
+    \caption{ARM Mapping Symbols}
     \label{tab:arm_map_tag}
     \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.3\hsize\bfseries}Y | >{\hsize=1.7\hsize}Y@{} |}
         \hline
@@ -185,16 +185,16 @@ DWARF is the debug format used by the toolchains considered here. It describes a
 A microcontroller is a system that integrates a processor, its memories and a set of peripherals within a single component. It cannot host a debugger, since it has neither the memory to hold one nor the means for a developer to operate one on it \cite{markusson2008}.
 
 \subsection{Device Description: CMSIS-SVD}
-The CMSIS System View Description format formalizes the description of the system contained in Arm Cortex processor-based devices, in particular, the memory mapped registers of peripherals. The detail contained in system view descriptions is comparable to the data in device reference manuals. The information ranges from high level functional descriptions of a peripheral all the way down to the definition and purpose of an individual bit field in a memory mapped register. \cite{cmsis_svd}.
+The CMSIS System View Description format formalizes the description of the system contained in ARM Cortex processor-based devices, in particular, the memory mapped registers of peripherals. The detail contained in system view descriptions is comparable to the data in device reference manuals. The information ranges from high level functional descriptions of a peripheral all the way down to the definition and purpose of an individual bit field in a memory mapped register. \cite{cmsis_svd}.
 
 The format is based on XML and describes a single device per file. A device consists of a processor and at least one peripheral, each peripheral contains at least one register, and a register may consist of one or more fields \cite{cmsis_svd}. Each level carries attributes, such as the address of a register, its reset value, the width and position of each field, whether a field may be read or written, and the meaning of particular field values.\cite{cmsis_svd}.
 
-\section{The Arm Cortex-M Architecture}
+\section{The ARM Cortex-M Architecture}
 \label{sec:cortexm}
 This section describes the parts of the architecture that the debug and trace infrastructure of Sections \ref{sec:arm_debug} and \ref{sec:coresight} depends upon.
 
-\subsection{Arm Architecture}
-Arm divides its architecture into three profiles, addressed to different classes of application. The A-profile targets systems running general-purpose operating systems, the R-profile targets systems with real-time requirements, and the M-profile targets microcontrollers.
+\subsection{ARM Architecture}
+ARM divides its architecture into three profiles, addressed to different classes of application. The A-profile targets systems running general-purpose operating systems, the R-profile targets systems with real-time requirements, and the M-profile targets microcontrollers.
 
 \subsection{Register Model and the Thumb Instruction Set}
 The M-profile presents thirteen general-purpose registers, a stack pointer, a link register, a program counter, and a program status register carrying the condition flags and the current execution state.
@@ -202,9 +202,9 @@ The M-profile presents thirteen general-purpose registers, a stack pointer, a li
 The M-profile executes the Thumb instruction set only.
 
 \subsection{Exception Model and Vector Table}
-In Arm architectures, an exception is defined as any events that suspends the currently executing program, this can originate from a peripheral signal termed an interrupt, a fault, or a software request.
+In ARM architectures, an exception is defined as any events that suspends the currently executing program, this can originate from a peripheral signal termed an interrupt, a fault, or a software request.
 
-An exception requires a handler, which is a subroutine that is executed whenever the exception occurs. And the address of the entirety of the handlers are stored contiguously in a table termed the Vector Table, which is then indexed by the number of the exception to retrieve the appropriate handler.
+An exception requires a handler, which is a subroutine that is executed whenever the exception occurs. The addresses of the handlers are stored contiguously in a table termed the Vector Table, which is indexed by the exception number to retrieve the appropriate handler.
 
 \subsection{System Address Map}
 The M-profile defines a default address map that assigns a purpose to each region of the address space. Distinct regions are reserved for code, for on-chip static memory, for peripherals, and for external memory and devices \cite{armv7m_arm, armv8m_arm}.
@@ -219,7 +219,7 @@ A further region is reserved for the Private Peripheral Bus (PPB), which holds t
 \end{figure}
 \subsection{AMBA Buses and their Roles in Debug}
 \label{subsec:amba}
-The components of an Arm device are connected by buses defined in the Advanced Microcontroller Bus Architecture (AMBA). Table \ref{tab:amba} states the four most common ones.
+The components of an ARM device are connected by buses defined in the Advanced Microcontroller Bus Architecture (AMBA). Table \ref{tab:amba} states the four most common ones.
 
 \begin{table}[H]
     \centering
@@ -240,12 +240,12 @@ The components of an Arm device are connected by buses defined in the Advanced M
     \end{tabularx}
 \end{table}
 
-\section{The Arm Debug Architecture}
+\section{The ARM Debug Architecture}
 \label{sec:arm_debug}
 Section \ref{subsec:anatomy} left the junction between the probe and the target undescribed. This section describes the specification that governs it and the debug logic it reaches.
 
-\subsection{The Arm Debug Interface}
-The Arm Debug Interface (ADI) defines the means by which a debugger accesses the debug functionality provided by debug components in an embedded system on chip \cite{adiv5}.
+\subsection{The ARM Debug Interface}
+The ARM Debug Interface (ADI) defines the means by which a debugger accesses the debug functionality provided by debug components in an embedded system on chip \cite{adiv5}.
 
 An implementation of that specification within a device is termed a Debug Access Port (DAP), which provides a debugger with a standard interface for accessing debug resources in systems that expose their debug information by resource-specific methods \cite{adiv5}.
 
@@ -271,7 +271,7 @@ There are three types of Debug Ports,
 \begin{itemize}
     \item JTAG Debug Port is accessed by scan chains compliant with IEEE 1149.1.
     \item Serial Wire Debug Port (SWD) is a two-pin serial interface using a packet-based protocol to read and write registers.
-    \item SWJ Debug Port which comibenes the two above\cite{adiv5}.
+    \item SWJ Debug Port which combines the two above\cite{adiv5}.
 \end{itemize}
 
 The debugger drives serial accesses that scan values into registers inside the Debug Port, which are then converted into bus transactions directed at an Access Port register \cite{coresight_guide}.
@@ -309,7 +309,7 @@ On an M-profile device, halting debug capabilities are controlled by the three m
         \hline
         \multirow{3}{*}{DEMCR} & MON\_EN & Enables the DebugMonitor exception, the alternative to halting. \\
         \cline{2-3}
-        & Vector catch & Arms the mechanism described in Section \ref{subsec:reset}. \\
+        & Vector catch & ARMs the mechanism described in Section \ref{subsec:reset}. \\
         \cline{2-3}
         & TRCENA & Governs the trace components. \\
         \hline
@@ -331,7 +331,7 @@ The Data Watchpoint and Trace unit (DWT) implements generic comparators that can
 
 \section{The CoreSight Trace Architecture}
 \label{sec:coresight}
-This section describes the architecture that Arm defines for trace. CoreSight is the mechanism Arm uses to provide the connectivity between a debugger and a processor, and it defines a set of capabilities that may be designed into a processor or into system-level components \cite{coresight_guide}.
+This section describes the architecture that ARM defines for trace. CoreSight is the mechanism ARM uses to provide the connectivity between a debugger and a processor, and it defines a set of capabilities that may be designed into a processor or into system-level components \cite{coresight_guide}.
 
 \subsection{Trace Sources, Links and Sinks}
 \label{subsec:sls}
@@ -340,7 +340,7 @@ Trace components fall into three categories. A trace source is a component that 
 Since a design is free to implement any subset of these components, the topology differs from device to device. A debugger consequently needs to know the topology of the particular target before it can configure a trace path \cite{understanding_trace}.
 
 \subsection{Instruction, Data and Instrumentation Trace}
-Trace refers to the process of capturing data that illustrates how the components in a design are operating, executing and performing, and the Arm approach usually involves a separate generation component for each type of trace \cite{understanding_trace}. Table \ref{tab:trace_types} states the types that concern this work.
+Trace refers to the process of capturing data that illustrates how the components in a design are operating, executing and performing, and the ARM approach usually involves a separate generation component for each type of trace \cite{understanding_trace}. Table \ref{tab:trace_types} states the types that concern this work.
 
 \begin{table}[H]
     \centering
@@ -363,7 +363,7 @@ Instrumentation trace differs from the other two in that the program must be mod
 
 \subsection{Trace Source: the Embedded Trace Macrocell}
 \label{subsec:etm}
-The component that generates instruction trace is termed a trace unit. It traces the instructions a processor executes and the data those instructions act upon \cite{etmv4_spec}. The implementation Arm supplies for this purpose is the Embedded Trace Macrocell (ETM), which exists in four architecture versions \cite{etmv3_spec,etmv4_spec}. This work treats ETMv4.
+The component that generates instruction trace is termed a trace unit. It traces the instructions a processor executes and the data those instructions act upon \cite{etmv4_spec}. The implementation ARM supplies for this purpose is the Embedded Trace Macrocell (ETM), which exists in four architecture versions \cite{etmv3_spec,etmv4_spec}. This work treats ETMv4.
 
 \subsubsection{Functions of a Trace Unit}
 A trace unit has two main functions. The first is to generate trace, by producing trace streams. The second is to filter those streams, so that tracing may be made active only for particular threads of execution or particular functions \cite{etmv4_spec}.
@@ -433,7 +433,7 @@ The protocol outputs data in frames of sixteen bytes, arranged as Figure \ref{fi
 \begin{figure}[H]
     \centering
     \includegraphics[width=\linewidth]{formatter_frame.png}
-    \caption[Structure of a formatter frame]{Structure of a formatter frame, taken from \cite{coresight_arch}}
+    \caption[Structure of a formatter frame]{Structure of a formatter frame \cite{coresight_arch}}
     \label{fig:formatter_frame}
 \end{figure}
 
@@ -522,7 +522,7 @@ Table \ref{tab:sink_tradeoff} sets the two routes against each other.
 
 \section{Debug and Trace Infrastructure in STM32 Microcontrollers}
 \label{sec:stm32}
-The preceding two sections described what Arm specifies. A device manufacturer decides which of those components to implement, where to place them, and what to add. This section describes the choices that are common across the STM32 range and the respects in which its members differ.
+The preceding two sections described what ARM specifies. A device manufacturer decides which of those components to implement, where to place them, and what to add. This section describes the choices that are common across the STM32 range and the respects in which its members differ.
 
 \subsection{Debug Access and Trace Capabilities}
 Every STM32 device exposes a debug port supporting SWD, and the devices built on the larger cores support JTAG as well \cite{an4989}. Behind that port lie the access ports of Section \ref{sec:arm_debug}. The architecture fixes the address of every component it defines. The manufacturer chooses the address of every component it adds, and the reference manual for the family states them. A debugger therefore knows part of the topology in advance and must either be told the rest or read it from the ROM tables of Section \ref{sec:arm_debug}.
@@ -559,7 +559,7 @@ The survey covers the mainstream, high-performance and ultra-low-power families.
 The last two columns are read together. Every family carrying an on-chip trace sink implements ETMv4, so an implementation that supports the later architecture alone loses no device reachable by the on-chip route of Section \ref{subsec:onchip_sinks}. The converse does not hold, since several families implement ETMv4 and carry no sink, and on those the trace must leave through the pins.
 
 \subsection{The DBGMCU Component}
-STM32 devices add a component that Arm does not define, named the microcontroller debug unit (DBGMCU). Unlike the units of Section \ref{sec:arm_debug}, it is placed in the ordinary peripheral address space rather than in the PPB. It reports the identity of the device, which a debugger reads in order to determine which memory map and which peripheral description to apply, and it carries the controls described below. Its address and the exact layout of its registers are properties of the family and are stated in the reference manual.
+STM32 devices add a component that ARM does not define, named the microcontroller debug unit (DBGMCU). Unlike the units of Section \ref{sec:arm_debug}, it is placed in the ordinary peripheral address space rather than in the PPB. It reports the identity of the device, which a debugger reads in order to determine which memory map and which peripheral description to apply, and it carries the controls described below. Its address and the exact layout of its registers are properties of the family and are stated in the reference manual.
 
 \subsubsection{Peripheral Freeze}
 Halting the processor does not halt the peripherals, so a peripheral continues to operate while the program that services it is suspended.
@@ -575,6 +575,6 @@ The configuration register of the DBGMCU component carries one control for each 
 The DBGMCU component also carries the controls that make trace usable. It enables the trace port clock \cite{rm0477}. On the families that route trace to pins, it also assigns those pins \cite{rm0090}. On devices divided into power domains, it enables the debug clock of each domain separately \cite{rm0433}. Which of these are present is a property of the family.
 
 \section{Conclusion}
-This chapter has assembled the concepts on which the remainder of the report rests. It defined a defect in terms of a specification, and a debugger as the system that examines and controls a program in order to locate one. It described the operations such a system provides and the protocols that connect its parts. It then set out the representation of a compiled program, comprising the object file that holds the image, the debug information that relates that image to the source, and the decoding that recovers instructions from the bytes. It narrowed to microcontrollers and to the Arm M-profile, described the ADI through which a debugger reaches a target, and described the CoreSight architecture through which a device reports what its processor executed.
+This chapter has assembled the concepts on which the remainder of the report rests. It defined a defect in terms of a specification, and a debugger as the system that examines and controls a program in order to locate one. It described the operations such a system provides and the protocols that connect its parts. It then set out the representation of a compiled program, comprising the object file that holds the image, the debug information that relates that image to the source, and the decoding that recovers instructions from the bytes. It narrowed to microcontrollers and to the ARM M-profile, described the ADI through which a debugger reaches a target, and described the CoreSight architecture through which a device reports what its processor executed.
 
 Two results of this chapter are used repeatedly in what follows, and they belong to the two halves of it. The trace infrastructure of Section \ref{sec:coresight} produces a record of execution expressed in addresses, and produces it in a form that cannot be interpreted without the program image. The debug information of Section \ref{sec:program_repr} converts an address into a function, a source file and a line. Neither is sufficient alone. Combining them is what turns a buffer of trace bytes into an account of a program in the terms in which it was written, and Chapters \ref{ch:architecture} and \ref{ch:implementation} describe how this combination was achieved.
