@@ -1,31 +1,10 @@
-\chapter{Objectives Specification and Work Environment}
+\chapter{Requirements Specification and Work Environment}
 \chaplabel{ch:specification}
 
 \section*{Introduction}
-Chapter \ref{ch:context} identified a gap between the debug and trace capability a microcontroller implements and the capability a developer can reach through available tools. This chapter states what the project undertook to do about that gap, the requirements derived from it, and the hardware and software used to produce the result.
+Chapter \ref{ch:context} stated the problem the project addresses, together with its objectives and deliverables. This chapter specifies the scope of those deliverables, the requirements the work must satisfy, and the hardware and software environment in which it was produced.
 
-\section{Project Objectives and Deliverables}
-\label{sec:objectives}
-The internship produced the three deliverables of Table \ref{tab:deliverables}. Chapter \ref{ch:implementation} presents the chronology.
-
-\begin{table}[H]
-    \centering
-    \caption{Deliverables}
-    \label{tab:deliverables}
-    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.5\hsize\bfseries}Y | >{\hsize=1.5\hsize}Y@{} |}
-        \hline
-        Deliverable & \textbf{Description} \\
-        \hline
-        Application note & The instruction trace infrastructure of STM32 microcontrollers, a reference implementation for decoding the trace such an infrastructure produces, and guidance on working with instruction trace features on vendor IDEs. \\
-        \hline
-        Proof of Concept & A demonstration that instruction trace is obtainable on an STM32 device using an on-chip trace sink. \\
-        \hline
-        Debugger & A debugger with instruction trace features. \\
-        \hline
-    \end{tabularx}
-\end{table}
-
-\subsection{Project Scope}
+\section{Scope}
 \label{subsec:scope}
 
 \begin{table}[H]
@@ -246,8 +225,8 @@ The probe is the STLINK-V3EC embedded on the board, which supports both SWD and 
 \end{table}
 
 \section{Conclusion}
-This chapter has stated the three deliverables of the project, the requirements derived from them, and the environment in which they were produced. Two facts from it govern everything that follows.
+This chapter has stated the scope of the work, the requirements it must satisfy, and the environment in which it was produced. The hardware and the requirement set both bear on what follows.
 
-The first is the hardware. The target implements both routes by which trace leaves a processor, and the bench can use only one of them, since the probe available cannot capture a trace port. The on-chip sink is therefore the route the work takes, and its capacity of two kilobytes is the constraint against which the results are read.
+The hardware constrains which trace route is usable. The target implements both routes by which trace leaves a processor, and the bench can use only one of them, since the probe available cannot capture a trace port. The on-chip sink is therefore the route the work takes, and its capacity of two kilobytes is the constraint against which the results are read.
 
-The second is the requirement set. The functional requirements describe a pipeline running from the configuration of a trace unit to the display of an executed source line, and the non-functional requirements constrain it to hardware already present and to an existing development tool. Chapter \ref{ch:architecture} describes the structure built to satisfy them.
+The requirement set fixes the shape of the work. The functional requirements describe a pipeline running from the configuration of a trace unit to the display of an executed source line, and the non-functional requirements constrain it to hardware already present and to an existing development tool. Chapter \ref{ch:architecture} describes the structure built to satisfy them.

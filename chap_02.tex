@@ -91,26 +91,24 @@ Disassembly serves two purposes in a debugger. It allows a developer to inspect 
 
 \section{Classes of Debugging}
 \label{sec:classes}
-Debugging techniques are grouped along several independent axes, and a given technique may occupy a position on each of them.
+Debugging techniques are grouped along several independent axes, and a given technique may occupy a position on each of them. Table \ref{tab:debug_axes} states the axes that concern this work and the distinction each draws.
 
-\subsection{Intrusive and Non-Intrusive Debugging}
-\label{subsec:intrusive}
-A debug technique is termed intrusive, or invasive, when applying it alters the behavior of the program under examination. It is termed non-intrusive when it does not. Halting the processor and executing debug code through dedicated exceptions are presented as invasive mechanisms, whereas program trace and profiling are presented as non-invasive\cite{armv7m_arm}.
-
-A program that meets a timing requirement when running freely may fail that requirement when it is halted at a breakpoint, and a defect that depends on the relative timing of an interrupt and the main program may cease to appear once the timing is disturbed. Adding logging statements has a comparable effect.
-
-\subsection{Live and Post-Mortem Debugging}
-Live debugging examines a program while it is running or halted under the control of a debugger. The developer forms a hypothesis, sets a breakpoint, inspects state and repeats. The technique requires the defect to be reproducible while the debugger is attached.
-
-Post-mortem debugging examines a record produced during execution and analyzed once that execution has finished. The term carries no implication that the program failed, since the record may equally describe a run that completed normally. The record may be a set of fault status registers, a region of memory preserved across a fault, a log, or a buffer of captured trace. No interaction with the program is possible during the analysis, so the analysis is limited to what the record contains. The technique applies where live debugging does not, for instance where a failure appears rarely, or where attaching a debugger would itself prevent it from occurring.
-
-\subsection{Run-Control and Trace-Based Debugging}
-\label{subsec:runstop}
-A debugger that supports the operations of Section \ref{sec:primitives} is termed a run-stop debugger, or a run-time control debugger\cite{markusson2008}. The developer directs the investigation by deciding where to stop and what to examine.
-
-Tracing follows the opposite order. Tracing records the program flow and the data accesses of the program while it runs, and the recorded information is used at a later stage to perform run-stop debugging \cite{markusson2008}.
-
-The two approaches answer different questions. A run-stop debugger answers what the state is at a chosen point. Tracing answers what the program did over an interval, including the path taken to reach a point of failure.
+\begin{table}[H]
+    \centering
+    \caption{Axes of debugging technique}
+    \label{tab:debug_axes}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.75\hsize\bfseries}Y | >{\hsize=1.25\hsize}Y@{} |}
+        \hline
+        Axis & \textbf{Distinction} \\
+        \hline
+        Intrusive and non-intrusive & Whether applying the technique alters the behavior of the program under examination. \\
+        \hline
+        Live and post-mortem & Whether the program is examined under the control of a debugger or from a record produced during execution and analyzed afterward. \\
+        \hline
+        Run-control and trace-based & Whether the developer directs the investigation by choosing where to stop, or reconstructs it from a recording of the program flow. \\
+        \hline
+    \end{tabularx}
+\end{table}
 
 \section{Program Representation}
 \label{sec:program_repr}
@@ -191,32 +189,8 @@ The format is based on XML and describes a single device per file. A device cons
 
 \section{The ARM Cortex-M Architecture}
 \label{sec:cortexm}
-This section describes the parts of the architecture that the debug and trace infrastructure of Sections \ref{sec:arm_debug} and \ref{sec:coresight} depends upon.
+This section describes the parts of the ARM Cortex-M architecture on which the debug and trace infrastructure depends. ARM divides its architecture into three profiles addressed to different classes of application. The A-profile targets systems running general-purpose operating systems, the R-profile targets systems with real-time requirements, and the M-profile targets microcontrollers, which is the profile this work concerns.
 
-\subsection{ARM Architecture}
-ARM divides its architecture into three profiles, addressed to different classes of application. The A-profile targets systems running general-purpose operating systems, the R-profile targets systems with real-time requirements, and the M-profile targets microcontrollers.
-
-\subsection{Register Model and the Thumb Instruction Set}
-The M-profile presents thirteen general-purpose registers, a stack pointer, a link register, a program counter, and a program status register carrying the condition flags and the current execution state.
-
-The M-profile executes the Thumb instruction set only.
-
-\subsection{Exception Model and Vector Table}
-In ARM architectures, an exception is defined as any events that suspends the currently executing program, this can originate from a peripheral signal termed an interrupt, a fault, or a software request.
-
-An exception requires a handler, which is a subroutine that is executed whenever the exception occurs. The addresses of the handlers are stored contiguously in a table termed the Vector Table, which is indexed by the exception number to retrieve the appropriate handler.
-
-\subsection{System Address Map}
-The M-profile defines a default address map that assigns a purpose to each region of the address space. Distinct regions are reserved for code, for on-chip static memory, for peripherals, and for external memory and devices \cite{armv7m_arm, armv8m_arm}.
-
-A further region is reserved for the Private Peripheral Bus (PPB), which holds the registers of the system and debug components belonging to the processor \cite{armv7m_arm, armv8m_arm}.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.88\linewidth]{fig_address_map.pdf}
-    \caption[The M-profile system address map]{The M-profile system address map \cite{armv7m_arm}}
-    \label{fig:addrmap}
-\end{figure}
 \subsection{AMBA Buses and their Roles in Debug}
 \label{subsec:amba}
 The components of an ARM device are connected by buses defined in the Advanced Microcontroller Bus Architecture (AMBA). Table \ref{tab:amba} states the four most common ones.
@@ -259,13 +233,7 @@ The Debug Access Port presents one interface to the debugger and performs the re
 \end{figure}
 
 \subsection{Debug Port: JTAG and SWD}
-A Debug Port provides four things\cite{adiv5}:
-\begin{itemize}
-    \item The external physical connection to the interface.
-    \item A method of obtaining the identification code of the Debug Access Port.
-    \item The methods by which the debugger accesses the Debug Port and Access Port registers.
-    \item A method of aborting a register access that appears to have failed.
-\end{itemize}
+A Debug Port provides the external physical connection to the interface and the methods by which the debugger accesses the Debug Port and Access Port registers \cite{adiv5}.
 
 There are three types of Debug Ports,
 \begin{itemize}
@@ -279,44 +247,8 @@ The debugger drives serial accesses that scan values into registers inside the D
 \subsection{Access Ports and the Memory Access Port}
 An Access Port uses a resource-specific transport mechanism to access debug information in the system, and passes that information to the Debug Port \cite{adiv5}. A Debug Access Port contains at least one Access Port and may contain several \cite{adiv5}, each driving a different memory space, with the type of Access Port determined by the bus protocol required for that space \cite{coresight_guide}.
 
-\subsection{Component Identification and ROM Tables}
-CoreSight designates two mechanisms that allow a debugger to discover the debugging capabilities of an unfamiliar device.
-
-The first is a common register layout. A component compliant with the CoreSight architecture occupies a block with a size that is a multiple of four kilobytes, divided between a set of predefined management registers and a set of registers specific to the device \cite{coresight_guide}.
-
-The second is ROM tables. A ROM table always occupies four kilobytes and is part of the address space of the memory system connected to an AP \cite{adiv5}. Its entries point to the components present, and one bit of each entry indicates whether the corresponding component is implemented \cite{armv7m_arm, armv8m_arm}.
-
-\subsection{Halting Debug Control}
-On an M-profile device, halting debug capabilities are controlled by the three memory-mapped registers described in table \ref{tab:halting}\cite{armv7m_arm, armv8m_arm}.
-
-\begin{table}[H]
-    \centering
-    \caption{Registers governing halting debug}
-    \label{tab:halting}
-    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.5\hsize\bfseries}Y | >{\hsize=0.75\hsize}Y | >{\hsize=1.75\hsize}Y@{} |}
-        \hline
-        Register & \textbf{Control} & \textbf{Effect} \\
-        \hline
-        \multirow{5}{*}{DHCSR} & C\_DEBUGEN & Enables halting debug, after which a debug event halts the processor in Debug state. \\
-        \cline{2-3}
-        & C\_HALT & Requests a halt when written as one, and a resume when written as zero. The processor also sets it on entry to Debug state. \\
-        \cline{2-3}
-        & C\_STEP & Requests a single step. \\
-        \cline{2-3}
-        & C\_MASKINTS & Prevents configurable interrupts from being taken during a step, which is what allows a step to remain within the statement under examination. \\
-        \cline{2-3}
-        & S\_HALT & Reports that the processor is in Debug state. Read-only. \\
-        \hline
-        \multirow{3}{*}{DEMCR} & MON\_EN & Enables the DebugMonitor exception, the alternative to halting. \\
-        \cline{2-3}
-        & Vector catch & ARMs the mechanism described in Section \ref{subsec:reset}. \\
-        \cline{2-3}
-        & TRCENA & Governs the trace components. \\
-        \hline
-        DFSR & One bit per event & Reports why execution stopped, distinguishing an internal halt request, a breakpoint, a watchpoint match, a vector catch and an external debug request. A debugger reads it after a halt in order to report the cause to the developer. Each bit is cleared by writing one. \\
-        \hline
-    \end{tabularx}
-\end{table}
+\subsection{Component Identification}
+CoreSight allows a debugger to discover the debugging capabilities of an unfamiliar device through a common register layout. A component compliant with the CoreSight architecture occupies a block with a size that is a multiple of four kilobytes, divided between a set of predefined management registers and a set of registers specific to the device \cite{coresight_guide}.
 
 \subsection{Reset Types and Vector Catch}
 \label{subsec:reset}
@@ -359,7 +291,7 @@ Trace refers to the process of capturing data that illustrates how the component
     \end{tabularx}
 \end{table}
 
-Instrumentation trace differs from the other two in that the program must be modified to produce it, which places it on the intrusive side of the distinction of Section \ref{subsec:intrusive}, albeit at a low level of intrusion \cite{armv7m_arm}.
+Instrumentation trace differs from the other two in that the program must be modified to produce it, which places it on the intrusive side of the distinction, albeit at a low level of intrusion \cite{armv7m_arm}.
 
 \subsection{Trace Source: the Embedded Trace Macrocell}
 \label{subsec:etm}
@@ -448,13 +380,7 @@ The design serves several ends at once \cite{coresight_arch}:
 Where only a single trace source is used and the embedded trigger and flow control information is not required, formatting may be disabled to obtain better throughput \cite{coresight_arch}. A decoder must therefore be told whether the stream it receives is formatted, since a formatted stream requires the frames to be unwrapped before the packet decoding of Section \ref{subsec:protocols} may begin.
 
 \subsection{Off-Chip Trace Sinks: TPIU and SWO}
-Two families of sink exist, distinguished by where the trace data comes to rest. The first exports it from the device.
-
-The standard component for this purpose is the Trace Port Interface Unit (TPIU), which drives the external pins of a trace port so that capture hardware may receive the data \cite{soc400_trm}. It also inserts source identifiers into the stream and coordinates the stopping of capture when a trigger is received \cite{soc400_trm}.
-
-The limitation of this route is bandwidth. A trace port is a small number of pins running at a fraction of the internal frequency, so it carries far less than the on-chip trace bus and suits a low rate of trace over a long period \cite{coresight_guide}. The Serial Wire Output (SWO) passes trace over a single pin directly to a debugger, at a lower rate still \cite{understanding_trace}.
-
-Two practical constraints follow. Pins must be available on the package and routed on the board, and the capture equipment must be able to receive them, which usually means a probe more capable than the one used for ordinary debugging. Neither constraint is met by every board.
+Trace sinks fall into two families, distinguished by where the trace data comes to rest. The first exports it from the device. The Trace Port Interface Unit (TPIU) drives the external pins of a trace port so that capture hardware may receive the data \cite{soc400_trm}, and the Serial Wire Output (SWO) passes trace over a single pin to a debugger at a lower rate \cite{understanding_trace}. This route is bounded by the bandwidth of a few pins running below the internal frequency, and it requires pins available on the package together with a probe able to capture them, which not every board provides \cite{coresight_guide}.
 
 \subsection{On-Chip Trace Sinks: the Trace Memory Controller}
 \label{subsec:onchip_sinks}
@@ -525,7 +451,7 @@ Table \ref{tab:sink_tradeoff} sets the two routes against each other.
 The preceding two sections described what ARM specifies. A device manufacturer decides which of those components to implement, where to place them, and what to add. This section describes the choices that are common across the STM32 range and the respects in which its members differ.
 
 \subsection{Debug Access and Trace Capabilities}
-Every STM32 device exposes a debug port supporting SWD, and the devices built on the larger cores support JTAG as well \cite{an4989}. Behind that port lie the access ports of Section \ref{sec:arm_debug}. The architecture fixes the address of every component it defines. The manufacturer chooses the address of every component it adds, and the reference manual for the family states them. A debugger therefore knows part of the topology in advance and must either be told the rest or read it from the ROM tables of Section \ref{sec:arm_debug}.
+Every STM32 device exposes a debug port supporting SWD, and the devices built on the larger cores support JTAG as well \cite{an4989}. Behind that port lie the access ports of Section \ref{sec:arm_debug}. The architecture fixes the address of every component it defines. The manufacturer chooses the address of every component it adds, and the reference manual for the family states them. A debugger therefore knows part of the topology in advance and must be told the rest.
 
 Debug capability varies across the range, since it follows in part from the processor a given family implements. Table \ref{tab:stm32_debug} states which families implement a trace unit and which additionally implement an on-chip trace sink.
 
@@ -560,16 +486,6 @@ The last two columns are read together. Every family carrying an on-chip trace s
 
 \subsection{The DBGMCU Component}
 STM32 devices add a component that ARM does not define, named the microcontroller debug unit (DBGMCU). Unlike the units of Section \ref{sec:arm_debug}, it is placed in the ordinary peripheral address space rather than in the PPB. It reports the identity of the device, which a debugger reads in order to determine which memory map and which peripheral description to apply, and it carries the controls described below. Its address and the exact layout of its registers are properties of the family and are stated in the reference manual.
-
-\subsubsection{Peripheral Freeze}
-Halting the processor does not halt the peripherals, so a peripheral continues to operate while the program that services it is suspended.
-
-STM32 devices provide a set of freeze registers in the DBGMCU component, one register per peripheral bus. Each bit corresponds to one peripheral and stops that peripheral while the processor is halted for debug \cite{an4989}. The registers may be written either by the debugger or by the application \cite{an4989}.
-
-\subsubsection{Low-Power Mode Debug Support}
-The processor is not clocked in the low-power modes of the device, so a debug connection is lost when the application enters one of them \cite{an4989}.
-
-The configuration register of the DBGMCU component carries one control for each low-power mode. Setting it keeps the clocks required for debug running while the device is in that mode, which retains the session \cite{an4989}.
 
 \subsubsection{Trace Pin and Clock Control}
 The DBGMCU component also carries the controls that make trace usable. It enables the trace port clock \cite{rm0477}. On the families that route trace to pins, it also assigns those pins \cite{rm0090}. On devices divided into power domains, it enables the debug clock of each domain separately \cite{rm0433}. Which of these are present is a property of the family.

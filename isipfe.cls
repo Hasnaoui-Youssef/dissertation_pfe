@@ -215,17 +215,8 @@
 \usepackage[framemethod=tikz]{mdframed}
 \usepackage{lipsum}
 \usepackage{xcolor}
-%================= configuring minitoc ==================%
-\usepackage[english]{minitoc}
-\mtcsettitle{minitoc}{Contents}
-\setcounter{minitocdepth}{1}
-\mtcsetrules{minitoc}{off}
-\mtcsetoffset{minitoc}{-1.0em}
-
-%% disabling chapter numbers
-\newcommand{\filterminitoc}[1]{#1}
-\renewcommand{\thesection}{\csname filterminitoc \endcsname{\arabic{chapter}.}\arabic{section}}
-\newcommand{\minitocsection}{\begingroup\renewcommand{\filterminitoc}[1]{}\minitoc\endgroup}
+%% section numbering: chapter.section
+\renewcommand{\thesection}{\arabic{chapter}.\arabic{section}}
 
 %=============== Customizing Chapters Names ===============%
 %@author: Stoufa
@@ -242,24 +233,11 @@
 
 \def\@makechapterhead#1{
     \vspace*{30\p@}%
-    {\parindent \z@ \centering \reset@font
-        \thickhrulefill\quad
-        \scshape\bfseries\textit{\@chapapp{}  \thechapter}
-        \quad \thickhrulefill
-        \par\nobreak
-        \vspace*{10\p@}%
-        \interlinepenalty\@M
-        \hrule
-        \vspace*{10\p@}%
-        \Huge \bfseries #1 \par\nobreak
-        \par
-        \vspace*{10\p@}%
-        \hrule
-        \vskip 50\p@
+    {\parindent \z@ \raggedright \reset@font
+        \Huge \bfseries \thechapter\quad #1 \par\nobreak
+        \vskip 40\p@
     }
-    \minitocsection
-    \thispagestyle{empty}%
-    \newpage
+    \thispagestyle{plain}%
 }
 \def\@makeschapterhead#1{\hbox{%
     \huge\hbox{\textbf{#1}}%
@@ -364,7 +342,6 @@
 
 
 
-\usepackage[english]{minitoc}
 \usepackage[nottoc,notlof, notlot]{tocbibind}
 				% allows the table of contents, bibliography
 				% and index to be added to the table of

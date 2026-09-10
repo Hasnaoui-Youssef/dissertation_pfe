@@ -1,6 +1,5 @@
 \chapter*{Introduction}
 \addcontentsline{toc}{chapter}{Introduction} % to include the introduction to the table of content
-\adjustmtc
 \markboth{Introduction}{} %To redefine the section page head
 
 Embedded systems operate under real-time constraints. They interact directly with hardware peripherals and with asynchronous external events. Both properties make them difficult to observe and to debug. Traditional techniques such as serial logging or software breakpoints are often insufficiently informative, and they are intrusive enough to perturb the behavior under examination. Modern ARM-based microcontrollers address these limitations by integrating hardware debug and trace capabilities through the ARM CoreSight architecture, which permits non-intrusive visibility into instruction execution, memory accesses and system activity.

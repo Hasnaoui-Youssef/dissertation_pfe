@@ -38,20 +38,17 @@
 
         \setcounter{secnumdepth}{3}
         \setcounter{tocdepth}{2}
-        \dominitoc
         \tableofcontents
         \thispagestyle{frontmatter}
         %uncomment from here ----
         \clearpage
         \phantomsection
         \addcontentsline{toc}{chapter}{\listfigurename}
-        \adjustmtc
         \listoffigures
         \thispagestyle{frontmatter}
         \clearpage
         \phantomsection
         \addcontentsline{toc}{chapter}{\listtablename}
-        \adjustmtc
         \listoftables
         \thispagestyle{frontmatter}
         %to here  ----
@@ -75,6 +72,9 @@
         \clearpage
 
         \input{chap_05}
+        \clearpage
+
+        \input{chap_06}
         \clearpage
 
         \input{conclusion}

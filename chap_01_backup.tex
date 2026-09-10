@@ -1,0 +1,168 @@
+\chapter{Context \& Problem Statement}
+\chaplabel{ch:context}
+
+\section*{Introduction}
+This chapter states the setting of the project and the problem it addresses. It presents the host organization, then examines what existing development tools offer for instruction trace, what they withhold, and what the hardware makes possible regardless.
+
+\section{Host Organization}
+\subsection{STMicroelectronics}
+
+STMicroelectronics (ST) is a global leader in the semiconductor industry, providing innovative solutions across various markets, including automotive, industrial, personal electronics, and communications equipment.
+
+Founded in 1987 through the merger of SGS Microelettronica of Italy and Thomson Semiconducteurs of France, ST has grown to become one of the largest semiconductor companies in the world.
+
+\subsection{Activity Sectors}
+
+ST's mission is to be the undisputed leader in the semiconductor market, delivering sustainable and innovative solutions that make a positive impact on people's lives. The company's vision is to create technology that enables a more intelligent and connected world, driving progress in key areas such as smart driving, smart industry, smart home, and smart city applications.\\
+Figure \ref{fig:st_activities} highlights the key end markets targeted by ST's solutions.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=16cm]{end markets.png}
+  \caption{STMicroelectronics Activity Sectors}
+  \label{fig:st_activities}
+\end{figure}
+
+\subsection{Global Presence}
+
+STMicroelectronics operates in more than 35 countries, with a strong presence in key markets around the world. Figure \ref{fig:map} illustrates the company's global network, which includes \cite{st_comp}:
+
+\begin{itemize}
+    \item \textbf{Manufacturing Sites:} ST has 14 main manufacturing sites, strategically located to serve its global customer base efficiently.
+    \item \textbf{Sales \& Marketing Offices:} With a network of sales and marketing offices, ST provides localized support and services to its customers.
+    \item \textbf{R\&D Centers:} ST's R\&D centers are spread across the globe, fostering innovation and collaboration.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=16cm]{st map.png}
+  \caption{STMicroelectronics Worldwide Presence}
+  \label{fig:map}
+\end{figure}
+
+\subsection{ST Tunis}
+
+The STMicroelectronics Tunis site, located in the El Ghazela Technopark, employs over 100 professionals in various fields such as tools, applications, quality, and support functions. The facility is involved in all stages of the microelectronics industry, from initial circuit design to final verification before mass production.
+
+With expertise in both hardware and software, the Tunis center's activities include electronic circuit design, software tool development, application software support, and the electrical validation and verification of new circuits. This diverse skill set allows the center to contribute significantly to ST's global operations. Figure \ref{fig:st_tn} shows the site.
+
+ \begin{figure}[htp]
+  \centering
+  \includegraphics[width=10cm]{stmicroelectronics-tunis-site.jpg}
+  \caption{STMicroelectronics Tunis}
+  \label{fig:st_tn}
+\end{figure}
+
+
+\subsection{Application \& Product Support Team}
+The Application \& Product Support team is dedicated to delivering comprehensive customer support while managing and publishing STM32 product documentation. Their role includes providing in-depth technical support for ST’s tools and products, helping customers troubleshoot problems and optimize their use of these technologies. They ensure the accuracy, clarity, and consistency of all technical documentation, which is regularly updated to reflect the latest developments and innovations.
+
+The team is also involved in enhancing and maintaining existing products, as well as defining new products, derivatives, and application references to meet evolving market needs. Additionally, they lead initiatives related to intellectual property applications, offering specific support through the development of application notes, training programs, and other resources that help customers fully understand and utilize ST’s products. This multifaceted approach ensures both customer satisfaction and continuous improvement in the STM32 ecosystem.
+\section{Project Context}
+
+\subsection{Problem Statement}
+Debugging software offers a unified experience across many chips, vendors and architectures. It achieves this through a common layer of abstraction that presents heterogeneous targets behind a single conceptual model. The abstraction holds for simple primitives such as memory views and breakpoints. It fails for the advanced features, such as reconstructing execution flow, conditional and cross-triggering of debug events, or recovering execution history after a failure. Those features do not generalize, since each is tightly coupled to a vendor-specific implementation.
+
+The gap between what a chip provides and what a developer can reach is the central concern of this project.
+\subsection{State of the Art}
+Debugging an embedded system from a host machine like a computer needs multiple components to work together, starting with the debug interface present on the microcontroller chip, the debugger software, and a hardware debug probe that links the microcontroller and the host machine.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Embedded Systems IDE Vendors}
+    \label{tab:ide_vendors}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.05\hsize\bfseries}Y | >{\hsize=1.05\hsize}Y | >{\hsize=0.95\hsize}Y | >{\hsize=0.95\hsize}Y | >{\hsize=1.0\hsize}Y@{} |}
+        \hline
+        Vendor & \textbf{Toolchain} & \textbf{Debugger} & \textbf{Debug server} & \textbf{Debug probe} \\
+        \hline
+        IAR & IAR toolchain (ICCARM) & C-SPY & Integrated & I-jet, I-jet Trace \\
+        \hline
+        Keil & ARM Compiler (armcc, armclang) & \textmu Vision debugger & Integrated & ULINK family \\
+        \hline
+        SEGGER & SEGGER toolchain & Ozone & J-Link GDB server & J-Link, J-Trace \\
+        \hline
+        STMicroelectronics & ST-Clang & GDB & ST-LINK GDB server & ST-LINK \\
+        \hline
+        Free & GCC, LLVM & GDB or LLDB & OpenOCD or pyOCD & CMSIS-DAP \\
+        \hline
+    \end{tabularx}
+\end{table}
+The features that the proprietary debuggers provide for devices based on the ARM architecture are worth examining in turn. ST's tools are specialized forks of open-source projects and are therefore excluded from this comparison.
+
+\begin{table}[htbp]
+    \centering
+    \begin{threeparttable}
+    \caption{Debugger Features}
+    \label{tab:debugger_features}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.3\hsize\bfseries}Y | >{\hsize=0.9\hsize}Y | >{\hsize=0.9\hsize}Y | >{\hsize=0.9\hsize}Y@{} |}
+        \hline
+        Feature & \textbf{IAR} & \textbf{Keil} & \textbf{SEGGER} \\
+        \hline
+        ITM trace & \cmark & \cmark & \cmark\tnote{1} \\
+        \hline
+        Instruction trace & \cmark & \cmark & \cmark \\
+        \hline
+        CTI support & \xmark & \xmark & \xmark \\
+        \hline
+        Scripting interface & \cmark & \cmark & \cmark \\
+        \hline
+        Multi-core debugging & Limited & Limited & Limited \\
+        \hline
+        IDE coupling & \cmark\tnote{2} & \cmark & \xmark \\
+        \hline
+    \end{tabularx}
+    \begin{tablenotes}
+        \item[1] Supports UART encoding only
+        \item[2] Implemented in the IDE, and able to work as a standalone server
+    \end{tablenotes}
+    \end{threeparttable}
+\end{table}
+
+\subsection{Critique of Current State of the Art}
+\label{subsec:critique}
+Vendor IDEs expose a fixed set of tracing settings through their interface. they therefore reapplies the fixed configuration at every resume, which is consistent behavior from the point of view of the tool and leaves a developer no way to hold a configuration of their own.
+
+Debug probes impose limitations of their own. IAR, Keil and SEGGER each supply two versions of their probe, a base model and an extended model that captures trace through dedicated pins.
+
+\begin{table}[htbp]
+    \centering
+    \begin{threeparttable}
+    \caption{Debug Probe Limitations}
+    \label{tab:debug_probe_limitations}
+        \begin{tabularx}{\linewidth}{| @{}>{\bfseries}Y | Y | Y | Y | Y@{} |}
+        \hline
+        Probe & \textbf{Supported by IAR} & \textbf{Supported by Keil} & \textbf{Supported by SEGGER} & \textbf{Trace pin capture} \\
+        \hline
+        I-jet & \cmark & \xmark & \xmark & \cmark \tnote{1} \\
+        \hline
+        ULINK & \xmark & \cmark & \xmark & \cmark \tnote{1} \\
+        \hline
+        J-Link, J-Trace & \cmark & \cmark & \cmark & \cmark \tnote{1} \\
+        \hline
+        ST-LINK & \cmark & \cmark & \cmark & \xmark \\
+        \hline
+        CMSIS-DAP & \cmark & \cmark & \cmark & \xmark \\
+        \hline
+    \end{tabularx}
+    \begin{tablenotes}
+        \item[1] Given the appropriate model
+        \item[2] Established by evaluating the probes during this work, in the versions given in Table \ref{tab:debugger_features}.
+    \end{tablenotes}
+    \end{threeparttable}
+\end{table}
+
+Among the tools examined, none exposes on-chip trace capture through a probe other than its own, none decodes trace capture outside of a live debug session, or a capture obtained by other means than a debug probe.
+
+\subsection{Proposed Solution}
+The proposed solution takes the form of four results.
+
+An application note assembles into one document the procedure for using instruction trace on these devices.
+
+An implementation of drivers that allow a host machine to configure the concerned trace and debug components.
+
+A pipeline for trace decoding processing and analysis that is decoupled from the trace extraction means, and of a debugging session, allowing for offline trace analysis.
+
+A debug engine carries that chain alongside the conventional debugging capabilities and presents the result inside a development tool during a live session.
+
+\section{Conclusion}
+This first chapter introduces the host organization, STMicroelectronics, and provides the context and objectives of the project. It sets the stage for understanding the foundational aspects of the project and its significance.

@@ -2,132 +2,157 @@
 \chaplabel{ch:context}
 
 \section*{Introduction}
-This chapter states the setting of the project and the problem it addresses. It presents the host organization, then examines what existing development tools offer for instruction trace, what they withhold, and what the hardware makes possible regardless.
+This chapter states the setting of the project and the problem it addresses. It presents the host organization and the origin of the subject, establishes what an execution record supplies that the ordinary means of debugging do not, states the question the project answers, surveys what the devices provide and what the available tools expose of it, and closes with the objectives, the constraints and the deliverables.
 
 \section{Host Organization}
 \subsection{STMicroelectronics}
 
-STMicroelectronics (ST) is a global leader in the semiconductor industry, providing innovative solutions across various markets, including automotive, industrial, personal electronics, and communications equipment.
+STMicroelectronics (ST) is a global semiconductor manufacturer, founded in 1987 through the merger of SGS Microelettronica of Italy and Thomson Semiconducteurs of France. It supplies devices for the automotive, industrial, personal electronics and communications markets \cite{st_comp}.
 
-Founded in 1987 through the merger of SGS Microelettronica of Italy and Thomson Semiconducteurs of France, ST has grown to become one of the largest semiconductor companies in the world.
-
-\subsection{Activity Sectors}
-
-ST's mission is to be the undisputed leader in the semiconductor market, delivering sustainable and innovative solutions that make a positive impact on people's lives. The company's vision is to create technology that enables a more intelligent and connected world, driving progress in key areas such as smart driving, smart industry, smart home, and smart city applications.\\
-Figure \ref{fig:st_activities} highlights the key end markets targeted by ST's solutions.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=16cm]{end markets.png}
-  \caption{STMicroelectronics Activity Sectors}
-  \label{fig:st_activities}
-\end{figure}
-
-\subsection{Global Presence}
-
-STMicroelectronics operates in more than 35 countries, with a strong presence in key markets around the world. Figure \ref{fig:map} illustrates the company's global network, which includes \cite{st_comp}:
-
-\begin{itemize}
-    \item \textbf{Manufacturing Sites:} ST has 14 main manufacturing sites, strategically located to serve its global customer base efficiently.
-    \item \textbf{Sales \& Marketing Offices:} With a network of sales and marketing offices, ST provides localized support and services to its customers.
-    \item \textbf{R\&D Centers:} ST's R\&D centers are spread across the globe, fostering innovation and collaboration.
-\end{itemize}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=16cm]{st map.png}
-  \caption{STMicroelectronics Worldwide Presence}
-  \label{fig:map}
-\end{figure}
+Among its product lines is the STM32 family of microcontrollers, built on the ARM Cortex-M processors. That family is the subject of this work, and Section \ref{sec:sota} surveys its trace capability.
 
 \subsection{ST Tunis}
 
-The STMicroelectronics Tunis site, located in the El Ghazela Technopark, employs over 100 professionals in various fields such as tools, applications, quality, and support functions. The facility is involved in all stages of the microelectronics industry, from initial circuit design to final verification before mass production.
-
-With expertise in both hardware and software, the Tunis center's activities include electronic circuit design, software tool development, application software support, and the electrical validation and verification of new circuits. This diverse skill set allows the center to contribute significantly to ST's global operations. Figure \ref{fig:st_tn} shows the site.
-
- \begin{figure}[htp]
-  \centering
-  \includegraphics[width=10cm]{stmicroelectronics-tunis-site.jpg}
-  \caption{STMicroelectronics Tunis}
-  \label{fig:st_tn}
-\end{figure}
-
+The STMicroelectronics Tunis site, located in the El Ghazela Technopark, employs over 100 professionals in fields such as tools, applications, quality and support functions. The site contributes to circuit design, software tool development, application support, and the electrical validation of new circuits.
 
 \subsection{Application \& Product Support Team}
-The Application \& Product Support team is dedicated to delivering comprehensive customer support while managing and publishing STM32 product documentation. Their role includes providing in-depth technical support for ST’s tools and products, helping customers troubleshoot problems and optimize their use of these technologies. They ensure the accuracy, clarity, and consistency of all technical documentation, which is regularly updated to reflect the latest developments and innovations.
 
-The team is also involved in enhancing and maintaining existing products, as well as defining new products, derivatives, and application references to meet evolving market needs. Additionally, they lead initiatives related to intellectual property applications, offering specific support through the development of application notes, training programs, and other resources that help customers fully understand and utilize ST’s products. This multifaceted approach ensures both customer satisfaction and continuous improvement in the STM32 ecosystem.
-\section{Project Context}
+The Application \& Product Support team provides technical support for ST's tools and products, and manages and publishes the STM32 product documentation. It answers customer questions on the use of the devices, maintains the accuracy of the documents that describe them, and produces application notes and training material stating how a given capability is used in practice.
 
-\subsection{Problem Statement}
-Debugging software offers a unified experience across many chips, vendors and architectures. It achieves this through a common layer of abstraction that presents heterogeneous targets behind a single conceptual model. The abstraction holds for simple primitives such as memory views and breakpoints. It fails for the advanced features, such as reconstructing execution flow, conditional and cross-triggering of debug events, or recovering execution history after a failure. Those features do not generalize, since each is tightly coupled to a vendor-specific implementation.
+The subject of this project originates in that function. Customers ask how the instruction trace hardware present in their device is used outside a vendor development environment. The capability is described by the architecture specifications, but the procedure for reaching it is assembled nowhere. Establishing that procedure, and supplying the software that makes it usable, is the work this report describes.
 
-The gap between what a chip provides and what a developer can reach is the central concern of this project.
-\subsection{State of the Art}
-Debugging an embedded system from a host machine like a computer needs multiple components to work together, starting with the debug interface present on the microcontroller chip, the debugger software, and a hardware debug probe that links the microcontroller and the host machine.
+\section{Observing an Executing Program}
+\label{sec:observability}
 
-\begin{table}[htbp]
+A defect is a condition in a program that causes its behavior to violate its specification. Locating one means identifying the stage at which the program departs from that specification, and that requires observing what the program did. A program required to toggle a LED once per second may fail because a clock is not configured or because an incorrect register is written. The two are distinct defects producing an identical symptom, and distinguishing them requires visibility into the intermediate behavior rather than the end result.
+
+The techniques that supply that visibility are grouped along several independent axes, and a given technique occupies a position on each of them. Table \ref{tab:debug_axes} states the axes that concern this work.
+
+\begin{table}[H]
     \centering
-    \caption{Embedded Systems IDE Vendors}
-    \label{tab:ide_vendors}
-    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.05\hsize\bfseries}Y | >{\hsize=1.05\hsize}Y | >{\hsize=0.95\hsize}Y | >{\hsize=0.95\hsize}Y | >{\hsize=1.0\hsize}Y@{} |}
+    \caption{Axes of debugging technique}
+    \label{tab:debug_axes}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.75\hsize\bfseries}Y | >{\hsize=1.25\hsize}Y@{} |}
         \hline
-        Vendor & \textbf{Toolchain} & \textbf{Debugger} & \textbf{Debug server} & \textbf{Debug probe} \\
+        Axis & \textbf{Distinction} \\
         \hline
-        IAR & IAR toolchain (ICCARM) & C-SPY & Integrated & I-jet, I-jet Trace \\
+        Intrusive and non-intrusive & Whether applying the technique alters the behavior of the program under examination. \\
         \hline
-        Keil & ARM Compiler (armcc, armclang) & \textmu Vision debugger & Integrated & ULINK family \\
+        Live and post-mortem & Whether the program is examined under the control of a debugger or from a record produced during execution and analyzed afterward. \\
         \hline
-        SEGGER & SEGGER toolchain & Ozone & J-Link GDB server & J-Link, J-Trace \\
-        \hline
-        STMicroelectronics & ST-Clang & GDB & ST-LINK GDB server & ST-LINK \\
-        \hline
-        Free & GCC, LLVM & GDB or LLDB & OpenOCD or pyOCD & CMSIS-DAP \\
+        Run-control and trace-based & Whether the developer directs the investigation by choosing where to stop, or reconstructs it from a recording of the program flow. \\
         \hline
     \end{tabularx}
 \end{table}
-The features that the proprietary debuggers provide for devices based on the ARM architecture are worth examining in turn. ST's tools are specialized forks of open-source projects and are therefore excluded from this comparison.
+
+The two techniques in ordinary use, halting the processor and instrumenting the program, occupy the same position on the first and the third of these axes. The consequences are the subject of the remainder of this section.
+
+\subsection{State at a Halt}
+
+When a processor is halted through its debug port, a host may read the register file, the contents of memory, the registers of the peripherals, and the debug components themselves. From the stack pointer and the debug information held in the program image, an unwinder reconstructs the frames that are still live.
+
+Each of these is a view of the state the device holds at the instant of the halt. The state at a given instant does not determine the path taken to reach it. The order in which the instructions ran, the branches taken, the calls that have already returned and the handlers that have already completed leave no residue that a later read recovers. Where the stack itself has been damaged, the unwind cannot proceed and the live frames become unavailable as well.
+
+Halting is also less passive than it appears. The processor stops and the system does not. Timers continue to count, transfers already programmed into a direct memory access controller continue to run, and a peer on a communication link observes a device that has ceased to respond. Devices provide controls that freeze selected peripherals while the processor is halted, and Chapter \ref{ch:foundations} describes those of the STM32 range, but what lies outside the device cannot be frozen.
+
+\subsection{The Cost of Instrumentation}
+
+The alternative is to have the program report on itself. That report is transmitted, and the cost of transmitting it falls on the system under examination.
+
+A character written over a UART configured for 115\,200 baud with eight data bits, no parity and one stop bit occupies ten bit periods, which is 86.8\,\textmu s on the wire. On a processor clocked at 600\,MHz that is some fifty-two thousand cycles for a single character, and a blocking implementation spends all of them waiting.
+
+Moving the transmission to a direct memory access controller removes the stall and does not remove the perturbation. The controller becomes a second master on the bus matrix, contending for the same memory banks and the same slave ports as the instruction and data ports of the processor, and it raises an interrupt on completion. Arbitration on the interconnect and the interrupt load of the system are the two properties to which a timing-dependent defect is most sensitive, and instrumenting the program alters both.
+
+\subsection{Defects Requiring Execution History}
+
+Some defects are not merely awkward to investigate by these means but lie outside their reach. Table \ref{tab:defect_classes} states the principal cases, the evidence each leaves once the processor has stopped, and what a record of the execution supplies in its place.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Defect classes and the evidence available to investigate them}
+    \label{tab:defect_classes}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.0\hsize\bfseries}Y | >{\hsize=1.0\hsize}Y | >{\hsize=1.0\hsize}Y@{} |}
+        \hline
+        Defect & \textbf{Available once halted} & \textbf{Supplied by an execution record} \\
+        \hline
+        Memory corrupted by a stray write & The corrupted contents, and the address at which the program eventually faults & The instructions that ran before the corruption, among them the store that performed it \\
+        \hline
+        Fault taken with a damaged stack & The fault status registers, and the stacked frame where it survives & The calls executed before the fault, recovered from the record rather than from the stack \\
+        \hline
+        Race between a handler and the main program & Inconsistent state, observed after both have run & The order in which the two ran, and the points at which preemption occurred \\
+        \hline
+        Fault occurring before a debugger attaches & Nothing, since the device has already failed & The execution from the reset handler onward \\
+        \hline
+        Defect appearing rarely, or only at full speed & Only what a reproduction under the debugger yields, if it reproduces at all & A record of the single occurrence, obtained without altering the timing of the program \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+These cases have in common that the evidence required is an ordering rather than a state. They call for a technique that is non-intrusive, that permits post-mortem examination, and that is trace-based rather than run-control based, which is the opposite position on all three axes of Table \ref{tab:debug_axes} from the two techniques in ordinary use.
+
+The same record serves purposes beyond locating defects. Because it states which instructions executed and how often, it yields code coverage without instrumenting the program, and identifies the paths on which execution time is spent.
+
+\section{Problem Statement}
+\label{sec:problem}
+
+Such a record is produced by hardware. Much of the STM32 range carries a trace unit that reports the flow of the program as it executes, and part of the range carries a buffer into which that report is captured without leaving the device. The hardware alone does not make the record usable. It must be configured, the capture must be retrieved, and the result must be interpreted against the program image before it means anything to a developer. Each of those steps requires software, and outside the environment of a tool vendor that software does not exist.
+
+The question this project answers is the following. How are the instruction trace capabilities of STM32 devices made reachable within an open and integrated debug chain, without a dedicated trace probe and without dependence on a proprietary environment?
+
+The question divides into four. Configuration asks how a host configures the trace components of a device over the ordinary debug connection, when their presence, their placement and their addresses are properties of the device rather than of the architecture. Capture asks how the record is retained and retrieved when no trace pins and no capture hardware are available. Interpretation asks how a capture is turned back into the instructions that executed, and whether that is done independently of the session that produced it. Restitution asks how the result is presented in source terms, inside a development environment the developer already uses. The chapters that follow answer them in turn.
+
+\section{State of the Art: Instruction Trace on ARM Microcontrollers}
+\label{sec:sota}
+
+The survey below is restricted to instruction trace on ARM M-profile microcontrollers. Conventional debugging on these devices is not surveyed, since breakpoints, memory inspection and single stepping are supported uniformly by every tool considered here and raise no question this project needed to answer. Three bodies of work bear on instruction trace specifically: what the devices provide, what the available tools expose of it, and what published work has attempted with it.
+
+\subsection{Trace Capability of the STM32 Devices}
+\label{subsec:sota_devices}
+
+Whether instruction trace is available at all is a property of the device. A family implements a trace unit or it does not, and independently of that it carries a buffer able to hold the captured trace inside the device or it does not. Where no such buffer exists the trace leaves only through dedicated pins, which requires those pins to be routed on the board and hardware able to capture them.
+
+Table \ref{tab:stm32_debug} states the capability of the families surveyed. It follows AN4989 \cite{an4989} where that document covers the family, and the reference manual of the family otherwise, of which RM0433 \cite{rm0433} and RM0477 \cite{rm0477} describe the two devices carrying an on-chip buffer that this work uses.
+
+\begin{table}[H]
+    \centering
+    \caption{Trace capability of the STM32 families surveyed}
+    \label{tab:stm32_debug}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.15\hsize\bfseries}Y | >{\hsize=0.95\hsize}Y | >{\hsize=0.85\hsize}Y | >{\hsize=1.15\hsize}Y | >{\hsize=0.9\hsize}Y@{} |}
+        \hline
+        Family & \textbf{Processor} & \textbf{Instruction trace} & \textbf{Trace unit architecture} & \textbf{On-chip trace} \\
+        \hline
+        C0, F0, G0, L0, U0 & Cortex-M0 and M0+ & \xmark & -- & \xmark \\
+        \hline
+        F1, F2 & Cortex-M3 & \cmark & ETMv3 & \xmark \\
+        \hline
+        F3, F4, G4, L4, L4+ & Cortex-M4 & \cmark & ETMv3 & \xmark \\
+        \hline
+        F7 & Cortex-M7 & \cmark & ETMv4 & \xmark \\
+        \hline
+        H7, H7RS & Cortex-M7 & \cmark & ETMv4 & \cmark \\
+        \hline
+        C5, H5, L5, U3, U5 & Cortex-M33 & \cmark & ETMv4 & \xmark \\
+        \hline
+        N6 & Cortex-M55 & \cmark & ETMv4 & \cmark \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+The last two columns are read together. Every family carrying an on-chip buffer implements the later trace unit architecture, so an implementation supporting that architecture alone loses no device reachable without trace pins. The converse does not hold, since several families implement it and carry no buffer, and on those the trace leaves through the pins. The capability the hardware offers is therefore not the question. What the available software does with it is.
+
+\subsection{Proprietary Development Environments}
+\label{subsec:sota_proprietary}
+
+Instruction trace on ARM microcontrollers is exposed principally by the development environments of IAR, Keil and SEGGER. Each couples a debugger to a debug probe of its own make, and reaching the trace means working inside that environment with that probe \cite{iar_etm_trace}.
+
+These environments expose a fixed set of tracing settings through their interface, and reapply that configuration at every resume. The behavior is consistent from the point of view of the tool, and it leaves a developer no means of holding a configuration of their own.
+
+The probes impose limitations of their own. IAR, Keil and SEGGER each supply a base model and an extended model, the latter capturing trace through dedicated pins. Table \ref{tab:debug_probe_limitations} states which environment accepts which probe.
 
 \begin{table}[htbp]
     \centering
     \begin{threeparttable}
-    \caption{Debugger Features}
-    \label{tab:debugger_features}
-    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.3\hsize\bfseries}Y | >{\hsize=0.9\hsize}Y | >{\hsize=0.9\hsize}Y | >{\hsize=0.9\hsize}Y@{} |}
-        \hline
-        Feature & \textbf{IAR} & \textbf{Keil} & \textbf{SEGGER} \\
-        \hline
-        ITM trace & \cmark & \cmark & \cmark\tnote{1} \\
-        \hline
-        Instruction trace & \cmark & \cmark & \cmark \\
-        \hline
-        CTI support & \xmark & \xmark & \xmark \\
-        \hline
-        Scripting interface & \cmark & \cmark & \cmark \\
-        \hline
-        Multi-core debugging & Limited & Limited & Limited \\
-        \hline
-        IDE coupling & \cmark\tnote{2} & \cmark & \xmark \\
-        \hline
-    \end{tabularx}
-    \begin{tablenotes}
-        \item[1] Supports UART encoding only
-        \item[2] Implemented in the IDE, and able to work as a standalone server
-    \end{tablenotes}
-    \end{threeparttable}
-\end{table}
-
-\subsection{Critique of Current State of the Art}
-\label{subsec:critique}
-Vendor IDEs expose a fixed set of tracing settings through their interface. they therefore reapplies the fixed configuration at every resume, which is consistent behavior from the point of view of the tool and leaves a developer no way to hold a configuration of their own.
-
-Debug probes impose limitations of their own. IAR, Keil and SEGGER each supply two versions of their probe, a base model and an extended model that captures trace through dedicated pins.
-
-\begin{table}[htbp]
-    \centering
-    \begin{threeparttable}
-    \caption{Debug Probe Limitations}
+    \caption{Debug probe support across the proprietary environments}
     \label{tab:debug_probe_limitations}
         \begin{tabularx}{\linewidth}{| @{}>{\bfseries}Y | Y | Y | Y | Y@{} |}
         \hline
@@ -146,23 +171,102 @@ Debug probes impose limitations of their own. IAR, Keil and SEGGER each supply t
     \end{tabularx}
     \begin{tablenotes}
         \item[1] Given the appropriate model
-        \item[2] Established by evaluating the probes during this work, in the versions given in Table \ref{tab:debugger_features}.
     \end{tablenotes}
     \end{threeparttable}
 \end{table}
 
-Among the tools examined, none exposes on-chip trace capture through a probe other than its own, none decodes trace capture outside of a live debug session, or a capture obtained by other means than a debug probe.
+Among the environments examined, none exposes capture from the on-chip buffer through a probe other than its own, and none decodes a capture outside a live debug session or a capture obtained by means other than a debug probe. The probes fitted to development boards, namely ST-LINK and CMSIS-DAP, are accepted by every environment and capture no trace through pins, so the developer who owns no other probe is left with no route to the trace.
 
-\subsection{Proposed Solution}
-The proposed solution takes the form of four results.
+\subsection{Open-Source Debug Software}
+\label{subsec:sota_open}
 
-An application note assembles into one document the procedure for using instruction trace on these devices.
+The open-source tools divide the problem differently and stop at a different point in it.
 
-An implementation of drivers that allow a host machine to configure the concerned trace and debug components.
+OpenOCD \cite{openocd} is the debug server in general use for ARM microcontrollers, and it reaches the debug port, the access ports and the memory of the target. Its support for trace units covers the architecture implemented in the ARM9 generation of processors, and its manual describes that support as little used and possibly unreliable. It offers no driver for the on-chip buffer of the devices considered here.
 
-A pipeline for trace decoding processing and analysis that is decoupled from the trace extraction means, and of a debugging session, allowing for offline trace analysis.
+pyOCD \cite{pyocd} reaches the debug port over the same class of probe and exposes instrumentation trace only. Instrumentation trace answers a different question, since it reports what the program was written to announce rather than what it executed.
 
-A debug engine carries that chain alongside the conventional debugging capabilities and presents the result inside a development tool during a live session.
+The decoder itself exists. OpenCSD \cite{opencsd} implements the trace protocols of the current architecture and is the decoder used by the Linux kernel profiling infrastructure to interpret captures taken on application-profile processors \cite{perf_cs_etm}. That arrangement presumes a host running on the traced device, kernel drivers configuring the trace components from within it, and a processor of the application profile. On a bare-metal microcontroller the host is external and reaches the device only through the debug port, and none of the surrounding infrastructure transfers. The decoder is available and what stands on either side of it is not.
+
+\subsection{Published Work}
+\label{subsec:sota_academic}
+
+Instruction trace has been applied in published work to problems adjacent to debugging. FrankenTrace \cite{frankentrace} concerns execution tracing on Cortex-M systems-on-chip, and Ninja \cite{ninja} concerns tracing and debugging on ARM processors. Both establish that the hardware supports uses beyond the ones the vendor environments expose.
+
+\subsection{Positioning of this Work}
+\label{subsec:positioning}
+
+Table \ref{tab:positioning} sets the approach of this work against the existing tools, across the capabilities that bear on instruction trace.
+
+\begin{table}[htbp]
+    \centering
+    \begin{threeparttable}
+    \caption{Positioning of this work against existing tools}
+    \label{tab:positioning}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.3\hsize\bfseries}Y | >{\hsize=0.9\hsize}Y | >{\hsize=0.9\hsize}Y | >{\hsize=0.9\hsize}Y@{} |}
+        \hline
+        Capability & \textbf{Proprietary environments} & \textbf{Open-source tools} & \textbf{This work} \\
+        \hline
+        Conventional debugging & \cmark & \cmark & \cmark \\
+        \hline
+        Instruction trace & \cmark & \xmark & \cmark \\
+        \hline
+        On-chip trace capture & \cmark\tnote{1} & \xmark & \cmark \\
+        \hline
+        No dedicated trace probe & \xmark & -- & \cmark \\
+        \hline
+        Offline decoding & \xmark & \cmark\tnote{2} & \cmark \\
+        \hline
+        IDE integration & \cmark & \cmark & \cmark \\
+        \hline
+        Open source & \xmark & \cmark & \cmark \\
+        \hline
+    \end{tabularx}
+    \begin{tablenotes}
+        \item[1] Reachable only through the vendor's own probe.
+        \item[2] A decoder operates on a capture independently of a session, and nothing supplies it with one.
+    \end{tablenotes}
+    \end{threeparttable}
+\end{table}
+
+Two intersections are occupied by nothing. The first is capture from the on-chip buffer through a probe the developer already owns, which the proprietary environments withhold and the open tools have not implemented. The second is interpretation decoupled from the session that produced the capture, for which a decoder exists and no path to it does. This work occupies both.
+
+\section{Objectives, Constraints and Deliverables}
+\label{sec:objectives}
+
+The objective follows from the question of Section \ref{sec:problem}. The trace hardware is configured over the ordinary debug connection, the capture is retrieved from the on-chip buffer and reconstructed against the program image, and the executed instructions are presented in source terms inside a development tool during a live debug session, the reconstruction remaining usable on a capture taken independently of any session.
+
+\subsection{Constraints}
+
+The work is bound by the conditions of its setting. Table \ref{tab:constraints} states each constraint, its origin and what it excludes.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Constraints on the work and their consequences}
+    \label{tab:constraints}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.85\hsize\bfseries}Y | >{\hsize=1.05\hsize}Y | >{\hsize=1.10\hsize}Y@{} |}
+        \hline
+        Constraint & \textbf{Origin} & \textbf{Consequence} \\
+        \hline
+        No hardware beyond the probe fitted to the development board & The result is reproducible by any owner of the board, without further purchase & Capture through trace pins is excluded, and the on-chip buffer is the only route \\
+        \hline
+        No dedicated trace probe & The probes that capture trace are proprietary to one environment each & The capture is retrieved over the ordinary debug connection \\
+        \hline
+        Windows and Linux & The teams and the customers concerned use both & No dependence on facilities specific to one platform \\
+        \hline
+        Integration rather than replacement & A separate tool would not be adopted alongside an existing workflow & The result plugs into a development environment already in use \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+The first constraint carries a consequence worth stating here. A buffer inside the device holds a bounded quantity of trace, so a capture is a window of recent execution rather than a complete history, and the extent of that window is fixed by the memory the device can spare. Section \ref{sec:results} states the quantity of trace measured for a capture taken on the target.
+
+\subsection{Deliverables}
+
+The work is delivered in three parts. An application note gathers into one document the procedure for using instruction trace on these devices. A proof of concept demonstrates that a capture is obtained from an on-chip sink, decoded against the program image, and reconstructed into the executed instructions. A debugger carries that capability into a development tool, alongside breakpoints, memory and variable inspection, and disassembly.
+
+Two of these rest on components adopted rather than written. The debug server and the debug engine are existing open-source projects, and the decoding of the trace protocol is performed by an existing library. Written for this work are the drivers that configure the trace components and retrieve the capture, the chain that reconstructs the executed instructions from it, the components that constitute the core of the debug engine, and the extension that presents the result. Chapter \ref{ch:implementation} states that division component by component.
 
 \section{Conclusion}
-This first chapter introduces the host organization, STMicroelectronics, and provides the context and objectives of the project. It sets the stage for understanding the foundational aspects of the project and its significance.
+
+This chapter has established that the ordering of a program's execution is required to locate an important class of defect, and that neither halting the processor nor instrumenting the program supplies it. It stated the question the project answers, namely how the instruction trace capability of STM32 devices is made reachable in an open and integrated debug chain without a dedicated trace probe, and divided that question into configuration, capture, interpretation and restitution. The survey established that the hardware provides the capability, that the proprietary environments expose it only through their own probes, and that the open tools reach a decoder and no capture. The objective, the constraints and the three deliverables were stated. The chapter that follows establishes the concepts on which the answer rests.
