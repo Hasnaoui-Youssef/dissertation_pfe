@@ -7,15 +7,7 @@ This chapter establishes the concepts on which the remainder of this report depe
 \section{Debugging Fundamentals}
 \label{sec:fundamentals}
 
-\subsection{Bugs, Specifications and Defects}
-\label{subsec:bugs}
-A defect is a condition in a program that causes its behavior to violate its specification. Debugging is the process of investigating program behavior to identify the cause of such defects. The term \textit{bug} is used interchangeably with defect.
-
-Identifying a defect requires a specification to compare against. A program required to toggle a LED once per second provides a simple example. A LED that remains static, or that toggles at a different rate, is a case of a program violating its specification.
-
-A specification states an end result, and that result implies intermediate behavior. Toggling a LED on a microcontroller requires initializing the device, configuring its power supply and clock tree, and writing to the registers that drive the output pin. A fault at any of these stages produces the same observable symptom, namely a LED that does not blink at the required rate. Writing to an incorrect register and omitting the clock configuration are distinct defects with identical symptoms.
-
-Locating a defect requires identifying the stage at which the program departs from its specification. Debugging therefore depends on a means of observing the state of the system, either by executing the program under a debugger or by instrumenting the program to report it through logging.
+This section states what a debugger is and how it communicates. It describes the components a debugger is built from, and then the two protocols that connect those components, namely the Debug Adapter Protocol toward the frontend and the GDB Remote Serial Protocol toward the target.
 
 \subsection{Anatomy of a Debugger}
 \label{subsec:anatomy}
@@ -56,7 +48,7 @@ In this work, \textit{debug primitives} refer to the fundamental operations that
 \subsection{Run Control}
 Run control provides mechanisms for starting, stopping and controlling the execution of the debuggee. Halting suspends execution and leaves the state of the program unchanged. Resuming returns the program to normal execution from the point at which it was suspended.
 
-Stepping executes a limited portion of the program and then halts again. The size of that portion depends on the granularity requested, mainly, a single instruction or one source statement, which usually amounts to several machine instructions \cite{markusson2008}. Further granularities are common, such as advancing over a complete function call rather than entering it.
+Stepping executes a limited portion of the program and then halts again. The size of that portion depends on the granularity requested, mainly, a single instruction or one source statement, which usually amounts to several machine instructions \cite{markusson2008}. Further granularities are common, such as advancing over a complete function call without entering it.
 
 \subsection{Breakpoints: Software and Hardware}
 A breakpoint is an artificial stopping point inserted into a program for the purpose of debugging. When execution reaches the breakpoint, the program is suspended, after which execution may continue from the point at which it was suspended \cite{markusson2008}.
@@ -88,27 +80,6 @@ Only the innermost activation is directly visible, since the processor registers
 Disassembly is the translation of the bytes held in the executable memory of the target back into machine instructions.
 
 Disassembly serves two purposes in a debugger. It allows a developer to inspect code for which no source is available, and it allows the machine instructions produced by the compiler to be compared against the source statement they were generated from.
-
-\section{Classes of Debugging}
-\label{sec:classes}
-Debugging techniques are grouped along several independent axes, and a given technique may occupy a position on each of them. Table \ref{tab:debug_axes} states the axes that concern this work and the distinction each draws.
-
-\begin{table}[H]
-    \centering
-    \caption{Axes of debugging technique}
-    \label{tab:debug_axes}
-    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.75\hsize\bfseries}Y | >{\hsize=1.25\hsize}Y@{} |}
-        \hline
-        Axis & \textbf{Distinction} \\
-        \hline
-        Intrusive and non-intrusive & Whether applying the technique alters the behavior of the program under examination. \\
-        \hline
-        Live and post-mortem & Whether the program is examined under the control of a debugger or from a record produced during execution and analyzed afterward. \\
-        \hline
-        Run-control and trace-based & Whether the developer directs the investigation by choosing where to stop, or reconstructs it from a recording of the program flow. \\
-        \hline
-    \end{tabularx}
-\end{table}
 
 \section{Program Representation}
 \label{sec:program_repr}
@@ -167,9 +138,9 @@ DWARF is the debug format used by the toolchains considered here. It describes a
         \hline
         Line number program & The correspondence between instruction addresses and source lines. & Presenting a location in source terms and stepping from line to line. \\
         \hline
-        Inlined subroutines & The expansion of a subroutine at its call site, and the chain of source locations that results. & Reporting the call site rather than the expanded code alone. \\
+        Inlined subroutines & The expansion of a subroutine at its call site, and the chain of source locations that results. & Recovering the call site of inlined code. \\
         \hline
-        Type descriptions & How the bytes belonging to a variable are to be interpreted. & Displaying a variable rather than a sequence of bytes. \\
+        Type descriptions & How the bytes belonging to a variable are to be interpreted. & Displaying a typed variable from its bytes. \\
         \hline
         Location descriptions & Where an object resides, which may change over its lifetime. & Finding a variable at the current point of execution. \\
         \hline
@@ -182,7 +153,7 @@ DWARF is the debug format used by the toolchains considered here. It describes a
 \label{sec:microcontrollers}
 A microcontroller is a system that integrates a processor, its memories and a set of peripherals within a single component. It cannot host a debugger, since it has neither the memory to hold one nor the means for a developer to operate one on it \cite{markusson2008}.
 
-\subsection{Device Description: CMSIS-SVD}
+\subsection{Device Description}
 The CMSIS System View Description format formalizes the description of the system contained in ARM Cortex processor-based devices, in particular, the memory mapped registers of peripherals. The detail contained in system view descriptions is comparable to the data in device reference manuals. The information ranges from high level functional descriptions of a peripheral all the way down to the definition and purpose of an individual bit field in a memory mapped register. \cite{cmsis_svd}.
 
 The format is based on XML and describes a single device per file. A device consists of a processor and at least one peripheral, each peripheral contains at least one register, and a register may consist of one or more fields \cite{cmsis_svd}. Each level carries attributes, such as the address of a register, its reset value, the width and position of each field, whether a field may be read or written, and the meaning of particular field values.\cite{cmsis_svd}.
@@ -205,7 +176,7 @@ The components of an ARM device are connected by buses defined in the Advanced M
         \hline
         APB & Advanced Peripheral Bus & Carries configuration accesses to debug components. Transactions arriving from a debug connection are converted into APB transactions and transported to each of the components the debugger must access \cite{coresight_guide}. \\
         \hline
-        AHB & Advanced High-performance Bus & The protocol through which the debug registers of a Cortex-M processor are commonly reached. Accesses may be directed to all locations in the memory space of the processor rather than to the debug registers alone \cite{coresight_guide}. \\
+        AHB & Advanced High-performance Bus & The protocol through which the debug registers of a Cortex-M processor are commonly reached. Accesses may be directed to every location in the memory space of the processor, the debug registers among them \cite{coresight_guide}. \\
         \hline
         AXI & Advanced eXtensible Interface & Carries accesses into the main functional memory space of the devices that implement it, bypassing the caches and the memory map controls of the processor \cite{coresight_guide}. Where a device routes captured trace into system memory, this is also the interface over which that trace is written, as Section \ref{subsec:onchip_sinks} describes. \\
         \hline
@@ -340,7 +311,7 @@ Table \ref{tab:elements} states what each kind of element reports.
     \end{tabularx}
 \end{table}
 
-Synchronization elements are generated periodically, which matters because trace held in a circular buffer is overwritten from an arbitrary point. A captured trace is therefore not necessarily continuous, and an analysis must represent a gap explicitly rather than joining the two sides of it \cite{etmv4_spec}. Figure \ref{fig:loop_elements} works the principle through for a loop of four iterations, in which three taken atoms and one not-taken atom stand for sixteen executed instructions.
+Synchronization elements are generated periodically, which matters because trace held in a circular buffer is overwritten from an arbitrary point. A captured trace is therefore not necessarily continuous, and an analysis must represent a gap explicitly, keeping the two sides of it distinct \cite{etmv4_spec}. Figure \ref{fig:loop_elements} works the principle through for a loop of four iterations, in which three taken atoms and one not-taken atom stand for sixteen executed instructions.
 
 \begin{figure}[H]
     \centering
@@ -415,7 +386,7 @@ Two axes describe the component. The configuration is fixed when the design is i
         \hline
         Circular buffer & The storage is used as a circular buffer. Old trace is overwritten once it is full, and nothing may be read until capture has stopped. & ETB, ETF, ETR \\
         \hline
-        Hardware FIFO & The component acts as a link between a source and a sink, applying back pressure rather than losing trace. & ETF \\
+        Hardware FIFO & The component acts as a link between a source and a sink, applying back pressure to preserve trace. & ETF \\
         \hline
         Software FIFO & The component acts as a queue that a debugger reads over the debug bus while capture continues. & ETB, ETF, ETR \\
         \hline
@@ -445,50 +416,6 @@ Table \ref{tab:sink_tradeoff} sets the two routes against each other.
     \end{tabularx}
 \end{table}
 
-
-\section{Debug and Trace Infrastructure in STM32 Microcontrollers}
-\label{sec:stm32}
-The preceding two sections described what ARM specifies. A device manufacturer decides which of those components to implement, where to place them, and what to add. This section describes the choices that are common across the STM32 range and the respects in which its members differ.
-
-\subsection{Debug Access and Trace Capabilities}
-Every STM32 device exposes a debug port supporting SWD, and the devices built on the larger cores support JTAG as well \cite{an4989}. Behind that port lie the access ports of Section \ref{sec:arm_debug}. The architecture fixes the address of every component it defines. The manufacturer chooses the address of every component it adds, and the reference manual for the family states them. A debugger therefore knows part of the topology in advance and must be told the rest.
-
-Debug capability varies across the range, since it follows in part from the processor a given family implements. Table \ref{tab:stm32_debug} states which families implement a trace unit and which additionally implement an on-chip trace sink.
-
-\begin{table}[H]
-    \centering
-    \caption{Trace capability of the STM32 families surveyed}
-    \label{tab:stm32_debug}
-    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.15\hsize\bfseries}Y | >{\hsize=0.95\hsize}Y | >{\hsize=0.85\hsize}Y | >{\hsize=1.15\hsize}Y | >{\hsize=0.9\hsize}Y@{} |}
-        \hline
-        Family & \textbf{Processor} & \textbf{Instruction trace} & \textbf{Trace unit architecture} & \textbf{On-chip trace} \\
-        \hline
-        C0, F0, G0, L0, U0 & Cortex-M0 and M0+ & \xmark & -- & \xmark \\
-        \hline
-        F1, F2 & Cortex-M3 & \cmark & ETMv3 & \xmark \\
-        \hline
-        F3, F4, G4, L4, L4+ & Cortex-M4 & \cmark & ETMv3 & \xmark \\
-        \hline
-        F7 & Cortex-M7 & \cmark & ETMv4 & \xmark \\
-        \hline
-        H7, H7RS & Cortex-M7 & \cmark & ETMv4 & \cmark \\
-        \hline
-        C5, H5, L5, U3, U5 & Cortex-M33 & \cmark & ETMv4 & \xmark \\
-        \hline
-        N6 & Cortex-M55 & \cmark & ETMv4 & \cmark \\
-        \hline
-    \end{tabularx}
-\end{table}
-
-The survey covers the mainstream, high-performance and ultra-low-power families. It follows AN4989 \cite{an4989} where that document covers the family, and the reference manual of the family otherwise, of which RM0433 \cite{rm0433} and RM0477 \cite{rm0477} describe the two devices carrying an on-chip sink that this work uses.
-
-The last two columns are read together. Every family carrying an on-chip trace sink implements ETMv4, so an implementation that supports the later architecture alone loses no device reachable by the on-chip route of Section \ref{subsec:onchip_sinks}. The converse does not hold, since several families implement ETMv4 and carry no sink, and on those the trace must leave through the pins.
-
-\subsection{The DBGMCU Component}
-STM32 devices add a component that ARM does not define, named the microcontroller debug unit (DBGMCU). Unlike the units of Section \ref{sec:arm_debug}, it is placed in the ordinary peripheral address space rather than in the PPB. It reports the identity of the device, which a debugger reads in order to determine which memory map and which peripheral description to apply, and it carries the controls described below. Its address and the exact layout of its registers are properties of the family and are stated in the reference manual.
-
-\subsubsection{Trace Pin and Clock Control}
-The DBGMCU component also carries the controls that make trace usable. It enables the trace port clock \cite{rm0477}. On the families that route trace to pins, it also assigns those pins \cite{rm0090}. On devices divided into power domains, it enables the debug clock of each domain separately \cite{rm0433}. Which of these are present is a property of the family.
 
 \section{Conclusion}
 This chapter has assembled the concepts on which the remainder of the report rests. It defined a defect in terms of a specification, and a debugger as the system that examines and controls a program in order to locate one. It described the operations such a system provides and the protocols that connect its parts. It then set out the representation of a compiled program, comprising the object file that holds the image, the debug information that relates that image to the source, and the decoding that recovers instructions from the bytes. It narrowed to microcontrollers and to the ARM M-profile, described the ADI through which a debugger reaches a target, and described the CoreSight architecture through which a device reports what its processor executed.

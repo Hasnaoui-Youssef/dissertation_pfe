@@ -2,18 +2,29 @@
 \chaplabel{ch:implementation}
 
 \section*{Introduction}
-This chapter states how the architecture of Chapter \ref{ch:architecture} was realized. It begins with the order in which the work was carried out, treats the three deliverables in turn, and closes with the tests performed and the results obtained.
+This chapter states how the architecture of Chapter \ref{ch:architecture} was realized. It begins with the methodology by which the work was carried out, then treats the external systems the engine embeds, the trace pipeline, the debugger and the frontend.
 
-\section{Development Chronology}
-Several architectural decisions of Chapter \ref{ch:architecture} were reached by discovering that an earlier arrangement did not work.
+The engine builds on existing open-source work, and the boundary between what was adopted and what was written is stated here at the outset. OpenOCD, LLDB and OpenCSD are adopted. Written for this project are the two CoreSight drivers, the trace pipeline from extraction through reconstruction, the domain components at the core of the engine, the device description provider, and the frontend extension.
 
-The work began as a study of the trace infrastructure, which produced the application note of Section \ref{sec:appnote}, and as an offline tool that decoded a previously captured trace file against a program image. That tool established the decoding and reconstruction stages, and it required no device.
+\section{Development Methodology}
+The work was built in stages, each chosen so that a part could be validated before the next depended on it. Several architecture decisions of Chapter \ref{ch:architecture} were reached this way, by finding that an earlier arrangement did not hold. The order followed the trace itself, from the parts that need no device to the parts only hardware can exercise.
 
-The second phase addressed acquisition. Obtaining a capture without manual intervention required the trace components on the device to be configured and drained, which OpenOCD did not support. The drivers of Section \ref{subsec:drivers} were written for this purpose.
+The first stage explored the trace infrastructure and produced the application note of Section \ref{sec:appnote}. It also produced an offline tool that decoded a stored capture against a program image, which established the decoding and reconstruction stages with no device present. Beginning offline let these stages be validated against fixed data before any acquisition existed.
 
-The third phase turned the result into a usable tool. A command-line program that printed a reconstructed trace demonstrated the mechanism without making it usable during development. The offline tool was absorbed into a debug engine, and OpenOCD was linked into that engine.
+The second stage addressed acquisition. Obtaining a capture without manual intervention required the trace components on the device to be configured and drained, which OpenOCD did not support, so the drivers of Section \ref{subsec:drivers} were written.
 
-The fourth phase added the remaining debugger capabilities, namely breakpoints, memory observation and peripheral inspection, and corrected the defects found by driving the result against real hardware. The fifth addressed portability and packaging.
+The third stage integrated the pieces. The offline tool was absorbed into a debug engine and OpenOCD was linked into it, which turned a mechanism that printed a reconstructed trace into one usable during a debug session.
+
+The fourth stage added the remaining debugger capabilities and the frontend, and it hardened the result against a real device, where the defects of Section \ref{subsec:field_issues} appeared. The fifth stage addressed portability and packaging.
+
+Figure \ref{fig:chronology} shows the stages and their dependencies.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{fig_chronology.pdf}
+    \caption{The development methodology}
+    \label{fig:chronology}
+\end{figure}
 
 
 \section{The Application Note}
@@ -28,7 +39,7 @@ The second part walks through configuring the trace source and the trace sink, a
 \section{OpenOCD}
 \label{sec:trace_impl}
 
-OpenOCD is a standalone program. Making it callable from the engine required converting it into a library and adding drivers for the CoreSight components the project requires. This section covers that conversion and the two drivers.
+OpenOCD is a standalone program. Making it callable from the engine required converting it into a library and adding drivers for the CoreSight components the project requires. The conversion and the two drivers are the work of this project, and OpenOCD's own debug functionality is used unchanged. This section covers them.
 
 \subsection{Embedding as a Library}
 \label{subsec:openocd_lib}
@@ -143,6 +154,8 @@ OpenOCD routed every GDB RSP packet beginning with a particular letter to a hand
 
 The engine drives two external systems that control the target device, and this section describes the responsibilities of each system.
 
+Neither system covers the work on its own. LLDB provides source-level debugging, the DWARF and expression machinery, and stack unwinding, but it reaches the device only through GDB RSP, which offers no path to the trace components and no access to memory while the processor runs. OpenOCD reaches the debug port, the access ports and the trace components directly, but it carries no model of the program and no source-level debugging. Combining the two gives the engine both, and the responsibilities below follow from that division.
+
 Debug primitives mentioned in Section~\ref{sec:primitives} are handled by LLDB.
 
 The decoder requires typed register values read from hardware, and a capture arrives as a push at the moment of a halt. The engine therefore also calls OpenOCD directly through its provider.
@@ -215,6 +228,8 @@ The result is sent to the frontend as an increment. Each message states the inde
 \section{The Debugger}
 \label{sec:debugger_impl}
 
+This section describes how the debugger is implemented on the architecture of Chapter \ref{ch:architecture}. It follows the session from its creation through the operations the developer drives, covering the session lifecycle, reset and resynchronization, breakpoints, memory and live observation, peripheral access, variables and expressions, and the extensions that carry the operations the standard protocol does not define.
+
 \subsection{Session Lifecycle}
 
 Launching creates the OpenOCD provider, installs the memory access strategy that uses it, creates the LLDB target from the program image, connects LLDB to OpenOCD's GDB RSP server, and starts the trace pipeline.
@@ -233,7 +248,7 @@ The reset is performed through the OpenOCD provider, because the reset-and-halt 
 
 By default, LLDB is made aware of resets via a reply to a reset request it has made, and therefore a new mechanism needs to be introduced for asynchronous device resets.
 
-A command was added to OpenOCD that arms a synchronization flag on the GDB RSP connection. When the flag is armed, the next resume or step request received on that connection is answered with a report of the current state instead of being executed. The engine arms the flag after the reset and then issues a single-instruction step through LLDB. OpenOCD intercepts the step and answers allowing LLDB to  updates its view, and the session continues against the program that is actually present.
+A command was added to OpenOCD that arms a synchronization flag on the GDB RSP connection. When the flag is armed, the next resume or step request received on that connection is intercepted and answered with a report of the current state. The engine arms the flag after the reset and then issues a single-instruction step through LLDB. OpenOCD intercepts the step and answers allowing LLDB to  updates its view, and the session continues against the program that is actually present.
 
 \begin{figure}[htbp]
     \centering

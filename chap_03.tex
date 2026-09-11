@@ -4,8 +4,10 @@
 \section*{Introduction}
 Chapter \ref{ch:context} stated the problem the project addresses, together with its objectives and deliverables. This chapter specifies the scope of those deliverables, the requirements the work must satisfy, and the hardware and software environment in which it was produced.
 
-\section{Scope}
+\section{Scope of the Deliverables}
 \label{subsec:scope}
+
+Each deliverable is scoped to its purpose. The application note documents the hardware, so it reaches across every STM32 family that carries the trace unit. The proof of concept only has to establish feasibility, so it is held to the smallest configuration that proves it. The debugger has to serve daily work, so it carries the conventional debug operations alongside trace. Table \ref{tab:scope} states where each boundary falls.
 
 \begin{table}[H]
     \centering
@@ -41,8 +43,12 @@ Chapter \ref{ch:context} stated the problem the project addresses, together with
 \section{Requirements Analysis}
 \label{sec:requirements}
 
+This section states the requirements the work must satisfy. It separates them into functional requirements, which state what the solution does, and non-functional requirements, which state the conditions it operates under, and it then traces each requirement to the deliverable that carries it.
+
 \subsection{Functional Requirements}
 \label{subsec:fr}
+
+The functional requirements follow one trace from the hardware to the source line, and Table \ref{tab:fr} keeps that order. FR1 to FR7 are the trace pipeline and hold the contribution of the project. FR8 to FR13 are the conventional debug operations, present so that trace joins a working debugger. FR7 keeps a gap in the capture visible in the record, which the trace data model and the frontend must both honor later.
 
 \begin{table}[H]
     \centering
@@ -64,7 +70,7 @@ Chapter \ref{ch:context} stated the problem the project addresses, together with
         \hline
         FR6 & Attribute each reconstructed instruction to a function, a source file and a line. \\
         \hline
-        FR7 & Represent a discontinuity in the capture explicitly, rather than joining the two sides of it. \\
+        FR7 & Represent a discontinuity in the capture explicitly, keeping the two sides of it distinct. \\
         \hline
         FR8 & Present the reconstruction inside a development tool during a live debug session. \\
         \hline
@@ -83,6 +89,8 @@ Chapter \ref{ch:context} stated the problem the project addresses, together with
 
 \subsection{Non-Functional Requirements}
 \label{subsec:nfr}
+
+The non-functional requirements are the constraints of Chapter \ref{ch:context} stated as obligations on the solution. NFR1 has the largest effect on the design, since holding the hardware to the board's own probe leaves the on-chip buffer as the only trace route. NFR2 and NFR3 bind the result to both host platforms and to an existing development tool. Table \ref{tab:nfr} states them.
 
 \begin{table}[H]
     \centering
@@ -104,6 +112,8 @@ Chapter \ref{ch:context} stated the problem the project addresses, together with
 \subsection{Traceability to Deliverables}
 \label{subsec:traceability}
 
+Traceability confirms that every requirement has a deliverable, and that the deliverables build on one another. The application note and the proof of concept rest on the same pipeline requirements, so the proof of concept demonstrates what the note describes. The debugger owns the operations that make the reconstruction usable, together with the two portability requirements. Table \ref{tab:traceability} gives the assignment.
+
 \begin{table}[H]
     \centering
     \caption{Traceability of requirements to deliverables}
@@ -123,6 +133,8 @@ Chapter \ref{ch:context} stated the problem the project addresses, together with
 
 \section{Hardware Environment}
 \label{sec:hardware}
+
+This section describes the hardware on which the work was developed and tested. It presents the target microcontroller, the development board that carries it, the debug probe that connects the board to the host, and the trace components the target makes available.
 
 \subsection{Microcontroller: STM32H7S3L8}
 \label{subsec:target}
@@ -148,6 +160,8 @@ The probe is the STLINK-V3EC embedded on the board, which supports both SWD and 
 \subsection{Trace Resources Available on the Target}
 \label{subsec:trace_resources}
 
+These four components form the on-chip trace path of the target. The ETM emits the instruction trace, the funnel carries it toward the sink, and the TMC holds it in two kilobytes of on-chip memory. That capacity is the limit against which every capture in this work is measured. The TPIU drives the external trace port, which this work leaves unused. Table \ref{tab:trace_resources} lists them with their base addresses.
+
 \begin{table}[H]
     \centering
     \caption{Trace components of the target device}
@@ -170,8 +184,12 @@ The probe is the STLINK-V3EC embedded on the board, which supports both SWD and 
 \section{Software Environment}
 \label{sec:software}
 
+This section describes the software used to build the work. It presents the development environment, meaning the languages, the compiler and the build tools, and then the external components the work depends on.
+
 \subsection{Development Environment}
 \label{subsec:devenv}
+
+The engine is written in C++23 and the frontend in TypeScript, one language for each of the two programs. The same build runs on Windows and on Linux, so neither platform carries a separate procedure. Table \ref{tab:devenv} lists the tools.
 
 \begin{table}[H]
     \centering
@@ -200,6 +218,8 @@ The probe is the STLINK-V3EC embedded on the board, which supports both SWD and 
 
 \subsection{External Software Components}
 \label{subsec:extsw}
+
+The project adopts existing software for the parts that are not specific to it and builds only the parts that are. The conventional debugger, the on-chip access, the trace decoding, and the XML parsing come from the components in Table \ref{tab:software}. What sits between them, the trace drivers and the reconstruction pipeline, is the work of the project. Each entry carries the version used and the reason it was chosen.
 
 \begin{table}[H]
     \centering

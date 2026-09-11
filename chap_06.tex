@@ -43,6 +43,27 @@ The reconstruction was compared against the output of three commercial debuggers
 
 A capture obtained by a probe of another vendor was decoded by the same pipeline. Once the synchronization framing is discounted, the byte stream was identical to the one drained from the on-chip sink.
 
+Table \ref{tab:correctness} summarizes the four checks and what each established.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Correctness checks and their outcomes}
+    \label{tab:correctness}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.7\hsize\bfseries}Y | >{\hsize=1.45\hsize}Y | >{\hsize=0.85\hsize}Y@{} |}
+        \hline
+        Check & \textbf{What was compared} & \textbf{Outcome} \\
+        \hline
+        Stored capture & Reconstructed instruction count against the frozen baseline, and every address against the static analysis & Counts match, every address resolves \\
+        \hline
+        Device & Trace-unit registers against the values recorded, and callbacks delivered on a halt & Registers match, two callbacks per halt \\
+        \hline
+        Commercial debuggers & Decoded listing against three vendor debuggers, instruction by instruction, each driving its own probe & Sequences agree, divergences confined to presentation \\
+        \hline
+        Cross-vendor capture & Byte stream against the block drained from the on-chip sink & Identical once the synchronization framing is discounted \\
+        \hline
+    \end{tabularx}
+\end{table}
+
 
 \section{Defects Found on Hardware}
 \label{subsec:field_issues}
@@ -73,9 +94,55 @@ Driving the result against a real device produced defects that no test on stored
 
 
 \section{Results}
+\label{sec:results}
 The objective stated in Chapter \ref{ch:specification} was met. Instruction trace is captured from an on-chip sink, extracted over the ordinary debug connection, decoded, reconstructed into a sequence of executed instructions and attributed to source locations, and presented inside a development tool during a live debug session. No trace pins and no specialized probe are used.
 
 The debugger that carries this capability provides breakpoints with automatic selection between software and hardware mechanisms, stepping at source and instruction granularity, variable and expression inspection, memory reading and writing, disassembly, device reset, and the extensions covering trace, live memory observation and peripheral inspection. The engine builds and runs on two host platforms.
+
+Each requirement is traced to the component that provides it and the section that realizes it. Table \ref{tab:rtm} states that mapping, and Table \ref{tab:verification} records how each requirement was checked.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Requirements traced to components and their realization}
+    \label{tab:rtm}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.3\hsize\bfseries}Y | >{\hsize=1.35\hsize}Y | >{\hsize=1.35\hsize}Y@{} |}
+        \hline
+        ID & \textbf{Component} & \textbf{Realization} \\
+        \hline
+        FR1 & Extended capabilities provider & CoreSight drivers \\
+        \hline
+        FR2 & Instruction-trace manager & Run-state coupling \\
+        \hline
+        FR3 & Extended capabilities provider & Trace extraction \\
+        \hline
+        FR4 & Trace provider & Decoding \\
+        \hline
+        FR5 & Trace provider & Reconstruction \\
+        \hline
+        FR6 & Trace and disassembler providers & Static program analysis \\
+        \hline
+        FR7 & Trace data model & Reconstruction \\
+        \hline
+        FR8 & Frontend and protocol handlers & The frontend \\
+        \hline
+        FR9 & Debug primitives provider & Breakpoints, session lifecycle \\
+        \hline
+        FR10 & Memory manager & Memory and observation \\
+        \hline
+        FR11 & Device provider & Peripherals \\
+        \hline
+        FR12 & Disassembler provider & Variables and expressions \\
+        \hline
+        FR13 & Session manager & Reset and resynchronization \\
+        \hline
+        NFR1 & Hardware bench & Hardware test bench \\
+        \hline
+        NFR2 & Engine build & Portability and provenance \\
+        \hline
+        NFR3 & Frontend & The frontend \\
+        \hline
+    \end{tabularx}
+\end{table}
 
 \begin{table}[htbp]
     \centering
@@ -122,7 +189,7 @@ The debugger that carries this capability provides breakpoints with automatic se
 
 \begin{table}[htbp]
     \centering
-    \caption{Measured figures for one capture}
+    \caption{Measured figures for captured traces}
     \label{tab:measured}
     \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.15\hsize\bfseries}Y | >{\hsize=0.85\hsize}Y@{} |}
         \hline
@@ -159,6 +226,8 @@ The last row answers what a buffer represents. At the density this capture exhib
 \section{Limitations and Future Work}
 \label{subsec:limits}
 \label{subsec:trace_limits}
+
+The work meets its objectives within limits, and those limits point to directions for extending it. The limitations fall into two groups. Table \ref{tab:trace_limits_tab} states the limitations of the trace pipeline, the stage that turns a capture into a reconstructed program. The limitations of the engine that carries the pipeline follow the table, together with the directions that extend the work.
 
 \begin{table}[htbp]
     \centering

@@ -7,8 +7,12 @@ This chapter states the structure of the solution. It names the components, stat
 \section{System Overview}
 \label{sec:overview}
 
+This section states the solution as a whole before the later sections detail its parts. It presents the global architecture, the capabilities the engine provides, and the design rules that every component observes.
+
 \subsection{Global Architecture}
 The solution is an embedded debugging engine paired with a frontend. The engine performs every debug operation. The frontend presents the results to the developer. The two are separate programs joined by the Debug Adapter Protocol.
+
+The alternative was a single program with the interface built in. Two programs were chosen because the result must plug into a development tool the developer already uses, and a built-in interface would bind the engine to one tool. Kept separate, the engine is reached by any frontend that speaks the Debug Adapter Protocol, and it runs without a frontend for offline work.
 
 The engine connects to the target device through a debug probe. The probe is reached from the host over USB and connects to the device over SWD. Instruction trace is captured in an on-chip buffer and read back over the same debug connection. No trace port and no trace-capable probe are required.
 
@@ -87,7 +91,7 @@ Each manager owns one area of debug state: breakpoints, memory, disassembly, mod
 
 \subsection{External-System Providers}
 \label{subsec:providers}
-A provider adapts an external system to the needs of the engine. No type belonging to an external system appears in any provider interface. Five providers exist.
+A provider adapts an external system to the needs of the engine, and no type belonging to an external system appears in any provider interface. Without this rule the types of OpenOCD, LLDB and OpenCSD would spread through the engine, and every component that touched them would depend on the library that defined them. The alternative was to let each component call those libraries directly. The abstraction was kept for three reasons. A component is tested against a substitute provider with no device and no library present. A library is replaced behind its provider without reaching the components above it. The core of the engine states its needs in its own terms and stays independent of any external interface. Five providers exist.
 
 \begin{table}[H]
     \centering
@@ -143,7 +147,7 @@ Trace leaves the processor as a compressed packet stream. The pipeline has four 
     \item \textbf{Analysis.} Trace elements are resolved against the program image and its debug information to produce executed instructions, each attributed to a source location.
 \end{enumerate}
 
-The last two stages run on a stored capture with no device present.
+The stages are separated because each depends on a different thing. Generation and capture depend on the device, extraction on the debug connection, decoding on the trace protocol, and analysis on the program image. A stage that combined two of these could run only when both were present.
 
 \begin{figure}[H]
     \centering
@@ -151,6 +155,8 @@ The last two stages run on a stored capture with no device present.
     \caption{The four-stage instruction trace pipeline}
     \label{fig:pipeline}
 \end{figure}
+
+The separation has four consequences. The work that needs the device is held apart from the work that does not, so the two do not interleave. The last two stages run on a stored capture, so a trace is analyzed offline with no device present. Each stage is tested on its own against fixed data. A stage is reused where its inputs allow, since decoding and analysis depend on the capture and the image alone.
 
 \subsection{Trace Data Model}
 The stages exchange value types. A reconstructed instruction records one executed instruction. A function block groups consecutive line blocks belonging to one function, and a line block groups consecutive instructions sharing one source location. A gap records a discontinuity and carries the reason for it.
