@@ -1,0 +1,15 @@
+\documentclass[border=3pt]{standalone}
+\input{fig-preamble}
+\begin{document}
+\begin{tikzpicture}[fig,
+  grp/.style={draw,thick,text width=112mm,align=left,inner sep=2.5mm}]
+\node[grp] (t3) {\textbf{Without the board}\quad the compiled engine only\\[1.2mm]
+  {\scriptsize protocol handshake \textbullet\ cancellation \textbullet\ event bus \textbullet\ device description \textbullet\ disassembler \textbullet\ trace decoder \textbullet\ reconstruction \textbullet\ whole-pipeline check \textbullet\ two copies of LLVM}};
+\node[grp,above=2mm of t3] (t2) {\textbf{On the board}\quad the development board\\[1.2mm]
+  {\scriptsize access-port routing \textbullet\ trace-unit registers \textbullet\ capture delivery \textbullet\ launch \textbullet\ stepping \textbullet\ peripherals \textbullet\ reset}};
+\node[grp,above=2mm of t2] (t1) {\textbf{Through the extension}\quad the board and VS Code\\[1.2mm]
+  {\scriptsize views fill in \textbullet\ state refreshes after a reset}};
+\draw[ln] ($(t3.south west)+(-5mm,0)$) -- ($(t1.north west)+(-5mm,0)$);
+\node[lbl,rotate=90] at ($(t3.south west)!0.5!(t1.north west)+(-8mm,0)$) {needs more to run};
+\end{tikzpicture}
+\end{document}

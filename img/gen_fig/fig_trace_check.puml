@@ -1,0 +1,22 @@
+@startuml
+!include puml-style.iuml
+participant "Test client" as C
+participant "Engine" as E
+participant "Target\n(on the board)" as T
+C -> E : launch
+C -> E : enable trace
+C -> E : set breakpoint (main.c:106)
+C -> E : continue
+E -> T : resume
+T --> E : breakpoint halt
+E -> T : drain the sink
+E --> C : trace data\n(instructions, function blocks)
+E --> C : stopped
+note over C : assert: trace data arrives before the halt,\ninstructions resolve to source lines,\na function block is named "main"
+C -> E : continue
+E -> T : resume
+T --> E : breakpoint halt
+E --> C : trace data\n(continues from the previous index)
+E --> C : stopped
+note over C : assert: the record accumulates\nacross the two captures
+@enduml

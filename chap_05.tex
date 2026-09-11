@@ -36,7 +36,7 @@ The first part surveys the trace infrastructure of the devices and restates in o
 The second part walks through configuring the trace source and the trace sink, arming them, obtaining a capture, and decoding it against the program image. The difficulty of the task lies in the ordering and in the preconditions, and the walkthrough states each condition at the point where it applies.
 
 
-\section{OpenOCD}
+\section{On-Chip Debugger: OpenOCD}
 \label{sec:trace_impl}
 
 OpenOCD is a standalone program. Making it callable from the engine required converting it into a library and adding drivers for the CoreSight components the project requires. The conversion and the two drivers are the work of this project, and OpenOCD's own debug functionality is used unchanged. This section covers them.
@@ -130,7 +130,7 @@ The extracted block is delivered to a callback registered by the engine and, whe
 \end{figure}
 
 
-\section{LLDB}
+\section{Source-Level Debugging through LLDB}
 \label{subsec:lldb_impl}
 
 The engine drives LLDB through the defined LLDB SB types.
@@ -331,21 +331,7 @@ Custom events carry what the engine produces asynchronously, trace increments, m
 
 The frontend is a VS Code extension. It contributes the views that the standard DAP protocol does not cover. The extension contains no debugger logic. It presents data received from the engine.
 
-Two views present trace. One groups the record by function and line. The other lists executed instructions in order. Both render source locations as links, so selecting an entry opens the corresponding source position. Discontinuities appear as explicit separators.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.65\linewidth,height=190mm,keepaspectratio]{debugger_screenshots/function_trace_ui.png}
-    \caption[The function trace view]{The function trace view. The record is grouped by function, each instruction carrying the source location resolved for it.}
-    \label{fig:function_trace}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.65\linewidth,height=190mm,keepaspectratio]{debugger_screenshots/instruction_trace_ui.png}
-    \caption[The instruction trace view]{The instruction trace view. Executed instructions are listed in order, each carrying the source location resolved for it.}
-    \label{fig:instruction_trace}
-\end{figure}
+Two views present trace. One groups the record by function and line. The other lists executed instructions in order. Both render source locations as links, so selecting an entry opens the corresponding source position. Discontinuities appear as explicit separators. Chapter \ref{ch:validation} shows both views populated by a live capture.
 
 A memory view and a set of live memory panels present regions of memory. A peripheral view presents the device description, with registers expanded to their individual fields.
 
