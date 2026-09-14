@@ -3,106 +3,166 @@
 \label{sec:testing}
 
 \section*{Introduction}
-The earlier chapters set the goals, the design, and the code that met them. This chapter shows how the result was tested and what the tests proved. It describes the checks that run without the board, the checks that run on the board, and the checks that run through the VS Code extension. It then compares the reconstructed trace against three commercial debuggers, lists the bugs that appeared only on real hardware, gives the result against every requirement, and states what is left undone.
+This chapter reports how the result was checked and what the checks established. It opens with the validation approach, which states the three settings in which a check runs and the rule that decides the setting for a given check. It then describes the bench, first the target device, the board, the probe and the trace components available on the target, then the languages, the build tools and the external software components. The instruction trace pipeline is taken first, in the order of the trace, and the conventional debug operations follow. A separate section covers the properties that belong to the engine as a whole rather than to any single capability. The chapter closes with the defects that appeared only against real hardware, the status of every requirement, and the limits of the result.
 
-
-\section{How the Engine Was Tested}
+\section{Validation Approach}
 \label{sec:test_strategy}
-The engine was tested in groups, set apart by what each one needs to run.
+\label{sec:offline_tier}
+\label{sec:ontarget_tier}
+\label{sec:frontend_tier}
+Validation is organized by capability, not by the machinery that exercises it. Each of the sections that follow takes one capability of the delivered system, states the requirement it discharges, and gives the evidence that the capability holds.
 
-The first group needs only the compiled engine. It checks the parts that work on saved data: the protocol, the device-description parser, the disassembler, the trace decoder, and the reconstruction. These run on any machine, on every build, so a broken change is caught at once and the board is kept for the checks that truly need it.
+A check runs in one of three settings, and the setting is chosen by what the check needs rather than by what it covers. The first setting needs only the compiled engine and saved data: a recorded capture, firmware ELF files, and the trace-unit register values read once from a real device. The second needs the board, where a Python script sends the engine real debug-adapter requests over its input and reads the replies, so hardware behaviour is exercised with no person watching. The third needs the board and the VS Code extension, and checks what the developer sees on screen.
 
-The second group needs the board. A Python script sends the engine real debug-adapter requests over its input and reads the replies, so the capture path and the ordinary debug operations are checked against real hardware with no person watching.
-
-The third group needs the board and the VS Code extension. It drives the extension and checks what the developer sees on screen.
-
-Figure \ref{fig:test_tiers} lists the three groups and what each one checks.
+The rule followed throughout is that a capability is validated without hardware wherever the hardware adds nothing to the evidence. This is possible because the decoder and the reconstruction were written to run on a saved capture with no board attached, as Chapter \ref{ch:arch_n_impl} describes. A capture taken once becomes a test file that is replayed as often as needed, so the whole trace pipeline, apart from taking the capture itself, is validated off the board. The board is then reserved for what only it can show. Figure \ref{fig:test_tiers} gives the three settings.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\linewidth]{fig_test_tiers.pdf}
-    \caption{The three groups of tests and what each one checks}
+    \caption{The three settings in which a check runs, and what each one can exercise}
     \label{fig:test_tiers}
 \end{figure}
 
-The decoder and the reconstruction were written to run on a saved capture with no board attached, as Chapter \ref{ch:architecture} describes. A capture taken once becomes a test file that is replayed as often as needed. This is why the whole trace pipeline, apart from taking the capture itself, is tested without hardware.
+Each check decides its own result. A check in the first setting is a small program that compares what it produced against a value written into it, then returns pass or fail. A script in the second setting passes when every reply and event it expects arrives, in the right order, with the right content. A check in the third passes when the view on screen matches what the engine sent.
 
-Each test decides its own result. A test in the first group is a small program that compares what it produced against a value written into the test, then returns pass or fail. A script in the second group passes when every reply and event it expects arrives, in the right order, with the right content. A check in the third group passes when the view on screen matches what the engine sent.
+No test framework is used. Each off-board check is a small program that verifies its own output and returns a code, which the build runs directly. This keeps the engine free of a dependency it would carry only for testing. Table \ref{tab:tests} in the annexes lists the checks and the capability each one serves.
 
-No test framework is used. Each off-board test is a small program that checks its own output and returns a code, which the build runs directly. This keeps the engine free of a dependency it would carry only for testing. Table \ref{tab:tests} in the annexes lists the tests.
+\section{Hardware Environment}
+\label{sec:hardware}
 
+This section describes the hardware on which the work was developed and tested. It presents the target microcontroller, the development board that carries it, the debug probe that connects the board to the host, and the trace components the target makes available.
 
-\section{Hardware Test Bench}
-\label{subsec:bench}
-The bench is a NUCLEO-H7S3L8 board. It carries an STM32H7S3L8, a Cortex-M7 device, and an on-board STLINK-V3EC probe, joined to the host by a single USB cable. The board has no trace probe and no wire to the trace pins. The on-chip sink is a Trace Memory Controller holding two kilobytes. Every trace result below was taken over the same cable used for ordinary debugging, which is the goal set in Chapter \ref{ch:specification}.
+\subsection{Microcontroller: STM32H7S3L8}
+\label{subsec:target}
+The main device used during the development period of the project is an STM32H7S3L8, a member of the STM32H7RS family. It carries an ARM Cortex-M7 processor \cite{cortexm7_trm} running at up to 600 MHz with a memory protection unit, a double-precision floating-point unit and separate instruction and data caches of 32 kilobytes each. The device provides 64 kilobytes of internal flash memory and 620 kilobytes of internal SRAM, and is supplied in a TFBGA225 package \cite{ds_h7s3}.
 
-The program under test is a small firmware project, built with debug information and with the optimization a developer would normally use.
+Figure \ref{fig:target_debug} shows the debug and trace components of the device and the buses that connect them.
 
-Every result in this chapter was taken in a session the engine started itself, since trace, live memory reading, and peripheral reading all need the direct path to the device.
-
-The same pipeline was also run on an STM32N6, which carries a newer trace unit on a Cortex-M55 processor. Only the base addresses and the configuration script changed. Neither driver was touched, because each driver reads what its component can do from that component's own identification registers. The result is therefore not tied to the one device it was measured on.
-
-
-\section{Tests That Run Without the Board}
-\label{sec:offline_tier}
-These tests run on saved data: one recorded trace capture, and firmware ELF files kept as fixtures. Each test drives one part of the engine and checks one result.
-
-\subsection{Protocol Handshake and Cancellation}
-The engine and the editor exchange JSON messages, each prefixed with its byte length. The first test writes a real \texttt{initialize} message to the engine's input and reads the reply. It checks that the reply is a proper \texttt{initialize} response and that it advertises trace support. Passing this means the engine frames a message, parses it, routes it to the right handler, and answers, all without a board and without the debugger library.
-
-Cancelling a request was harder to get right, so it has its own test. The engine reads incoming messages on one thread and runs them on another, as Section \ref{subsec:concurrency} describes. The test sends a slow request that blocks, then a second request behind it, then a cancel for the second one. It checks that the second request comes back marked cancelled and that its handler never ran. This holds only if the reading thread can record the cancel while the running thread is still stuck on the slow request. The test proves the two threads are truly separate.
-
-\subsection{Event Delivery From Several Threads}
-Output is produced by several threads at once: the thread running debug requests, the thread receiving events from the debugger library, and the thread running OpenOCD. All of them hand their output to one object, the event bus, which passes each item to a single writer. If the event bus lost or duplicated an item under this load, output would be corrupted.
-
-The test runs three threads that publish on the event bus at the same time, 2000 items each, and counts what comes out with a plain counter that has no lock of its own. The count comes out right only if the event bus already holds its own lock while it delivers. The same test runs under a thread sanitizer, which flags a data race the moment it happens. Running the whole engine under that sanitizer against the board is how the lock-ordering bug of Section \ref{subsec:lldb_impl} was found.
-
-\subsection{Static Program Analysis}
-Before a trace can be turned back into instructions, the engine reads the firmware ELF once and records, for every address, the instruction bytes, its mnemonic and operands, whether it is a branch, a call, a return or an indirect jump, and the source file, line and inlined functions it came from. Every later stage reads these facts by address.
-
-The test checks this against three ELF files. The first has no debug information. On it the test confirms that a \texttt{bl} is marked a direct call with its target address filled in, that a \texttt{bx lr} is marked a return, and that asking for an address in the middle of an instruction returns nothing. The second is compiled with inlining forced on. On it the test confirms that one address unfolds into its full inline chain, for example an instruction inside an inlined \texttt{add\_one} reported as \texttt{add\_one} called from \texttt{compute} at the exact line. The third is the real firmware from the board. On it the test confirms that the pass, guided by the mapping symbols of Section \ref{subsec:mapping_symbols}, skips a block of constant data sitting inside the code, a literal pool that runs from address \texttt{0x0800124C} to \texttt{0x08001264}, so those bytes are never disassembled as instructions. The test confirms that a real instruction just before the pool, at \texttt{0x08001214}, is decoded, and that the first word of the pool is not. Both addresses were read from the firmware's symbol table by hand before the test was written.
-
-\subsection{Trace Decoding and Reconstruction}
-\label{subsec:offline_trace}
-Decoding turns the captured bytes into trace elements. Reconstruction turns those elements into the list of executed instructions, each tied to a source line. Figure \ref{fig:offline_datapath} shows the path and the test that guards each step. The element kinds are the ones in Table \ref{tab:elements}.
-
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{fig_offline_datapath.pdf}
-    \caption[The off-board trace path and its tests]{The trace path off the board, and the test that guards each step}
-    \label{fig:offline_datapath}
+    \includegraphics[width=\linewidth]{stm32h7rs_debug_infrastructure.pdf}
+    \caption[Debug and trace infrastructure of the target]{Debug and trace infrastructure of the target, adapted from \cite{rm0477}}
+    \label{fig:target_debug}
 \end{figure}
 
-The decoder is tested on its own. The test feeds it a saved capture together with the exact ETMv4 register values read from a real trace unit, and confirms the bytes decode all the way through without the decoder rejecting them. No firmware is given, so this test checks only that the bytes become elements.
+\subsection{Development Board: NUCLEO-H7S3L8}
+\label{subsec:board}
+The microcontroller is used on a NUCLEO-H7S3L8. It exposes a MIPI20 connector for external debug tools, which carries the serial wire and JTAG signals together with a four-bit trace port \cite{um3276}.
 
-Reconstruction is tested on a hand-built instruction table, with no real firmware and no decoder. This works because reconstruction reads plain value types that depend on neither library. One test builds three instructions, an \texttt{add}, a \texttt{bl} and a \texttt{bx}, feeds a range whose closing branch was not taken, and confirms that only the last instruction of that range is marked not-executed and that the mark does not leak into the next range. Another builds an inlined call chain and confirms that instructions from the same inlined line merge into one block, that instructions from different call chains stay in separate blocks, and that instructions in an assembly file never merge even when they share a line.
+\subsection{Debug Probe: STLINK-V3EC}
+\label{subsec:probe}
+The probe is the STLINK-V3EC embedded on the board, which supports both SWD and JTAG \cite{um3276}. It connects to the host through a USB Type-C connector and additionally provides a virtual COM port (VCP) and mass storage programming.
 
-The whole pipeline is tested on one saved capture. The capture, the firmware, and the trace-unit registers are kept as test files. The test runs them through and checks the result against numbers frozen on the first correct run: 114 executed instructions, 6 function blocks, and 2 start markers. It also checks that every reconstructed address exists in the firmware and that at least one block has a real function name. These are the numbers reported in Table \ref{tab:measured}.
+\subsection{Trace Resources Available on the Target}
+\label{subsec:trace_resources}
 
-\subsection{Parsing the Device Description}
-The peripheral views come from parsing the vendor's SVD file, an XML description of every peripheral on the chip. The test parses the file for the board's device and checks the result against fixed counts: 105 peripherals, 5\,902 registers, 25\,136 fields, and 30\,490 named field values. It confirms that a peripheral defined as a copy of another, such as \texttt{ADC2} from \texttt{ADC1}, still gets its own base address and its parent's registers. It checks the exact bit position and width of one named field. It confirms that a register cleared by the act of reading it is marked, so a view never reads it by accident. The test also records how much memory the parser uses, since one device's description is large.
+These four components form the on-chip trace path of the target. The ETM emits the instruction trace, the funnel carries it toward the sink, and the TMC holds it in two kilobytes of on-chip memory. That capacity is the limit against which every capture in this work is measured. The TPIU drives the external trace port, which this work leaves unused. Table \ref{tab:trace_resources} lists them with their base addresses.
 
-\subsection{Two Copies of LLVM in One Process}
-The engine links two copies of LLVM: one inside the LLDB library, and one behind the disassembler. Two copies in one program can clash at startup, for example both trying to register the same command-line option. A build that only links proves nothing, because the linker pulls in just the code that is actually called. The test therefore calls into both, in the same order the real program does, and confirms that both start up and that the disassembler opens a firmware file. This catches the clash at startup, ahead of any debug session.
+\begin{table}[H]
+    \centering
+    \caption{Trace components of the target device}
+    \label{tab:trace_resources}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.55\hsize\bfseries}Y | >{\hsize=0.8\hsize}Y | >{\hsize=1.65\hsize}Y@{} |}
+        \hline
+        Name & \textbf{Base address} & \textbf{Note} \\
+        \hline
+        ETM & 0xE0041000 & Implementation of the Cortex-M7 ETM, configured for instruction trace only \cite{etm_m7_trm}. \\
+        \hline
+        TMC & 0xE00F4000 & ETF configuration, providing two kilobytes of memory. \\
+        \hline
+        TPIU & 0xE00F5000 & - \\
+        \hline
+        Funnel & 0xE00F3000 & Funnels the ETM trace data into the TMC. It also carries the stream of the instrumentation macrocell \cite{rm0477}, which this work does not use. \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\section{Software Environment}
+\label{sec:software}
+
+This section describes the software used to build the work. It presents the development environment, meaning the languages, the compiler and the build tools, and then the external components the work depends on.
+
+\subsection{Development Environment}
+\label{subsec:devenv}
+
+The engine is written in C++23 and the frontend in TypeScript, one language for each of the two programs. The same build runs on Windows and on Linux, so neither platform carries a separate procedure. Table \ref{tab:devenv} lists the tools.
+
+\begin{table}[H]
+    \centering
+    \caption{Development environment}
+    \label{tab:devenv}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.85\hsize\bfseries}Y | >{\hsize=1.15\hsize}Y@{} |}
+        \hline
+        Element & \textbf{Choice} \\
+        \hline
+        Host platforms & Linux and Windows \\
+        \hline
+        Backend language & C++23 \\
+        \hline
+        Frontend language & TypeScript \\
+        \hline
+        Compiler & Clang \\
+        \hline
+        Build system & CMake, Ninja generator \\
+        \hline
+        Frontend bundler & esbuild \\
+        \hline
+        Editor & Visual Studio Code \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\subsection{External Software Components}
+\label{subsec:extsw}
+
+The project adopts existing software for the parts that are not specific to it and builds only the parts that are. The conventional debugger, the on-chip access, the trace decoding, and the XML parsing come from the components in Table \ref{tab:software}. What sits between them, the trace drivers and the reconstruction pipeline, is the work of the project. Each entry carries the version used and the reason it was chosen.
+
+\begin{table}[H]
+    \centering
+    \caption{External software components}
+    \label{tab:software}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.65\hsize\bfseries}Y | >{\hsize=0.4\hsize}Y | >{\hsize=1.45\hsize}Y | >{\hsize=1.5\hsize}Y@{} |}
+        \hline
+        Component & \textbf{Version} & \textbf{Description} & \textbf{Justification} \\
+        \hline
+        OpenOCD & Fork of 0.12.0 & Open-source on-chip debugger \cite{openocd}. & Supplies the groundwork the trace drivers extend. \\
+        \hline
+        LLVM & 22 & Compiler infrastructure and debugger, of which the machine code layer \cite{llvm_mc} and the debugger \cite{lldb} are used. & Supplies the core debug functionality and the analysis of the program image. \\
+        \hline
+        OpenCSD & 1.8.3 & Library for decoding CoreSight trace \cite{opencsd}. & Simplifies the trace decoding process. \\
+        \hline
+        Xerces-C & 3.2.4 & XML parser. & Reads the CMSIS-SVD device descriptions. \\
+        \hline
+        CodeSynthesis XSD & 4.2.0 & Generator of C++ bindings from an XML schema. & Avoids writing the CMSIS-SVD bindings by hand. \\
+        \hline
+        Visual Studio Code & 1.125 & Editor hosting the frontend extension. & Already implements the client side of the Debug Adapter Protocol. \\
+        \hline
+    \end{tabularx}
+\end{table}
 
 
-\section{Tests That Run on the Board}
-\label{sec:ontarget_tier}
-These tests need the board. Each one checks something only real hardware shows: how the debug access port behaves, how the trace components behave, and how the processor stops and steps. A Python script drives the engine over the debug-adapter protocol, so the checks run with no person watching.
+\section{The Instruction Trace Pipeline}
+\label{sec:val_pipeline}
+This section follows the trace from the components that produce it to the record the developer reads, and validates each stage of that path. It discharges FR1 to FR8 together with NFR1, the requirements that hold the contribution of the project.
 
-\subsection{Reading Memory Through the Right Access Port}
-The engine reaches memory through a chosen access port, and this chip has two: one for the processor and one for direct memory access. The test reads the same address through each and confirms the two differ, because on this chip they genuinely see that address differently. It confirms that a read with no port named gives the processor's view, the default. It reads the same port twice and confirms the bytes match, which rules out a stale or a random result. It confirms that naming a port that does not exist fails. Together these show the port selection actually reaches the port asked for. The difference between the two ports was confirmed separately with OpenOCD's own \texttt{mdw} command.
+\subsection{Configuring the Trace Components}
+\label{subsec:val_config}
+The engine has to find the trace source and the trace sink of the target and program them through the debug connection, which is FR1. What is checked is that the components the engine addresses are the components the device carries, and that the values the engine believes it wrote are the values the device holds.
 
-\subsection{Trace-Unit Registers and Capture Delivery}
-The decoder has to be set up with the trace unit's exact settings, so the values the engine reads from the unit are checked first. The test reads all of the trace unit's identification registers and compares each against a saved reference, and confirms that naming a trace source that does not exist fails. It checks that the reported core name is Cortex-M7.
+On the board, the engine reads every identification register of the trace unit and each one is compared against a reference saved from the device. The reported core name has to be Cortex-M7. Naming a trace source that does not exist has to fail rather than fall back to an arbitrary component. Reading the registers back over the same connection that wrote them is what closes the loop: the configuration is not assumed to have taken effect, it is observed.
 
-Capture is checked in the same test. It turns on the trace source and the sink, runs the processor for a moment, halts it, and records the callbacks the engine receives. It confirms exactly two callbacks for each halt: a 16-byte synchronization marker that the extraction driver inserts, then the captured bytes. The marker is checked byte for byte. Section \ref{subsec:drivers} relies on this two-callback rule.
+This check also serves the stage that follows it. The decoder cannot be set up from documentation alone, because it needs the exact ETMv4 configuration the device is running under. The register values validated here are the ones handed to the decoder, so an error at this stage would surface as a decoding failure rather than as a wrong result.
 
-\subsection{Launch and the Live Trace Path}
+\subsection{Coupling Capture to the Run State}
+\label{subsec:val_runstate}
 \label{subsec:launch_check}
-The engine starts its own debug server, OpenOCD, inside its own process, rather than talking to a separate one. The test confirms that no separate OpenOCD process exists while it runs.
+FR2 requires capture to start and stop with the run state of the program, with no separate command from the developer. The evidence is that a capture appears at a halt the developer did not ask to be traced.
 
-The same test runs the trace path in a real session. Figure \ref{fig:trace_check} shows the steps. It turns on trace, sets a breakpoint at \texttt{main.c:106}, and lets the program run. When the program hits the breakpoint, the engine drains the trace and sends it. The test confirms that the trace arrives before the stop is reported, that its instructions carry real source lines, and that one block is named \texttt{main}. It runs the program a second time and confirms that the second batch of trace continues from where the first one ended, so the record grows across stops instead of starting over. Section \ref{subsec:trace_lifecycle} describes that accumulation.
+On the board, the engine turns on the trace source and the sink, runs the processor for a moment, halts it, and the callbacks it receives are recorded. Exactly two arrive for each halt: a 16-byte synchronization marker that the extraction driver inserts, then the captured bytes. The marker is checked byte for byte. Section \ref{subsec:drivers} relies on this two-callback rule, and the rule is what makes an empty capture distinguishable from a missing one.
+
+The same coupling is then exercised in a real session, shown in Figure \ref{fig:trace_check}. Trace is turned on, a breakpoint is set at \texttt{main.c:106}, and the program runs. When the breakpoint is hit the engine drains the trace and sends it, and the check confirms that the trace arrives before the stop is reported, so the record is complete by the time the developer sees the program stop. The program is then run a second time, and the second batch continues from where the first ended rather than starting over, which is the accumulation described in Section \ref{subsec:trace_lifecycle}. This check also confirms that the engine starts its own OpenOCD inside its own process, since no separate OpenOCD process exists while it runs.
+
+The defect where trace was inconsistent and often empty, listed in Section \ref{subsec:field_issues}, was found here. Its cause was that the components were not armed on every transition that resumes the processor, which is precisely the property this check now guards.
 
 \begin{figure}[htbp]
     \centering
@@ -111,27 +171,90 @@ The same test runs the trace path in a real session. Figure \ref{fig:trace_check
     \label{fig:trace_check}
 \end{figure}
 
-\subsection{Stepping}
-Stepping has to stop, and it must never freeze when the chip runs out of hardware comparators. The test steps over a call, into a call, and out of a call, and requires each one to stop within a set time. Stepping into \texttt{HAL\_Init} has to leave the top of the stack inside \texttt{HAL\_Init}, and stepping out has to leave it back in \texttt{main}. The time limit is what turns a freeze into a failing test instead of one that hangs forever. The bug where a step did not stop, listed in Section \ref{subsec:field_issues}, was found here. Its cause was that LLDB placed its internal step breakpoints in flash as software breakpoints, which never fire on this chip.
+\subsection{Extraction Over the Debug Connection}
+\label{subsec:val_extraction}
+FR3 requires the capture to be extracted over the same debug connection that carries every other debug operation, and NFR1 requires no hardware beyond the probe already on the board and no trace pins. These two are validated by the bench itself rather than by a dedicated check.
 
-\subsection{Peripherals and Live Watching}
-The test reads the device model the engine built, reads port \texttt{GPIOA}, then writes and reads back a scratch register in the backup domain, chosen because writing it changes nothing on the board. It starts watching a peripheral and confirms that the frames arrive with a strictly rising sequence number. While the watch runs, it writes a register and confirms that no frame carries a value read before that write finished. Figure \ref{fig:periprace} shows how that race is avoided.
+The bench of Section \ref{sec:hardware} carries the STLINK-V3EC embedded on the NUCLEO board and nothing else. No trace probe is attached, and no wire runs to the trace pins of the MIPI20 connector, which the four-bit trace port would otherwise require. Every result reported in this chapter, including every capture, was obtained on that bench. The extraction therefore uses the same serial wire connection as the register reads and the run control, and the requirement holds by construction of the bench on which the checks pass.
 
-\subsection{Reset and Resynchronization}
-Resetting the chip stops the processor by a path LLDB does not see, so afterward LLDB's picture of the program is stale. The resynchronization of Section \ref{subsec:reset_impl} repairs this. The test resets the board, confirms the session reports a stop, then confirms that the stack and the variables reported afterward describe the program now running and not the one before the reset. The bugs where a restart left a stale view, listed in Section \ref{subsec:field_issues}, were found here.
+\subsection{Decoding the Captured Byte Stream}
+\label{subsec:val_decode}
+FR4 requires the extracted bytes to be decoded into trace elements. Decoding is checked apart from everything downstream of it, so a failure here cannot be mistaken for a reconstruction failure.
 
+The check feeds the decoder a saved capture together with the exact ETMv4 register values read from the real trace unit, and confirms the bytes decode all the way through without the decoder rejecting them. No firmware is supplied, so nothing but the byte stream and the unit configuration is under test: the result is that the bytes become elements of the kinds listed in Table \ref{tab:elements}. Figure \ref{fig:offline_datapath} shows this stage and the ones after it, with the check that guards each.
 
-\section{Tests Through the Extension}
-\label{sec:frontend_tier}
-These checks cover what the developer sees in VS Code. Some run in the editor's test host with no board, checking the code that turns an engine message into a view. The rest run against the board and confirm the views fill in during a real session.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{fig_offline_datapath.pdf}
+    \caption[The off-board trace path and its checks]{The trace path off the board, and the check that guards each step}
+    \label{fig:offline_datapath}
+\end{figure}
 
-\subsection{View Logic}
-Part of the extension is plain logic that a wrong result would corrupt without warning, so it is tested with no board. For the trace views, the test confirms that a new batch of trace is added to the list, that a reset clears the list, and that a gap shows as a plain separator and not as a fake instruction row, which keeps the two sides of a gap apart as Section \ref{subsec:trace_lifecycle} requires. It confirms that a small reducer turns each state the engine reports, idle, capturing, decode error, and the rest, into the right message on screen.
+\subsection{Reconstructing the Executed Instructions}
+\label{subsec:val_reconstruction}
+\label{subsec:offline_trace}
+FR5 requires the sequence of executed instructions to be reconstructed from the elements and the program image. Reconstruction is validated in two ways: on data built by hand, where the expected result is known exactly, and on a real capture, where the result is compared against fixed numbers and against the firmware.
 
-The peripheral view and the memory view carry bit arithmetic that a wrong result would corrupt silently. The test checks reading and writing one field without disturbing the bits around it, masking a value too wide for its field, and building the mask of a field that fills a whole 32-bit register without overflow. For memory it checks address parsing, grouping bytes into 16-bit and 32-bit words in both byte orders, and dropping a leftover partial cell.
+The hand-built checks use a small instruction table with no real firmware and no decoder, which is possible because reconstruction reads plain value types that depend on neither library. One builds three instructions, an \texttt{add}, a \texttt{bl} and a \texttt{bx}, feeds a range whose closing branch was not taken, and confirms that only the last instruction of that range is marked not-executed and that the mark does not leak into the next range. Another builds an inlined call chain and confirms that instructions from the same inlined line merge into one block, that instructions from different call chains stay in separate blocks, and that instructions in an assembly file never merge even when they share a line.
 
-\subsection{End to End on the Board}
-The rest run against the board through the extension's real code path. One confirms that a batch of trace produced in a live session reaches the extension and fills both trace views. One confirms that launching starts the engine's own in-process OpenOCD, attaches, and resolves a breakpoint on a source line. One confirms, through the same path a developer uses, that stepping over a call stops instead of hanging. Figures \ref{fig:function_trace} and \ref{fig:instruction_trace} show both trace views filled from a live capture, the function view grouping the record by function and line, and the instruction view listing the executed instructions in order.
+The whole pipeline is then run on one saved capture, with the capture, the firmware and the trace-unit registers kept as fixtures. The result is checked against numbers frozen on the first correct run: 114 executed instructions, 6 function blocks, and 2 start markers. Every reconstructed address has to exist in the firmware, which rules out a plausible but invented instruction stream, and at least one block has to carry a real function name. Table \ref{tab:measured} gives these figures together with what the device produced to yield them.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Measured figures for captured traces}
+    \label{tab:measured}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.15\hsize\bfseries}Y | >{\hsize=0.85\hsize}Y@{} |}
+        \hline
+        Quantity & \textbf{Value} \\
+        \hline
+        Interval traced & Reset handler to the entry of \texttt{main} \\
+        \hline
+        Trace produced by the device & 128 bytes, eight formatter frames \\
+        \hline
+        Host-inserted synchronization barrier & 16 bytes, one frame \\
+        \hline
+        Bytes presented to the decoder & 144 bytes, nine formatter frames \\
+        \hline
+        Elements retained & 35 \\
+        \hline
+        Executed instructions reconstructed & 114 \\
+        \hline
+        Function blocks & 6 \\
+        \hline
+        Start-of-capture markers & 2 \\
+        \hline
+        Discontinuities within the traced execution & 0 \\
+        \hline
+        Executed instructions per byte produced by the device & 0.89 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+The barrier is inserted by the extraction driver ahead of every payload, so it never sat in the sink and is counted apart from the trace the device produced. Both figures are given because the first is what the buffer held and the second is what the decoder read.
+
+The last row answers what a buffer holds. At the density of this capture, the two kilobytes of the sink hold on the order of eighteen hundred executed instructions. The figure is a guide only, since the density depends on how often the program branches.
+
+\subsection{Attributing Instructions to Source}
+\label{subsec:val_attribution}
+FR6 requires each reconstructed instruction to carry a function, a source file and a line. The attribution comes from a pass over the firmware ELF that records, for every address, the instruction bytes, its mnemonic and operands, whether it is a branch, a call, a return or an indirect jump, and the source file, line and inlined functions it came from. Every later stage reads these facts by address, so the pass is validated on its own before the reconstruction is trusted to use it.
+
+Three ELF files are used. The first has no debug information; on it a \texttt{bl} has to be marked a direct call with its target address filled in, a \texttt{bx lr} has to be marked a return, and asking for an address in the middle of an instruction has to return nothing. The second is compiled with inlining forced on; on it one address has to unfold into its full inline chain, for example an instruction inside an inlined \texttt{add\_one} reported as \texttt{add\_one} called from \texttt{compute} at the exact line. The third is the real firmware from the board, and it checks the hardest case: guided by the mapping symbols of Section \ref{subsec:mapping_symbols}, the pass has to skip a literal pool sitting inside the code, running from \texttt{0x0800124C} to \texttt{0x08001264}, so those bytes are never disassembled as instructions. A real instruction just before the pool, at \texttt{0x08001214}, has to be decoded, and the first word of the pool must not be. Both addresses were read from the firmware's symbol table by hand before the check was written.
+
+Attribution is then confirmed end to end. In the reconstruction of the saved capture, function blocks carry resolved names, and in the live session of Section \ref{subsec:val_runstate} the instructions arrive carrying real source lines with one block named \texttt{main}.
+
+\subsection{Keeping Discontinuities Visible}
+\label{subsec:val_gaps}
+FR7 requires a discontinuity in the capture to be represented explicitly, with the two sides of it kept distinct. A gap is where the record is silent about what executed, and the failure mode to avoid is a record that reads as continuous across it.
+
+Reconstruction counts the gaps and marks them, and the count is part of the frozen figures of Table \ref{tab:measured}: the traced interval contains two start-of-capture markers and no discontinuity within the execution itself. On the presentation side, the check on the view logic confirms that a gap is rendered as a plain separator and never as an instruction row, so nothing is displayed that the trace did not report, and the two sides of the gap remain separate as Section \ref{subsec:trace_lifecycle} requires.
+
+\subsection{Presenting the Record During a Live Session}
+\label{subsec:val_presentation}
+FR8 requires the reconstruction to be presented inside a development tool during a live debug session, and NFR3 requires integration with existing development tools. The frontend is a VS Code extension that speaks the standard Debug Adapter Protocol, so the second requirement is met by the interface it uses rather than by an interface of its own.
+
+The logic between the engine's messages and the views is checked in the editor's test host with no board, because a wrong result there would corrupt a view silently. A new batch of trace has to be appended to the list, a reset has to clear it, and a small reducer has to turn each state the engine reports, idle, capturing, decode error, and the rest, into the right message on screen.
+
+The presentation itself is then confirmed on the board through the extension's real code path. A batch of trace produced in a live session has to reach the extension and fill both trace views. Figures \ref{fig:function_trace} and \ref{fig:instruction_trace} show both views filled from a live capture, the function view grouping the record by function and line, and the instruction view listing the executed instructions in order. These are the reconstruction of the preceding sections as the developer sees it, and they are the end of the path that began at the trace components.
 
 \begin{figure}[p]
     \centering
@@ -148,16 +271,13 @@ The rest run against the board through the extension's real code path. One confi
 \end{figure}
 \clearpage
 
-
-\section{Comparison Against Other Tools}
+\subsection{Agreement With Independent Implementations}
 \label{subsec:trace_validation}
-The tests above check the pieces. To check the reconstruction as a whole, its output was compared against tools built by other people. Table \ref{tab:correctness} lists the four comparisons.
+The checks above compare the pipeline against itself: against frozen numbers, against the firmware, against saved references. They cannot show that the whole reconstruction is right, only that it has not changed. That is why the output was also compared against tools built by other people, which is the strongest evidence available for FR5 short of instrumenting the processor.
 
-The stored-capture check and the device check are the two tests already described in Sections \ref{subsec:offline_trace} and \ref{sec:ontarget_tier}. The other two compare against commercial tools.
+The reconstructed instruction list was compared, line by line, against three commercial debuggers, each using its own vendor's probe. The lists matched, and the only differences were in how each tool printed them.
 
-The reconstructed instruction list was compared, line by line, against three commercial debuggers, each using its own vendor's probe. The lists matched. The only differences were in how each tool printed them.
-
-A capture taken with a different vendor's probe was decoded by the same pipeline. After the framing is removed, the bytes were identical to those drained from the on-chip sink, which shows the pipeline does not depend on the probe that took the capture.
+A capture taken with a different vendor's probe was then decoded by the same pipeline. After the framing is removed, the bytes were identical to those drained from the on-chip sink, which shows the pipeline does not depend on the probe that took the capture. Table \ref{tab:correctness} collects the four independent comparisons.
 
 \begin{table}[htbp]
     \centering
@@ -179,9 +299,71 @@ A capture taken with a different vendor's probe was decoded by the same pipeline
 \end{table}
 
 
+\section{The Conventional Debug Operations}
+\label{sec:val_debug_ops}
+Trace is only usable inside a working debugger, so the operations of FR9 to FR13 carry the same burden of proof. All of them touch hardware behaviour that saved data cannot reproduce, so all of them are checked on the board, with the parts that are pure computation checked off it.
+
+\subsection{Run Control and Breakpoints}
+\label{subsec:val_runcontrol}
+FR9 requires the run control primitives of Section \ref{sec:primitives}. Two things have to hold for stepping: it has to stop, and it must never freeze when the chip runs out of hardware comparators.
+
+The check steps over a call, into a call, and out of a call, and requires each one to stop within a set time. Stepping into \texttt{HAL\_Init} has to leave the top of the stack inside \texttt{HAL\_Init}, and stepping out has to leave it back in \texttt{main}. The time limit is what turns a freeze into a failing check instead of one that hangs forever, and it is what caught the defect where a step did not stop, listed in Section \ref{subsec:field_issues}. Its cause was that LLDB placed its internal step breakpoints in flash as software breakpoints, which never fire on this chip.
+
+Breakpoints are exercised throughout: resolved on a source line in the trace check of Section \ref{subsec:val_runstate}, and resolved again through the extension in a check that also confirms that stepping over a call stops rather than hanging when driven through the same path a developer uses. Two of the defects of Section \ref{subsec:field_issues}, a breakpoint resolving into a vendor header at an inlined call site and breakpoints refused in assembly files, were found this way.
+
+\subsection{Memory and Register Access}
+\label{subsec:val_memory}
+FR10 requires memory and processor registers to be read and written. On this chip memory is reachable through two access ports, one for the processor and one for direct memory access, so the requirement is not met by a read that returns bytes but by a read that returns the bytes of the port asked for.
+
+The check reads the same address through each port and confirms the two differ, because on this chip they genuinely see that address differently. A read with no port named has to give the processor's view, the default. The same port read twice has to return the same bytes, which rules out a stale or a random result. Naming a port that does not exist has to fail. The difference between the two ports was confirmed separately with OpenOCD's own \texttt{mdw} command, so the check rests on an independently observed property of the device and not on the engine's own behaviour.
+
+The memory view carries arithmetic that a wrong result would corrupt silently, and that part is checked off the board: address parsing, grouping bytes into 16-bit and 32-bit words in both byte orders, and dropping a leftover partial cell. Register access is exercised on the board along the same paths.
+
+\subsection{Peripheral Inspection}
+\label{subsec:val_peripherals}
+FR11 requires the registers of a peripheral to be presented by name and by field from a description of the device. The description is the vendor's SVD file, and the check parses the file for the board's device and compares the result against fixed counts: 105 peripherals, 5\,902 registers, 25\,136 fields, and 30\,490 named field values. A peripheral defined as a copy of another, such as \texttt{ADC2} from \texttt{ADC1}, has to keep its own base address while inheriting its parent's registers. The exact bit position and width of one named field is checked. A register cleared by the act of reading it has to be marked, so a view never reads it by accident. The parser's memory use is recorded as well, since one device's description is large.
+
+On the board, the engine's device model is read back, port \texttt{GPIOA} is read, and a scratch register in the backup domain is written and read back, chosen because writing it changes nothing on the board. Live watching is checked in the same run: the frames have to arrive with a strictly rising sequence number, and while the watch runs a register is written and no frame may carry a value read before that write finished. Figure \ref{fig:periprace} shows how that race is avoided. The field arithmetic behind the view is checked off the board: reading and writing one field without disturbing the bits around it, masking a value too wide for its field, and building the mask of a field that fills a whole 32-bit register without overflow.
+
+\subsection{Disassembly and Variable Inspection}
+\label{subsec:val_disasm}
+FR12 requires disassembly and source-level inspection of variables. Disassembly is validated by the program analysis of Section \ref{subsec:val_attribution}, which is the same pass that serves the trace: for every address it yields the mnemonic, the operands and the class of the instruction, and it refuses to disassemble the bytes of a literal pool. Correct disassembly of the trace and correct disassembly in the view are therefore one property, checked once.
+
+Variables and scopes are checked on the board, where they are requested at a stop and compared against the program that is running. The same property is checked again after a reset, described next, because that is the case in which it was seen to fail.
+
+\subsection{Reset and Session Resynchronization}
+\label{subsec:val_reset}
+FR13 requires the target to be reset and the session restored to a state consistent with the reset device. Resetting the chip stops the processor by a path LLDB does not see, so afterward LLDB's picture of the program is stale. The resynchronization of Section \ref{subsec:reset_impl} repairs this.
+
+The check resets the board, confirms the session reports a stop, then confirms that the stack and the variables reported afterward describe the program now running and not the one before the reset. The two defects where a restart left a stale view, listed in Section \ref{subsec:field_issues}, were found here, and the check is what distinguishes a reset that reached the device from a reset the debugger merely believes in.
+
+
+\section{Properties of the Engine as a Whole}
+\label{sec:val_engine}
+Three properties belong to no single capability but would break all of them. They are validated separately, off the board, since none of them involves the device.
+
+\subsection{Message Framing and Cancellation}
+\label{subsec:val_protocol}
+The engine and the editor exchange JSON messages, each prefixed with its byte length, and every capability of the preceding sections is delivered through that channel. A real \texttt{initialize} message is written to the engine's input and the reply has to be a proper \texttt{initialize} response advertising trace support. Passing this means the engine frames a message, parses it, routes it to the right handler and answers, all without a board and without the debugger library.
+
+Cancelling a request was harder to get right, so it is checked on its own. The engine reads incoming messages on one thread and runs them on another, as Section \ref{subsec:concurrency} describes. The check sends a slow request that blocks, then a second request behind it, then a cancel for the second one, and requires the second request to come back marked cancelled with its handler never having run. This holds only if the reading thread can record the cancel while the running thread is still stuck on the slow request, so the check proves the two threads are truly separate.
+
+\subsection{Event Delivery From Several Threads}
+\label{subsec:val_eventbus}
+Output is produced by several threads at once: the thread running debug requests, the thread receiving events from the debugger library, and the thread running OpenOCD. All of them hand their output to one object, the event bus, which passes each item to a single writer. If the event bus lost or duplicated an item under this load, output would be corrupted and every view fed by it would be wrong.
+
+Three threads publish on the event bus at the same time, 2000 items each, and the output is counted with a plain counter that has no lock of its own. The count comes out right only if the event bus already holds its own lock while it delivers. The same check runs under a thread sanitizer, which flags a data race the moment it happens. Running the whole engine under that sanitizer against the board is how the lock-ordering bug of Section \ref{subsec:lldb_impl} was found.
+
+\subsection{Host Portability and Process Integrity}
+\label{subsec:val_portability}
+NFR2 requires the engine to operate on Windows and on Linux. The same CMake build produces the engine on both, and the off-board checks run on both, so portability is demonstrated by the checks of this chapter passing on each platform rather than by a separate check.
+
+One process-level hazard is checked directly. The engine links two copies of LLVM, one inside the LLDB library and one behind the disassembler, and two copies in one program can clash at startup, for example both trying to register the same command-line option. A build that only links proves nothing, because the linker pulls in just the code that is actually called. The check therefore calls into both, in the same order the real program does, and confirms that both start up and that the disassembler opens a firmware file. This catches the clash at startup, ahead of any debug session.
+
+
 \section{Defects Found on Hardware}
 \label{subsec:field_issues}
-Running the engine against a real board turned up bugs that no test on saved data would have caught. These bugs are why the on-board tests exist. Table \ref{tab:defects} gives each one, its cause, its fix, and the section that describes the mechanism.
+Running the engine against a real board turned up bugs that no check on saved data would have caught. These bugs are why the on-board checks exist, and each one is now guarded by the check named in the section that reported it. Table \ref{tab:defects} gives each one, its cause, its fix, and the section that describes the mechanism.
 
 \begin{table}[htbp]
     \centering
@@ -209,11 +391,11 @@ Running the engine against a real board turned up bugs that no test on saved dat
 
 \section{Results}
 \label{sec:results}
-The goal set in Chapter \ref{ch:specification} was met. Instruction trace is captured from an on-chip sink, read out over the ordinary debug cable, decoded, reconstructed into the list of executed instructions, tied to source locations, and shown inside a development tool during a live debug session. No trace pins and no special probe are used.
+The objectives set in Section~\ref{sec:objectives} were met. Instruction trace is captured from an on-chip sink, read out over the ordinary debug cable, decoded, reconstructed into the list of executed instructions, tied to source locations, and shown inside a development tool during a live debug session. No trace pins and no special probe are used.
 
 The debugger that carries this also provides breakpoints with automatic choice between software and hardware, stepping by source line and by instruction, variable and expression reading, memory reading and writing, disassembly, device reset, and the added views for trace, live memory, and peripherals. The engine builds and runs on two host platforms.
 
-Every requirement is tied to the component that provides it and the section that builds it. Table \ref{tab:rtm} gives that mapping, and Table \ref{tab:verification} gives how each requirement was checked and where the check runs.
+Every requirement is tied to the component that provides it and the section that builds it. Table \ref{tab:rtm} gives that mapping, and Table \ref{tab:verification} gathers the evidence of this chapter, giving for each requirement what was checked, where the check runs, and the section that reports it.
 
 \begin{table}[htbp]
     \centering
@@ -262,79 +444,44 @@ Every requirement is tied to the component that provides it and the section that
     \centering
     \caption{Verification of the requirements}
     \label{tab:verification}
-    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.4\hsize\bfseries}Y | >{\hsize=2.35\hsize}Y | >{\hsize=0.55\hsize}Y | >{\hsize=0.4\hsize}Y@{} |}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.35\hsize\bfseries}Y | >{\hsize=2.95\hsize}Y | >{\hsize=0.65\hsize}Y | >{\hsize=0.6\hsize}Y | >{\hsize=0.45\hsize}Y@{} |}
         \hline
-        ID & \textbf{How it was checked} & \textbf{Runs} & \textbf{Status} \\
+        ID & \textbf{How it was checked} & \textbf{Runs} & \textbf{Section} & \textbf{Status} \\
         \hline
-        FR1 & Trace source and sink found and their registers read back on the board & board & Met \\
+        FR1 & Trace source and sink found and their registers read back against a saved reference on the board & board & \ref{subsec:val_config} & Met \\
         \hline
-        FR2 & Two callbacks seen on every halt & board & Met \\
+        FR2 & Two callbacks seen on every halt, and trace delivered at a breakpoint with no explicit command & board & \ref{subsec:val_runstate} & Met \\
         \hline
-        FR3 & Every result in this chapter taken over the debug cable alone & board & Met \\
+        FR3 & Every result in this chapter taken over the debug cable alone & board & \ref{subsec:val_extraction} & Met \\
         \hline
-        FR4 & The saved capture decoded all the way through, Figure \ref{fig:offline_datapath} & no board & Met \\
+        FR4 & The saved capture decoded all the way through against the real unit configuration, Figure \ref{fig:offline_datapath} & no board & \ref{subsec:val_decode} & Met \\
         \hline
-        FR5 & Every reconstructed address exists in the firmware, the counts match the frozen numbers of Table \ref{tab:measured}, and the list matches three vendor debuggers, Section \ref{subsec:trace_validation} & both & Met \\
+        FR5 & Every reconstructed address exists in the firmware, the counts match the frozen numbers of Table \ref{tab:measured}, and the list matches three vendor debuggers & both & \ref{subsec:val_reconstruction}, \ref{subsec:trace_validation} & Met \\
         \hline
-        FR6 & Function blocks carry resolved names in the same check & no board & Met \\
+        FR6 & Three ELF fixtures checked for call, return, inline chain and literal pool, and function blocks carrying resolved names & no board & \ref{subsec:val_attribution} & Met \\
         \hline
-        FR7 & Gaps counted and shown as separators in the same check & no board & Met \\
+        FR7 & Gaps counted in the reconstruction and shown as separators, never as instruction rows & no board & \ref{subsec:val_gaps} & Met \\
         \hline
-        FR8 & Trace views filled during a live session, seen in the editor & extension & Met \\
+        FR8 & Trace views filled during a live session, seen in the editor & extension & \ref{subsec:val_presentation} & Met \\
         \hline
-        FR9 & Stepping over, into and out of a call, and breakpoints, on the board & board & Met \\
+        FR9 & Stepping over, into and out of a call within a time limit, and breakpoints, on the board & board & \ref{subsec:val_runcontrol} & Met \\
         \hline
-        FR10 & Memory reading and register access on both paths, on the board & board & Met \\
+        FR10 & Memory read through both access ports, defaults and failures included, and register access on the board & board & \ref{subsec:val_memory} & Met \\
         \hline
-        FR11 & Peripheral reading and writing on the board & board & Met \\
+        FR11 & The device description parsed against fixed counts, and peripheral reading, writing and watching on the board & both & \ref{subsec:val_peripherals} & Met \\
         \hline
-        FR12 & Disassembly, scopes and variables on the board & board & Met \\
+        FR12 & Disassembly checked by the program analysis, scopes and variables on the board & both & \ref{subsec:val_disasm} & Met \\
         \hline
-        FR13 & Reset then the resynchronization of Section \ref{subsec:reset_impl}, on the board & board & Met \\
+        FR13 & Reset then the resynchronization of Section \ref{subsec:reset_impl}, on the board & board & \ref{subsec:val_reset} & Met \\
         \hline
-        NFR1 & The bench carries no trace probe and no wire to trace pins, Section \ref{subsec:bench} & board & Met \\
+        NFR1 & The bench carries no trace probe and no wire to trace pins, Section \ref{sec:hardware} & board & \ref{subsec:val_extraction} & Met \\
         \hline
-        NFR2 & The engine builds and runs on both host platforms & no board & Met \\
+        NFR2 & The engine builds and runs on both host platforms & no board & \ref{subsec:val_portability} & Met \\
         \hline
-        NFR3 & The frontend is an extension speaking the standard protocol & extension & Met \\
-        \hline
-    \end{tabularx}
-\end{table}
-
-\begin{table}[htbp]
-    \centering
-    \caption{Measured figures for captured traces}
-    \label{tab:measured}
-    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.15\hsize\bfseries}Y | >{\hsize=0.85\hsize}Y@{} |}
-        \hline
-        Quantity & \textbf{Value} \\
-        \hline
-        Interval traced & Reset handler to the entry of \texttt{main} \\
-        \hline
-        Trace produced by the device & 128 bytes, eight formatter frames \\
-        \hline
-        Host-inserted synchronization barrier & 16 bytes, one frame \\
-        \hline
-        Bytes presented to the decoder & 144 bytes, nine formatter frames \\
-        \hline
-        Elements retained & 35 \\
-        \hline
-        Executed instructions reconstructed & 114 \\
-        \hline
-        Function blocks & 6 \\
-        \hline
-        Start-of-capture markers & 2 \\
-        \hline
-        Discontinuities within the traced execution & 0 \\
-        \hline
-        Executed instructions per byte produced by the device & 0.89 \\
+        NFR3 & The frontend is an extension speaking the standard protocol & extension & \ref{subsec:val_presentation} & Met \\
         \hline
     \end{tabularx}
 \end{table}
-
-The barrier is inserted by the extraction driver ahead of every payload, so it never sat in the sink and is counted apart from the trace the device produced. Both figures are given because the first is what the buffer held and the second is what the decoder read.
-
-The last row answers what a buffer holds. At the density of this capture, the two kilobytes of the sink hold on the order of eighteen hundred executed instructions. The figure is a guide only, since the density depends on how often the program branches.
 
 
 \section{Limitations and Future Work}
@@ -375,5 +522,7 @@ Further limits concern the engine. The two disassembly paths have not been merge
 Several directions extend the work. Keeping the timing elements now dropped would allow profiling from the same captures. Showing exceptions directly would complete the picture across interrupt entry. Turning on the trace unit's filtering would let the buffer cover a chosen region. Reading the component layout from the ROM tables would remove the per-device configuration file.
 
 
-\section{Conclusion}
-The result was checked against the goals of Chapter \ref{ch:specification} and the requirements taken from them. The parts were tested without the board wherever the board was not needed, the capture and the stepping were tested on the board, and the reconstructed instruction list was matched line by line against three commercial debuggers. Every requirement was met. Instruction trace was captured over the ordinary debug cable, with no trace pins and no probe beyond the one on the board. The limits that remain point to the next steps.
+\section*{Conclusion}
+This chapter has established that the result satisfies every requirement stated in Section \ref{sec:requirements}. The trace pipeline was checked one stage at a time, from the configuration of the trace components on the device to the record presented in the editor during a live session. The conventional debug operations were checked on the board, because their failure modes depend on the device and not on the data.
+
+Two results stand apart from the requirements they satisfy. The reconstructed instruction list matched the output of three commercial debuggers line by line, each of those tools running on its own vendor's probe, and no check internal to the system can supply evidence of that kind. Every capture reported in this chapter was taken on a bench that carries no trace probe and no wire to the trace pins, which was the constraint the design was built around. The limits that remain concern the coverage of the result rather than its correctness, and each of them states a direction in which the work continues.

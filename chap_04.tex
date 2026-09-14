@@ -1,20 +1,259 @@
-\chapter{Architecture}
-\chaplabel{ch:architecture}
+\chapter{Architecture \& Implementation}
+\chaplabel{ch:arch_n_impl}
 
 \section*{Introduction}
-This chapter states the structure of the solution. It names the components, states what each is responsible for, and states why the responsibilities were divided as they were. Implementation is the subject of Chapter \ref{ch:implementation}.
+This chapter presents the design of the solution and the implementation that realizes it. It opens with the scope of the three deliverables, the requirements derived from that scope, and the order in which the work was built. It then presents the application note and the instruction trace pipeline, which is the contribution of the project. It continues with the architecture of the engine that carries the pipeline together with the conventional debug operations. The implementation follows in three sections: the on-chip debugger, the source-level debugging, and the frontend that presents the result inside an existing development tool. The chapter closes with the supported host platforms and the provenance of the parts.
 
-\section{System Overview}
-\label{sec:overview}
+\section{Scope of the Deliverables}
+\label{subsec:scope}
 
-This section states the solution as a whole before the later sections detail its parts. It presents the global architecture, the capabilities the engine provides, and the design rules that every component observes.
+Each deliverable is scoped to its purpose. The application note documents the hardware, so it reaches across every STM32 family that carries the trace unit. The proof of concept only has to establish feasibility, so it is held to the smallest configuration that proves it. The debugger has to serve daily work, so it carries the conventional debug operations alongside trace. Table \ref{tab:scope} states where each boundary falls.
 
-\subsection{Global Architecture}
+\begin{table}[H]
+    \centering
+    \caption{Scope of the three deliverables}
+    \label{tab:scope}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.6\hsize\bfseries}Y | >{\hsize=1.4\hsize}Y@{} |}
+        \hline
+        Deliverable & \textbf{Scope} \\
+        \hline
+        \multirow{3}{*}{Application note} & Instruction trace infrastructure of every STM32 family that implements it \\
+        \cline{2-2}
+        & Keil \textmu Vision with the ULINKpro probe \\
+        \cline{2-2}
+        & IAR Embedded Workbench with the I-jet Trace probe \\
+        \hline
+        \multirow{3}{*}{Proof of Concept} & ETMv4 implementations \\
+        \cline{2-2}
+        & On-chip trace sink \\
+        \cline{2-2}
+        & Instruction trace \\
+        \hline
+        \multirow{4}{*}{Debugger} & STM32 MCUs \\
+        \cline{2-2}
+        & Breakpoints and variable inspection \\
+        \cline{2-2}
+        & Peripheral inspection, memory views and disassembly \\
+        \cline{2-2}
+        & Instruction trace \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\section{Requirements Analysis}
+\label{sec:requirements}
+
+This section states the requirements the work must satisfy. It separates them into functional requirements, which state what the solution does, and non-functional requirements, which state the conditions it operates under, and it then traces each requirement to the deliverable that carries it.
+
+\subsection{Functional Requirements}
+\label{subsec:fr}
+
+The functional requirements follow one trace from the hardware to the source line, and Table \ref{tab:fr} keeps that order. FR1 to FR7 are the trace pipeline and hold the contribution of the project. FR8 to FR13 are the conventional debug operations, present so that trace joins a working debugger. FR7 keeps a gap in the capture visible in the record, which the trace data model and the frontend must both honor later.
+
+\begin{table}[H]
+    \centering
+    \caption{Functional requirements}
+    \label{tab:fr}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.4\hsize\bfseries}Y | >{\hsize=1.6\hsize}Y@{} |}
+        \hline
+        ID & \textbf{Requirement} \\
+        \hline
+        FR1 & Configure the trace unit and the on-chip trace sink of the target through the debug connection. \\
+        \hline
+        FR2 & Start and stop trace capture in step with the run state of the program, without a separate command from the developer. \\
+        \hline
+        FR3 & Extract the captured trace over the same debug connection that carries every other debug operation. \\
+        \hline
+        FR4 & Decode the extracted byte stream into trace elements. \\
+        \hline
+        FR5 & Reconstruct the sequence of executed instructions from those elements together with the program image. \\
+        \hline
+        FR6 & Attribute each reconstructed instruction to a function, a source file and a line. \\
+        \hline
+        FR7 & Represent a discontinuity in the capture explicitly, keeping the two sides of it distinct. \\
+        \hline
+        FR8 & Present the reconstruction inside a development tool during a live debug session. \\
+        \hline
+        FR9 & Provide the run control primitives of Section \ref{sec:primitives}, namely halting, resuming, stepping, breakpoints and watchpoints. \\
+        \hline
+        FR10 & Read and write memory and processor registers. \\
+        \hline
+        FR11 & Present the registers of a peripheral by name and by field, using a description of the device. \\
+        \hline
+        FR12 & Provide disassembly and source-level inspection of variables. \\
+        \hline
+        FR13 & Reset the target and restore the debug session to a state consistent with the reset device. \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\subsection{Non-Functional Requirements}
+\label{subsec:nfr}
+
+The non-functional requirements are the constraints of Chapter \ref{ch:context} stated as obligations on the solution. NFR1 has the largest effect on the design, since holding the hardware to the board's own probe leaves the on-chip buffer as the only trace route. NFR2 and NFR3 bind the result to both host platforms and to an existing development tool. Table \ref{tab:nfr} states them.
+
+\begin{table}[H]
+    \centering
+    \caption{Non-functional requirements}
+    \label{tab:nfr}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=0.4\hsize\bfseries}Y | >{\hsize=1.6\hsize}Y@{} |}
+        \hline
+        ID & \textbf{Requirement} \\
+        \hline
+        NFR1 & Require no hardware beyond the debug probe already present on the development board, and no trace pins. \\
+        \hline
+        NFR2 & Operate on Windows and on Linux. \\
+        \hline
+        NFR3 & Integrate with existing development tools. \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\subsection{Traceability to Deliverables}
+\label{subsec:traceability}
+
+Traceability confirms that every requirement has a deliverable, and that the deliverables build on one another. The application note and the proof of concept rest on the same pipeline requirements, so the proof of concept demonstrates what the note describes. The debugger owns the operations that make the reconstruction usable, together with the two portability requirements. Table \ref{tab:traceability} gives the assignment.
+
+\begin{table}[H]
+    \centering
+    \caption{Traceability of requirements to deliverables}
+    \label{tab:traceability}
+    \begin{tabularx}{\linewidth}{| @{}>{\hsize=1.2\hsize\bfseries}Y | >{\hsize=0.9\hsize}Y | >{\hsize=0.9\hsize}Y@{} |}
+        \hline
+        Deliverable & \textbf{Functional} & \textbf{Non-functional} \\
+        \hline
+        Application note & FR1 to FR5 & NFR1 \\
+        \hline
+        Proof of Concept & FR1 to FR8 & NFR1 \\
+        \hline
+        Debugger & FR8 to FR13 & NFR2, NFR3 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\section{Development Methodology}
+The work was built in stages, each chosen so that a part could be validated before the next depended on it. By finding that an earlier arrangement did not hold. The order followed the trace itself, from the parts that need no device to the parts only hardware can exercise.
+
+The first stage explored the trace infrastructure and produced the application note of Section \ref{sec:appnote}. It also produced an offline tool that decoded a stored capture against a program image, which established the decoding and reconstruction stages with no device present. Beginning offline let these stages be validated against fixed data before any acquisition existed.
+
+The second stage addressed acquisition. Obtaining a capture without manual intervention required the trace components on the device to be configured and drained, which OpenOCD did not support, so the drivers of Section \ref{subsec:drivers} were written.
+
+The third stage integrated the pieces. The offline tool was absorbed into a debug engine and OpenOCD was linked into it, which turned a mechanism that printed a reconstructed trace into one usable during a debug session.
+
+The fourth stage added the remaining debugger capabilities and the frontend, and it hardened the result against a real device, where the defects of Section \ref{subsec:field_issues} appeared. The fifth stage addressed portability and packaging.
+
+Figure \ref{fig:chronology} shows the stages and their dependencies.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{fig_chronology.pdf}
+    \caption{The development methodology}
+    \label{fig:chronology}
+\end{figure}
+
+\section{The Application Note}
+\label{sec:appnote}
+The information required to use instruction trace on these devices is correct, complete and distributed across documents written for different readers. A developer must assemble a procedure from several documents, and the assembly is the difficult part. The audience is an embedded developer who has a device, a probe and a debug session, and who wants execution history.
+
+The first part surveys the trace infrastructure of the devices and restates in one place what the specifications and the reference manuals state separately. A reader can determine whether the trace capability is reachable with the hardware already available.
+
+The second part walks through configuring the trace source and the trace sink, arming them, obtaining a capture, and decoding it against the program image. The difficulty of the task lies in the ordering and in the preconditions, and the walkthrough states each condition at the point where it applies.
+
+\section{The Instruction Trace Pipeline}
+\label{sec:trace_arch}
+This section states the pipeline that turns the execution of a program into a record expressed in source terms. It is the primary contribution of the project.
+
+\subsection{Pipeline Stages}
+From generating the trace data on the target microcontroller to turning it into meaningful information, the pipeline is composed of four stages, the division rational is based on the functionality, the input and output of each stage. Decoupling in such an independent way allows each stage to be validated separately and is what allows offline decoding to be possible.
+
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{Generation and capture.} The trace source is configured to emit packets and the trace sink is configured to store them. Both are coupled to the run state of the processor.
+    \item \textbf{Extraction.} The captured data is transferred from the on-chip buffer to the host when the processor halts.
+    \item \textbf{Decoding.} The compressed byte stream is converted into trace elements.
+    \item \textbf{Analysis.} Trace elements are resolved against the program image and its debug information to produce executed instructions, each attributed to a source location.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{fig_pipeline.pdf}
+    \caption{The four-stage instruction trace pipeline}
+    \label{fig:pipeline}
+\end{figure}
+
+The implementation of this section addresses the 3 later stages, while the generation and capture stage's implementation is delegated to Section~\label{sec:trace_impl}.
+
+\subsection{Trace Data Model}
+The stages exchange value types. A reconstructed instruction records one executed instruction. A function block groups consecutive line blocks belonging to one function, and a line block groups consecutive instructions sharing one source location. A gap records a discontinuity and carries the reason for it.
+
+\subsection{Trace Lifecycle}
+\label{subsec:trace_lifecycle}
+Trace progresses through four states: unavailable, idle, armed, and capturing. The diagram below shows the transitions.
+
+The distinction between armed and capturing exists because configuration must complete before execution begins. The pipeline is prepared while the processor is halted, so that no trace is lost at the start of a run.
+
+Each halt produces one capture. A session that resumes and halts repeatedly accumulates a sequence of captures, each appended to the record. A reset discards the entire record, because it describes a program run that no longer exists.
+
+Two kinds of discontinuity appear in the record. A buffer overflow during a run causes the oldest data to be lost. A halt between two captures is itself a gap, since nothing is recorded while the processor is stopped.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{fig_trace_lifecycle.pdf}
+    \caption{The trace lifecycle}
+    \label{fig:trace_life}
+\end{figure}
+
+\subsection{Decoding}
+\label{subsec:decode_impl}
+
+Decoding is performed by OpenCSD. The implementation consists of configuring it correctly for each capture.
+
+A decode tree is constructed for each block, setting up frame formatting, memory alignment, and resets on full sync frames.
+
+The decoder must be configured exactly as the trace unit was. The identification registers are read from the unit itself, so the decoder is configured against the capabilities the hardware reports. The control register and the trace identifier hold the values the driver committed.
+
+The program image is registered with the decoder as the source of instruction bytes, described by its loadable segments.
+
+The decoder reports elements to a sink record object. The sink retains instruction ranges, exception and exception return elements, trace-on elements and loss-of-synchronization elements, as well as the byte offset within the captured buffer, and the trace identifier of the stream.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.92\linewidth]{fig_bytes_to_elements.pdf}
+    \caption[From bytes to elements]{From bytes to elements, on the capture held as test data}
+    \label{fig:bytes_to_elements}
+\end{figure}
+
+
+\subsection{Static Program Analysis}
+
+The program image is opened as an ELF object file via LLVM, and its loadable segments are extracted, and registered with the decoder.
+
+The mapping symbols partition the image into marker spans, skipping data markers to prevent literal pools from being decoded as instructions. And treating sections with no mapping symbols as a single span of the default instruction set.
+
+Each span is decoded instruction by instruction. For every instruction the analysis records its address, length, raw bytes, mnemonic, operands and a classification: branch, call, return, conditional or indirect. When a branch target is determinable from the instruction, it is recorded. LLVM's analysis facility does not recognize the instruction forms Thumb2 architecture emits for a return, so those forms are matched on the printed instruction.
+
+The source location of every decoded instruction is resolved during the same pass to keep reconstruction expensive, and it is done  by requesting the whole chain of inlined frames.
+
+
+\subsection{Reconstructing the Execution History}
+
+The decoded elements are converted into the model of Section \ref{sec:trace_arch} by transformations expressed over the same record sequence.
+
+A range is expanded by walking from its start address to its end address, taking the length of each instruction from the precomputed table. When the decoder reports that the last instruction of a range was not executed, the transformation marks it and keeps it. The instruction is dropped one layer higher, when the increment is assembled, so the output of the transformation remains a complete account of what the decoder reported.
+
+Consecutive executed instructions sharing an identical chain of source locations are merged into a line block, and consecutive line blocks belonging to the same outermost function are merged into a function block. Comparison uses the whole inlining chain to differentiate contiguous instructions from different call chains. Grouping is chronological and performs no deduplication.
+
+Discontinuities are detected by maintaining a running count of executed instructions and emitting a gap wherever the element stream indicates one. The causes distinguished are buffer overflow, resumption of tracing after it had stopped, and loss of synchronization.
+
+
+\subsection{Result Delivery}
+The result is sent to the frontend as an increment. Each message states the index at which its contents begin, followed by the instructions, function blocks and gaps the capture produced.
+
+
+\section{Debugger Architecture}
+\label{sec:debugger_arch}
 The solution is an embedded debugging engine paired with a frontend. The engine performs every debug operation. The frontend presents the results to the developer. The two are separate programs joined by the Debug Adapter Protocol.
 
 The alternative was a single program with the interface built in. Two programs were chosen because the result must plug into a development tool the developer already uses, and a built-in interface would bind the engine to one tool. Kept separate, the engine is reached by any frontend that speaks the Debug Adapter Protocol, and it runs without a frontend for offline work.
-
-The engine connects to the target device through a debug probe. The probe is reached from the host over USB and connects to the device over SWD. Instruction trace is captured in an on-chip buffer and read back over the same debug connection. No trace port and no trace-capable probe are required.
 
 \begin{figure}[H]
     \centering
@@ -35,18 +274,6 @@ The engine provides the following capabilities, grouped by area.
     \item \textbf{Symbols} --- modules, source resolution
 \end{itemize}
 
-Capabilities the standard protocol does not cover are exposed through its extension mechanism.
-
-\subsection{Design Rules}
-
-\begin{itemize}
-    \item No component of the engine names an interface of a particular development tool. A second frontend can be written against the same engine without change.
-    \item A failed operation produces an error response and the process continues. A device may be absent, in reset, or unresponsive.
-    \item Components that produce output publish typed domain events. A single subscriber converts each event into a protocol message. No component constructs protocol messages directly.
-\end{itemize}
-
-\section{Debugger Architecture}
-\label{sec:debugger_arch}
 The engine is divided into six layers. Each depends only on the layers below it. The protocol types are a shared dependency used by the handlers and the context.
 
 \begin{figure}[H]
@@ -54,6 +281,30 @@ The engine is divided into six layers. Each depends only on the layers below it.
     \includegraphics[width=0.6\linewidth]{fig_module_layers.pdf}
     \caption{Module dependency graph}
     \label{fig:layers}
+\end{figure}
+
+\subsection{Division of Work}
+\label{subsec:division}
+
+The engine drives two external systems that control the target device, and this section describes the responsibilities of each system.
+
+Neither system covers the work on its own. LLDB provides source-level debugging, the DWARF and expression machinery, and stack unwinding, but it reaches the device only through GDB RSP, which offers no path to the trace components and no access to memory while the processor runs. OpenOCD reaches the debug port, the access ports and the trace components directly, but it carries no model of the program and no source-level debugging. Combining the two gives the engine both, and the responsibilities below follow from that division.
+
+Debug primitives mentioned in Section~\ref{sec:primitives} are handled by LLDB.
+
+The decoder requires typed register values read from hardware, and a capture arrives as a push at the moment of a halt. The engine therefore also calls OpenOCD directly through its provider.
+
+Reading memory through LLDB requires a stopped program. A direct read through OpenOCD reaches the device while the processor runs allowing for live memory watches.
+
+Memory access is selected when the session is established. A launched session installs the direct path through OpenOCD, and every read and write uses it. An attached session has no direct path, so trace, live memory observation and peripheral inspection are unavailable.
+
+Reset is performed on the direct path. Section \ref{subsec:reset_impl} describes why.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.62\linewidth]{fig_division_responsibility.pdf}
+    \caption{Division of work between LLDB and OpenOCD}
+    \label{fig:division}
 \end{figure}
 
 \subsection{Transport Layer}
@@ -124,6 +375,35 @@ The engine is multi-threaded. Three requirements drive the model.
     \item The debug primitives provider does not support concurrent use.
 \end{itemize}
 
+\subsection{Session Lifecycle}
+
+Launching creates the OpenOCD provider, installs the memory access strategy that uses it, creates the LLDB target from the program image, connects LLDB to OpenOCD's GDB RSP server, and starts the trace pipeline.
+
+Attaching connects LLDB to a GDB RSP server the engine did not create. Every capability depending on the direct path is unavailable in this mode.
+
+Disconnection proceeds in a fixed order. The program is detached or terminated, event handling is stopped, the trace pipeline is shut down, the observation workers are stopped, and the OpenOCD provider is destroyed last, so that no thread outlives the resource it reads from.
+
+
+\subsection{Reset and Resynchronization}
+\label{subsec:reset_impl}
+
+Resetting the device is the operation where LLDB and OpenOCD conflict.
+
+The reset is performed through the OpenOCD provider, because the reset-and-halt behavior required is not reachable through GDB RSP. The processor therefore halts without LLDB being aware meaning that its cached view of threads, frames and variables is stale.
+
+By default, LLDB is made aware of resets via a reply to a reset request it has made, and therefore a new mechanism needs to be introduced for asynchronous device resets.
+
+A command was added to OpenOCD that arms a synchronization flag on the GDB RSP connection. When the flag is armed, the next resume or step request received on that connection is intercepted and answered with a report of the current state. The engine arms the flag after the reset and then issues a single-instruction step through LLDB. OpenOCD intercepts the step and answers allowing LLDB to  updates its view, and the session continues against the program that is actually present.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{fig_reset_resync.pdf}
+    \caption{Reset and resynchronization}
+    \label{fig:resync}
+\end{figure}
+
+
+
 A reader thread receives messages from the transport. A dispatch thread executes them one at a time. Separating the two allows a cancellation to be recorded as soon as it arrives.
 
 The extended capabilities provider confines its operations to a dedicated thread. Observation workers access it directly, which is what allows observation to proceed independently of request handling.
@@ -132,58 +412,211 @@ Access to the debug primitives provider is serialized. A single operation accept
 
 Every background thread that produces output publishes a domain event. The single subscriber converts each event into a protocol message.
 
+\section{On-Chip Debugger: OpenOCD}
+\label{sec:trace_impl}
 
-\section{Instruction Trace Architecture}
-\label{sec:trace_arch}
-This section states the pipeline that turns the execution of a program into a record expressed in source terms. It is the primary contribution of the project.
+OpenOCD is a standalone program. Making it callable from the engine required converting it into a library and adding drivers for the CoreSight components the project requires. The conversion and the two drivers are the work of this project, and OpenOCD's own debug functionality is used unchanged. This section covers them.
 
-\subsection{Pipeline Stages}
-Trace leaves the processor as a compressed packet stream. The pipeline has four stages.
+\subsection{Embedding as a Library}
+\label{subsec:openocd_lib}
 
-\begin{enumerate}[label=\arabic*.]
-    \item \textbf{Generation and capture.} The trace source is configured to emit packets and the trace sink is configured to store them. Both are coupled to the run state of the processor.
-    \item \textbf{Extraction.} The captured data is transferred from the on-chip buffer to the host when the processor halts.
-    \item \textbf{Decoding.} The compressed byte stream is converted into trace elements.
-    \item \textbf{Analysis.} Trace elements are resolved against the program image and its debug information to produce executed instructions, each attributed to a source location.
-\end{enumerate}
+OpenOCD is designed to run as a self-contained process. Embedding it inside the engine required four changes.
 
-The stages are separated because each depends on a different thing. Generation and capture depend on the device, extraction on the debug connection, decoding on the trace protocol, and analysis on the program image. A stage that combined two of these could run only when both were present.
+\subsubsection{Build System Migration}
+The original build system was replaced so that OpenOCD could be compiled as a static library consumed by the engine. Each group of source files became a CMake object library, and those groups were aggregated into a single library target with no entry point. The source file containing \texttt{main()} remains in the tree and is excluded from the build.
 
-\begin{figure}[H]
+\subsubsection{Containing Process Termination}
+OpenOCD calls \texttt{exit()} in many error paths. A library must not terminate the host process, since a failure affecting one device must not end the debug session.
+
+Every \texttt{exit()} call was redirected to a replacement function, imposed on each translation unit by the build. The replacement checks a per-thread guard. When a guarded call is in progress, the replacement performs a non-local jump (\texttt{setjmp}/\texttt{longjmp}) back to the guard site, which returns the termination code to the caller as a failure. When no guard is active, the replacement terminates as before.
+
+Every entry into OpenOCD from the engine is wrapped in such a guard. Destructors on the abandoned call chain are not run, and allocations are leaked. The mechanism is a containment of last resort.
+
+\subsubsection{Embedding the Startup Scripts}
+OpenOCD reads Tcl scripts from disk at startup. These scripts define much of its command surface. They are converted into byte arrays at build time and compiled into the library, removing the file-system dependency.
+
+\subsubsection{Runtime Initialization}
+The initialization that OpenOCD's \texttt{main()} would have performed is reimplemented by the engine. A command context is created, the logging subsystem is started, and each subsystem's command set is registered in the order OpenOCD requires, since later registrations depend on earlier ones.
+
+The startup sequence then follows the order OpenOCD requires: initializing targets, the adapter and the transport, initializing the debug access port, examining the targets, initializing the flash and trace subsystems, and starting the GDB RSP server.
+
+\subsubsection{Thread Affinity and Command Serialization}
+Every OpenOCD operation executes on the thread running its server loop. That loop blocks in \texttt{select()} over sockets it owns. Work submitted from another thread must reach that thread and must wake the loop.
+
+A service is registered with OpenOCD, bound to a port on the loopback interface, and a client socket is connected to it. Sending one byte on that connection wakes the loop. The service handler drains a queue of pending work and executes each entry. Every public method of the OpenOCD provider submits work to that queue and waits for the result, with a bounded timeout so that no caller blocks indefinitely.
+
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=\linewidth]{fig_pipeline.pdf}
-    \caption{The four-stage instruction trace pipeline}
-    \label{fig:pipeline}
+    \includegraphics[width=0.8\linewidth]{fig_command_queue.pdf}
+    \caption{Command queue and wake mechanism}
+    \label{fig:cmdqueue}
 \end{figure}
 
-The separation has four consequences. The work that needs the device is held apart from the work that does not, so the two do not interleave. The last two stages run on a stored capture, so a trace is analyzed offline with no device present. Each stage is tested on its own against fixed data. A stage is reused where its inputs allow, since decoding and analysis depend on the capture and the image alone.
+\subsection{CoreSight Drivers}
+\label{subsec:drivers}
 
-\subsection{Trace Data Model}
-The stages exchange value types. A reconstructed instruction records one executed instruction. A function block groups consecutive line blocks belonging to one function, and a line block groups consecutive instructions sharing one source location. A gap records a discontinuity and carries the reason for it.
+OpenOCD carries drivers for earlier CoreSight trace components but does not support the TMC or ETMv4. The two drivers were implemented as part of the project, following the patterns established by the existing CoreSight infrastructure.
 
-\subsection{Trace Lifecycle}
-\label{subsec:trace_lifecycle}
-Trace progresses through four states: unavailable, idle, armed, and capturing. The diagram below shows the transitions.
+Each driver is created as a named Tcl object within the OpenOCD configuration. The object exposes a \texttt{configure} command for staging options, an \texttt{init} command for hardware validation and initial setup, and \texttt{enable} and \texttt{disable} commands for requesting that trace follow the run state of the target.
 
-The distinction between armed and capturing exists because configuration must complete before execution begins. The pipeline is prepared while the processor is halted, so that no trace is lost at the start of a run.
+\subsubsection{TMC Driver}
+The driver handles all three TMC variants. The variant is determined at initialization from the DEVID and DEVTYPE registers.
 
-Each halt produces one capture. A session that resumes and halts repeatedly accumulates a sequence of captures, each appended to the record. A reset discards the entire record, because it describes a program run that no longer exists.
+The driver maintains an explicit state machine to track what the hardware is doing. Figure \ref{fig:tmc_states} shows the transitions. The state governs what operations are valid at any given moment and prevents redundant hardware access.
 
-Two kinds of discontinuity appear in the record. A buffer overflow during a run causes the oldest data to be lost. A halt between two captures is itself a gap, since nothing is recorded while the processor is stopped.
-
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=\linewidth]{fig_trace_lifecycle.pdf}
-    \caption{The trace lifecycle}
-    \label{fig:trace_life}
+    \includegraphics[width=0.7\linewidth]{fig_tmc_states.pdf}
+    \caption{TMC state transitions}
+    \label{fig:tmc_states}
 \end{figure}
 
-\section{Frontend Architecture}
+\subsubsection{ETMv4 Driver}
+The ETMv4 driver adapts to the particular implementation present on the device. At initialization it reads all TRCIDR registers and decodes them into a capability structure.
+
+First, each configuration request is validated against the discovered capabilities. Second, the driver applies capability-dependent defaults: features that must be enabled when supported are turned on, and features that may degrade gracefully are adjusted. Third, the raw identification register values are preserved as a snapshot for the trace decoder.
+
+\subsubsection{Configuration Model}
+Both drivers follow a stage-validate-commit model. Options are staged by the \texttt{configure} command, which sets dirty flags without touching hardware. When the commit path runs, it validates the staged options against the discovered identity and capabilities, then writes only the dirty registers as a batch of fixed-order, queued DAP writes. The fixed order is necessary because certain registers become meaningful only after others have been written.
+
+\subsubsection{Run-State Coupling}
+Both drivers register callbacks on target events and act on processor state transitions.
+
+On resume, an already enabled driver validates, commits and starts the component. On halt, the ETMv4 driver stops the trace unit and the TMC driver stops capture and drains the buffer. When stepping, the ETMv4 driver starts before the step and the TMC driver starts after it, keeping the sink disarmed during single-step execution. On reset, both drivers recommit their full configuration, since the reset invalidates all register values.
+
+Trace therefore follows the program with no host action during a run.
+
+
+\subsection{Trace Extraction}
+Extraction runs when the processor halts.
+
+Capture is stopped before it is read. The driver requests that the component stop on flush, issues a manual flush, then waits for the TMCReady status bit. A component reporting an empty buffer is handled separately.
+
+The size of the buffer to read is obtained from the CBUFLEVEL register if the component doesn't report an overflow of the buffer, otherwise, the entirety of the on-chip buffer is read. The fill level is meaningful only while capture is enabled, so capture is disabled only after the drain has completed.
+
+The buffer is drained through TMC\_RRD, a single register that returns successive words. The read is issued as a repeated access to the register address with the automatic address increment of the access port suppressed.
+
+The extracted block is delivered to a callback registered by the engine and, where configured, to a file or a TCP connection. A full synchronization frame is emitted ahead of every payload.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.55\linewidth]{fig_extraction_sequence.pdf}
+    \caption{Extraction sequence}
+    \label{fig:extraction}
+\end{figure}
+
+\section{Source-Level Debugging through LLDB}
+\label{subsec:lldb_impl}
+
+The engine drives LLDB through the defined LLDB SB types.
+
+LLDB connects to the target over GDB RSP, served by OpenOCD inside the same process. The connection is made over the loopback interface.
+
+Serialization of target access acquires the recursive API mutex of the target and invokes the supplied callable.
+
+At startup, the following configuration elements are applied to the LLDB instance:
+\begin{itemize}
+    \item External symbol lookup is disabled, since LLDB otherwise attempts to fetch symbols from network services.
+    \item Parallel module loading is disabled, since the background workers it creates acquire locks in an order opposite to the serialization above.
+    \item The strategy for resolving breakpoints at inlined call sites is fixed, preventing a developer's personal configuration from changing where breakpoints are placed.
+\end{itemize}
+
+OpenOCD routed every GDB RSP packet beginning with a particular letter to a handler for an obsolete feature, while LLDB sends several unrelated packets beginning with that letter. OpenOCD was modified to match the complete packet name and replies to the others with the empty response that indicates an unsupported packet.
+
+\subsection{Breakpoints}
+\label{subsec:breakpoints_impl}
+
+The choice between a software and a hardware breakpoint follows from the memory region the address lies in. The engine makes that choice automatically.
+
+For each breakpoint the engine consults the memory map provided by the device description. If the location lies in writable memory, a software breakpoint is used. Otherwise a hardware breakpoint is used. Where no memory map is available, a hardware breakpoint is used by default.
+
+The developer may override the decision.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.62\linewidth]{fig_breakpoint_decision.pdf}
+    \caption{Breakpoint placement decision}
+    \label{fig:bpdecision}
+\end{figure}
+
+
+\subsection{Memory and Observation}
+
+Memory is read through one of two strategies, selected when the session is established. \texttt{ProcessMemoryStrategy} reads through LLDB and serves a conventional session. \texttt{OpenOcdMemoryStrategy} reads through the OpenOCD provider and is installed whenever the direct path is available.
+
+The second strategy does not require the program to be stopped. Live observation is built on it. Each observation runs on a dedicated thread, reads the requested region at a configured interval, and publishes the result on the event bus. The wait between reads is interruptible so that stopping an observation takes effect immediately.
+
+Observations are not suspended while the processor is halted.
+
+
+\subsection{Peripherals}
+The device description is parsed from the vendor SVD file into a plain data model of peripherals, registers and fields.
+
+A register whose reading changes the state of the peripheral is not read by default. Registers that are adjacent and safe to read are coalesced into a single access, reducing a peripheral view to a small number of reads.
+
+A race between a write and a periodic read is resolved on the producing side. A counter is advanced whenever a write completes, and an observation whose read overlapped a completing write is discarded.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\linewidth]{fig_peripheral_race.pdf}
+    \caption{Peripheral write and observation}
+    \label{fig:periprace}
+\end{figure}
+
+
+\subsection{Variables and Expressions}
+\label{subsec:boundaries}
+\label{subsec:variables_impl}
+
+Variables are obtained from LLDB. The engine converts each \texttt{SBValue} into the representation DAP defines, recursing into structured values on demand.
+
+References to values are allocated from two spaces: one for values invalidated when the program resumes and one for values that persist. Separating them allows the first space to be cleared on every resumption without disturbing the second.
+
+Expression evaluation is exposed through the same component. A prefix character distinguishes an expression in the source language from a command addressed to LLDB.
+
+
+\section{Debugger Frontend}
 The frontend is an extension for a development tool. A session object tracks which capabilities the engine advertised and enables the matching views. Each view holds a model that accumulates what the engine sends and a presentation that renders it. The engine sends increments, so the cost of an update follows the size of the change.
 
-\section{Conclusion}
-The instruction trace pipeline is the contribution of the project. Its stages are separated so that each depends on one thing, which is the device, the extended capabilities provider, the trace protocol, or the program image.
+\subsection{Protocol Extensions}
 
-The engine that carries it is structured around provider abstraction, event-driven communication, and a transport and orchestrator pair that decouples it from any specific protocol or frontend.
+The protocol layer implements the message framing, the dispatch and the handler hierarchy of Section \ref{sec:debugger_arch}. The engine registers a handler for each DAP request listed in Table \ref{tab:handlers}.
 
-Consequences of that arrangement recur in the next chapter. Observation continues while the program runs, which makes live memory and peripheral views possible. Reset is performed outside the conventional path, which makes resynchronization necessary. Chapter \ref{ch:implementation} describes how each was realized.
+Handlers share a base that parses arguments, invokes the handler body and converts a returned error into an error response. Two handler shapes exist: one answering immediately and one deferring its response. The deferred shape is required by requests that must not be answered until configuration is complete.
+
+Custom DAP requests expose embedded-specific functionality:
+\begin{itemize}
+    \item Trace status and control
+    \item Memory observation start and stop
+    \item Peripheral enumeration and access
+    \item Device reset
+\end{itemize}
+
+Custom events carry what the engine produces asynchronously, trace increments, memory view values, the values of a peripheral observation, and the report that the device was reset.
+
+\subsection{User Interface Views}
+Two views present trace. One groups the record by function and line. The other lists executed instructions in order. Both render source locations as links, so selecting an entry opens the corresponding source position. Discontinuities appear as explicit separators. Chapter \ref{ch:validation} shows both views populated by a live capture.
+
+A memory view and a set of live memory panels present regions of memory. A peripheral view presents the device description, with registers expanded to their individual fields.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth,height=150mm,keepaspectratio]{debugger_screenshots/peripheral_view_ui.png}
+    \caption[The peripheral view]{The peripheral view, with a register expanded to its individual fields.}
+    \label{fig:peripheral_view}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth,height=190mm,keepaspectratio]{debugger_screenshots/memory_view_ui.png}
+    \caption[The live memory view]{A live memory panel.}
+    \label{fig:memory_view}
+\end{figure}
+
+\section{Portability and Provenance}
+The engine builds on Linux and on Windows. Portability work concentrated on protocol message reading (which requires a different mechanism on each platform), path resolution relative to the executable, and initialization requirements of the libraries used. An installer is produced for Windows, carrying the engine, its resources and the scripts of OpenOCD.
+
+The engine is built on existing open-source work. The protocol layer began as the debug adapter distributed with LLDB and was restructured into the layers of Section \ref{sec:debugger_arch}. OpenOCD is a fork with the two CoreSight drivers and the GDB RSP corrections added. Decoding is performed by OpenCSD. Written for this project are the two CoreSight drivers, the trace pipeline from extraction through reconstruction, the domain components that constitute the core of the engine, the device description provider, and the frontend extension. The licenses of the adopted work are carried unchanged.
+
+\section*{Conclusion}
+This chapter has presented a design and its implementation. The requirements were derived from the scope of each deliverable and assigned to the deliverable that carries it. The instruction trace pipeline was presented as four stages, separated so that each stage exchanges only value types with the next. The engine that carries the pipeline was presented as a set of layers, with providers that confine each external library to one boundary and a concurrency model that keeps request handling, cancellation and observation independent of one another. The implementation converted OpenOCD into a library and added the drivers for the trace components, obtained the conventional debug operations from LLDB, and delivered the result as an extension for an existing development tool.
